@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set section = "feeds" %}
+{% block body %}
+	<div class="yellowbox">
+		<form action="/search" method="post">
+			<table>
+				<tr>
+					<td width="150">Search for a feed:</td>
+					<td>
+						<input type="hidden" name="type" value="feed"/>
+						<input type="text" name="query"/>
+						<input type="submit" value="Go"/>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</div>
+	{% if feeds %}
+		<table width="100%" class="list" border="0" cellspacing="0" cellpadding="0">
+			<thead>
+				<td width="18">&nbsp;</td>
+				<td width="50%">Feed</td>
+				<td>Type</td>
+				<td>Last Update</td>
+				{% if user.admin %}
+				<td>Owner</td>
+				{% endif %}
+			</thead>
+			<tbody>
+			{% for f in feeds %}
+				<tr>
+					<td><a href="/feeds/{{ f.id }}/delete"
+						onclick="return confirm('Are you sure you want to delete this feed?');"
+						><img src="/media/images/delete.png"/></a></td>
+					<td><a href="/feeds/{{ f.id }}/edit">{{ f.name }}</a></td>
+					<td>{{ mediatypes[f.media_type] }}</td>
+					<td>
+						{% if f.last_update %}
+							{{ f.last_update|timestampformat('%m-%d-%Y') }}
+						{% else %}
+							None
+						{% endif %}
+					</td>
+					{% if user.admin %}
+					<td>{{ f.user.username }}</td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	{% else %}
+		<p>You have no media feeds.</p>
+	{% endif %}
+	<a href="/feeds/add"><img src="/media/images/add.gif" /></a>
+	<a href="/feeds/add">Add a new feed</a>
+{% endblock %}

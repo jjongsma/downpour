@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set section = ["share", share.id]|join("_") %}
+{% block body %}
+    {% if files or directories %}
+        <table cellpadding="3" cellspacing="0" border="0" class="list" width="100%">
+            <thead>
+                <tr>
+                    <td width="20">&nbsp;</td>
+                    <td>Filename</td>
+                    <td>Size</td>
+                    <td>&nbsp;</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% if path %}
+                <tr>
+                    <td><img src="/media/images/up.png"/></td>
+                    <td><a href="..">Parent</a></td>
+                    <td>&nbsp;</td>
+                    <td align="right">&nbsp;</td>
+                </tr>
+                {% endif %}
+                {% for d in directories %}
+                <tr>
+                    <td><img src="/media/images/folder.png"/></td>
+                    <td><a href="{{ d.href|urlencode }}">{{ d.text }}</a></td>
+                    <td>&nbsp;</td>
+                    <td align="right"><a title="Add as new feed subscription" href="/feeds/add?url={{ downloadUrl|format(d.href)|urlencode }}%26rss=1&name={{ d.name|urlencode }}"><img src="/media/images/add.gif"/></a></td>
+                </tr>
+                {% endfor %}
+                {% for f in files %}
+                <tr>
+                    <td><img src="/media/images/file.png"/></td>
+                    <td><a title="Add to queue" href="/downloads/add/url?url={{ downloadUrl|format(f.href)|urlencode }}">{{ f.text }}</td>
+                    <td>{{ f.size|filesizeformat }}</td>
+                    <td align="right"><a href="/downloads/add/url?url={{ downloadUrl|format(f.href)|urlencode }}"><img src="/media/images/download.png"/></a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        No files found.
+    {% endif %}
+{% endblock %}

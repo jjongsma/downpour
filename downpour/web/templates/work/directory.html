@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set section = "work" %}
+{% block body %}
+	<table cellpadding="3" cellspacing="0" border="0" class="list" width="100%">
+		<thead>
+			<tr>
+				<td width="20">&nbsp;</td>
+				<td>Filename</td>
+				<td>Size</td>
+				<td>&nbsp;</td>
+			</tr>
+		</thead>
+		<tbody>
+			{% if path %}
+			<tr>
+				<td><img src="/media/images/up.png"/></td>
+				<td><a href="..">Parent</a></td>
+				<td>&nbsp;</td>
+				<td align="right">&nbsp;</td>
+			</tr>
+			{% endif %}
+			{% for d in directories %}
+			<tr>
+				<td><img src="/media/images/folder.png"/></td>
+				<td><a href="{{ d.href }}">{{ d.text }}</a></td>
+				<td>&nbsp;</td>
+				<td align="right"><a href="/work?d={{ path|e }}/{{ d.href }}"
+					onclick="return confirm('Are you sure you want to delete this file?')"
+					><img src="/media/images/delete.png"/></a></td>
+			</tr>
+			{% endfor %}
+			{% for f in files %}
+			<tr>
+				<td><img src="/media/images/file.png"/></td>
+				<td><a target="_blank" href="{{ f.href }}">{{ f.text }}</a></td>
+				<td>{{ f.size }}</td>
+				<td align="right"><a href="/work?d={{ path }}/{{ f.href }}"
+					onclick="return confirm('Are you sure you want to delete this file?')"
+					><img src="/media/images/delete.png"/></a></td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}

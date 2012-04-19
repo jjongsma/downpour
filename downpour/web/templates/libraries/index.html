@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set section = "libraries" %}
+{% block body %}
+	<div class="info">
+		By default, all downloads are saved to <b>{{ basedir }}</b>.<br />
+		<a href="/browse/">Browse my media</a>
+	</div>
+
+	<p><i>To better organize your library, you can specify separate
+	subdirectories and file renaming patterns for each media type
+	below.</i></p>
+	<hr />
+
+	<form action="/libraries/save" method="post">
+		<table cellspacing="0" cellpadding="3" border="0" width="100%">
+		{% for l in libraries %}
+			<tr>
+				<td valign="top" rowspan="3" width="125"><b>{{ mediatypes[l] }}</b></td>
+				<td width="100">Subdirectory:</td>
+				<td>
+					<input type="hidden" name="media_type" value="{{ l }}"/>
+					<input type="text" name="directory" size="30"
+						value="{{ libraries[l].directory|d('', true) }}"/>
+				</td>
+			</tr>
+			<tr>
+				<td>Import Files:</td>
+				<td>
+					<select name="keep" size="1">
+						<option value="1">All files</option>
+						<option {% if not libraries[l].keepall %}selected{% endif %}
+							value="0">Only recognized media</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td>Save as:</td>
+				<td>
+					<select name="pattern" size="1">
+						<option value="">Original filenames</option>
+						{% for p in patterns[l] %}
+						<option {% if libraries[l].pattern == p %}selected{% endif %}
+							value="{{ p }}">{{ patterns[l][p] }}</option>
+						{% endfor %}
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="3"><hr /></td>
+			</tr>
+		{% endfor %}
+		</table>
+		<br />
+		<input type="submit" value="Save Settings" />
+	</form>
+{% endblock %}

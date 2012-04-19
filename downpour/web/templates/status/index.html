@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% set section = "status" %}
+{% block body %}
+	<div class="info">
+		<table cellspacing="0" border="0" cellpadding="1">
+			<tr>
+				<td width="75"><b>Version:</b></td>
+				<td>Downpour v{{ status.version }}</td>
+			</tr>
+			<tr>
+				<td><b>Host:</b></td>
+				<td>{{ status.host }}</td>
+			</tr>
+		</table>
+	</div>
+	<br />
+
+	<h3>Current Activity (All Users)</h3>
+	<table cellspacing="0" border="0" cellpadding="3">
+		<tr>
+			<td width="150">Current state</td>
+			<td>{% if status.paused %}Paused{% else %}Running{% endif %}</td>
+		</tr>
+		<tr>
+			<td>Active downloads</td>
+			<td>{{ status.active_downloads }}</td>
+		</tr>
+		<tr>
+			<td>Queued downloads</td>
+			<td>{{ status.queued_downloads }}</td>
+		</tr>
+		<tr>
+			<td>Download rate</td>
+			<td>{{ status.downloadrate|filesizeformat|replace('Bytes', 'b') }}/s</td>
+		</tr>
+		<tr>
+			<td>Upload rate</td>
+			<td>{{ status.uploadrate|filesizeformat|replace('Bytes', 'b') }}/s</td>
+		</tr>
+		<tr>
+			<td>Connections</td>
+			<td>{{ status.connections }}</td>
+		</tr>
+	</table>
+	<br />
+
+	<h3>Disk Space</h3>
+	<table cellspacing="0" border="0" cellpadding="3">
+		<tr>
+			<td width="150">Download volume</td>
+			<td>
+				{% if status.diskfreepct < 10 %}
+					{{ status.diskfreepct|progressbar(300,style='red',label='free') }}
+				{% elif status.diskfreepct < 30 %}
+					{{ status.diskfreepct|progressbar(300,style='yellow',label='free') }}
+				{% else %}
+					{{ status.diskfreepct|progressbar(300,label='free') }}
+				{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<td>User volume</td>
+			<td>
+				{% if status.userdiskfreepct < 10 %}
+					{{ status.userdiskfreepct|progressbar(300,style='red',label='free') }}
+				{% elif status.userdiskfreepct < 30 %}
+					{{ status.userdiskfreepct|progressbar(300,style='yellow',label='free') }}
+				{% else %}
+					{{ status.userdiskfreepct|progressbar(300,label='free') }}
+				{% endif %}
+			</td>
+		</tr>
+	</table>
+{% endblock %}

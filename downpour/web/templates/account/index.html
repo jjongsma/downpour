@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% set section = "account" %}
+{% block body %}
+	<p>Username: {{ user.username }}</p>
+	<a href="/account/edit">Update My Account</a>
+{% endblock %}

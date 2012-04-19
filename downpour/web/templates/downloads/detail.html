@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% set section = "downloads" %}
+{% block body %}
+	<table border="0" cellpadding="0" cellspacing="0" class="detail">
+		<tr>
+			<td class="label">Description</td>
+			<td class="value">{{ download.description }}</td>
+		</tr>
+		<tr>
+			<td class="label">Source URL</td>
+			<td class="value">{{ download.url|default('Uploaded by user', true) }}</td>
+		</tr>
+		<tr>
+			<td class="label">Progress</td>
+			<td class="value">
+				{{ download.progress|progressbar(200) }}
+			</td>
+		</tr>
+		<tr>
+			<td class="label">Size</td>
+			<td class="value">
+				{% if download.size %}
+					{{ download.size|filesizeformat|replace('Bytes','b') }}
+				{% else %}
+					Unknown
+				{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<td class="label">State</td>
+			<td class="value">
+				{{ statusdesc[download.status] }}
+				{% if download.status_message %}
+					({{ download.status_message }})
+				{% endif %}
+			</td>
+		</tr>
+		{% if client.is_running() %}
+		<tr>
+			<td class="label">Speed</td>
+			<td class="value">
+				{{ download.downloadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s down<br />
+				{{ download.uploadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s up
+			</td>
+		</tr>
+		<tr>
+			<td class="label">Elapsed Time</td>
+			<td class="value">
+				{{ download.elapsed|intervalformat }}
+			</td>
+		</tr>
+		<tr>
+			<td class="label">Time Left</td>
+			<td class="value">
+				{{ download.timeleft|intervalformat }}
+			</td>
+		</tr>
+		{% endif %}
+		<tr>
+			<td class="label">Owner</td>
+			<td class="value">
+				{{ download.user.username }}
+			</td>
+		</tr>
+	</table>
+
+	{% if client.is_startable() %}
+		{% if client.is_finished() %}
+			<a class="button seed" href="/downloads/{{ download.id }}/start?from=detail">Seed</a>
+		{% else %}
+			<a class="button start" href="/downloads/{{ download.id }}/start?from=detail">Start</a>
+		{% endif %}
+	{% else %}
+	{% endif %}
+	{% if client.is_stoppable() %}
+		<a class="button start" href="/downloads/{{ download.id }}/restart?from=detail">Restart</a>
+		<a class="button stop" href="/downloads/{{ download.id }}/stop?from=detail">Stop</a>
+	{% endif %}
+	<a class="button remove" onclick="return confirm('Are you sure you want to remove this download?')" href="/downloads/{{ download.id }}/delete">Delete</a>
+	<br clear="left"/>
+	<br />
+
+	<table border="0" cellpadding="0" cellspacing="0" class="detail">
+		<tr>
+			<td class="label">Destination</td>
+			<td class="value">
+				{% if download.files.count() %}
+					Files have been imported to
+					{% set dldir = (download.files|first).directory %}
+					<a href="/browse/{{ dldir|default('', true) }}">{{ dldir|default('your user directory', true) }}</a>.
+					<hr />
+					{% for file in download.files %}
+						{{ file|librarylink }}
+						({{ file.size|d(0,true)|filesizeformat|replace('Bytes','b') }})
+						<br />
+					{% endfor %}
+				{% elif download.media_type %}
+					<div>Media type is <b>{{ mediatypes[download.media_type] }}</b>.
+						Files will be imported to
+						<a href="/browse/{{ libraries[download.media_type].directory|default('', true) }}">
+						{{ libraries[download.media_type].directory|default('your user directory', true) }}</a>
+						when the download is complete.</div>
+				{% else %}
+					<div>Media type is unknown. Files will be imported to
+						<a href="/browse/">your user directory</a> when
+						the download is complete.</div>
+				{% endif %}
+				<hr />
+				<form action="/downloads/{{ download.id }}/update" method="post">
+					<select name="media_type">
+						<option value="">Assign a new media type</option>
+						{% for type in mediatypes %}
+							<option value="{{ type }}">{{ mediatypes[type] }}</option>
+						{% endfor %}
+					</select>
+					<input type="submit" value="Assign"/>
+				</form>
+			</td>
+		</tr>
+		{% if download.feed_id %}
+		<tr>
+			<td class="label">Source Feed</td>
+			<td class="value">
+				<a href="/feeds/{{ download.feed_id }}/edit">{{ download.feed.name }}</a>
+			</td>
+		</tr>
+		{% endif %}
+		<tr>
+			<td class="label">Downloaded Files</td>
+			<td class="value">
+				{% block files %}
+					<table cellspacing="0" cellpadding="0" border="0" class="plain">
+						{% for file in client.get_files() %}
+							<tr>
+								{% if download.status != statuscode.COMPLETED %}
+								<td>
+									{% if file.progress < 100 %}
+										{{ file.progress|progressbar(75,style='yellow') }}
+									{% else %}
+										{{ file.progress|progressbar(75) }}
+									{% endif %}
+								</td>
+								{% endif %}
+								<td>
+									{{ file.path|workinglink(download) }}
+									({{ file.size|d(0,true)|filesizeformat|replace('Bytes','b') }})
+								</td>
+							</tr>
+						{% endfor %}
+					</table>
+				{% endblock %}
+			</td>
+		</tr>
+	</table>
+	{% block additional %}
+	{% endblock %}
+{% endblock %}

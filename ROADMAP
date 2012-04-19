@@ -1,0 +1,74 @@
+---------------------------
+0.3: "Sharing is Caring"
+---------------------------
+Focused on seeding, sharing, private trackers
+Features TBD
+
+---------------------------
+0.4: "Conan the Librarian"
+---------------------------
+Focused on better library management
+Features TBD
+
+---------------------------
+0.5: "Social Butterfly"
+---------------------------
+Focused on remote shares and searching
+Features TBD
+
+---------------------------
+Feature List
+---------------------------
+
+New architecture split - independent modules
+  1. Download module
+  2. Feed module
+  3. Library module
+  4. Search module
+  5. Sharing module
+
+General:
+  - Revist unicode support in Twisted
+  - Language translations
+
+Download Module:
+  - Fix seeding / upload ratio
+  - Create separate seed queue / filter seeds out of default download view
+  - Show current peer downloads (from Sharing Module) in seed view
+  - Add time-based bandwidth limits
+  - Allow changing media type of a download inline (AJAX) in overview
+  - Ad-hoc torrent creation / publishing
+  - Magnet links for torrents
+  - Verify torrent traffic encryption
+  - FTP downloads
+
+Library Module:
+  - Better media type guessing - use thetvdb.com / themoviedb.com?
+  - New "Series" section configuration separately from feeds
+  - Move series pruning into library module, based on file scan, not
+    feed records
+  - Media transcoding on import
+  - Generate new searchable index on library update
+  - Improve library browser UI - hard to match "X" with media item
+  - Store metadata on all library files
+
+Feed Module:
+  - Allow RSS feeds to get show name from the feed for multi-show feeds
+  - Parse <description> field for metadata hints
+  - Better filtering of duplicates
+  - Resolution preference (HD/SD)
+  - Release group / keyword preference
+  - Watch a local directory for torrents to auto-download
+  - Link to a show in the library, default to auto-detect/auto-create
+  - Limit number of previous feed items shown
+
+Search Module:
+  - Pluggable search providers
+
+Sharing Module:
+  - Separate sharing bandwidth settings
+  - Periodically refresh search indexes from remote shares
+  - Add search provider that uses peer indexes to find media
+  - Ad-hoc torrent creation instead of HTTP downloads for load sharing
+  - Queue entire remote folder for download
+  - Better logging/monitoring of peer downloads in web UI

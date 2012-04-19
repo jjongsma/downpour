@@ -1,0 +1,396 @@
+/* Template layout */
+html {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+body {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-family: sans-serif;
+	font-size: 10pt;
+	color: #333;
+}
+form {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+#header {
+	position: relative;
+	height: 60px;
+	color: white;
+	background-color: #0d3c59;
+}
+#header #logo {
+	padding: 10px;
+	width: 160px;
+}
+#header #account {
+	font-size: 9pt;
+	position: absolute;
+	margin: 5px;
+	bottom: 0;
+	right: 0;
+}
+#header a {
+	color: #CCC;
+}
+#main {
+	position: relative;
+	background-color: #EEE;
+	padding: 10px 5px;
+}
+#navigation {
+	float: left;
+	padding: 5px;
+	width: 140px;
+	background-color: #FFF;
+	border: 1px solid #CCC;
+}
+#navigation h4 {
+	margin-top: 10px;
+}
+#navigation ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+#navigation ul li a {
+	display: block;
+	text-decoration: none;
+	color: #333;
+	padding: 3px 5px;
+}
+#navigation ul li.active a {
+	border: 1px solid #1a75ad;
+	background-color: #EEE;
+}
+#content {
+	position: relative;
+	margin-left: 160px;
+	border: 1px solid #CCC;
+	margin-top: 0;
+	padding: 10px;
+	background-color: #FFF;
+}
+#footer {
+	clear: both;
+	border-top: 1px solid #CCC;
+	padding-top: 5px;
+	text-align: center;
+	font-size: 9pt;
+	color: #999;
+}
+
+/* Tag styles */
+h1 {
+	font-size: 16pt;
+	border-bottom: 1px solid #DDD;
+	margin: 0 0 10px 0;
+	padding: 0;
+}
+h2 {
+	font-size: 14pt;
+	border-bottom: 1px solid #DDD;
+	margin: 0 0 8px 0;
+	padding: 0;
+}
+h3 {
+	font-size: 12pt;
+	border-bottom: 1px solid #DDD;
+	margin: 0 0 5px 0;
+	padding: 0;
+}
+h4 {
+	font-size: 10pt;
+	border-bottom: 1px solid #DDD;
+	margin: 0 0 5px 0;
+	padding: 0;
+}
+img {
+	border: 0;
+	vertical-align: middle;
+}
+input, select {
+	vertical-align: middle;
+    font-size: 10pt;
+}
+input[type=text],
+input[type=password] {
+	border: 1px solid #999;
+}
+a {
+	color: #1a75ad;
+}
+a.status_failed {
+	color: red;
+}
+hr {
+	margin: 5px 0;
+	padding: 0;
+	border: 0;
+	height: 0;
+	border-bottom: 1px solid #DDD;
+}
+
+table.list {
+	border-collapse: collapse;
+	margin: 5px 0;
+}
+table.list thead td {
+	padding: 0 3px;
+	font-weight: bold;
+	background-color: #CCC;
+	border-top: 1px solid #999;
+	border-bottom: 1px solid #999;
+}
+table.list thead td a {
+	color: #000;
+	text-decoration: none;
+}
+table.list tbody tr.even td {
+	background-color: #EEE;
+}
+table.list tbody td {
+	padding: 3px;
+	border-bottom: 1px solid #CCC;
+}
+.recently_completed {
+	clear: right;
+	padding-top: 25px;
+	font-size: 9pt;
+}
+
+.recent_line {
+	padding: 3px 0;
+	color: #666;
+}
+
+.recent_title {
+}
+
+.recent_type {
+	font-style: italic;
+}
+
+.recent_timestamp {
+	color: #BBB;
+}
+
+/* Info boxes */
+.yellowbox {
+	margin: 5px 0;
+	background-color: #FFFF99;
+	border: 1px solid #CC9900;
+	padding: 4px;
+}
+.greenbox {
+	margin: 5px 0;
+	background-color: #CCFFCC;
+	border: 1px solid #669966;
+	padding: 4px;
+}
+.info {
+	margin: 5px 0;
+	background: 4px 4px no-repeat url(/media/images/info.png) #CCDDFF;
+	min-height: 30px;
+	border: 1px solid #3333FF;
+	padding: 4px 4px 4px 44px;
+}
+.infoSmall {
+	margin: 5px 0;
+	background: 4px 4px no-repeat url(/media/images/info-small.png) #CCDDFF;
+	min-height: 15px;
+	border: 1px solid #3333FF;
+	padding: 3px 3px 3px 24px;
+}
+.warning {
+	margin: 5px 0;
+	background: 4px 4px no-repeat url(/media/images/warning.png) #FFFF99;
+	min-height: 30px;
+	border: 1px solid #CC9900;
+	padding: 4px 4px 4px 44px;
+}
+.error {
+	margin: 5px 0;
+	background: 4px 4px no-repeat url(/media/images/error.png) #FFCCCC;
+	min-height: 30px;
+	border: 1px solid #FF0000;
+	padding: 4px 4px 4px 44px;
+}
+.errorSmall {
+	margin: 5px 0;
+	background: 4px 4px no-repeat url(/media/images/error-small.png) #FFCCCC;
+	min-height: 15px;
+	border: 1px solid #FF0000;
+	padding: 3px 3px 3px 24px;
+}
+.inputError {
+	background: right 2px no-repeat url(/media/images/error-small-bkgd.png) #FFCCCC;
+}
+.denied {
+	margin: 5px 0;
+	background: 4px 4px no-repeat url(/media/images/denied.png) #FFCCCC;
+	min-height: 30px;
+	border: 1px solid #FF0000;
+	padding: 4px 4px 4px 44px;
+}
+.help {
+	margin: 5px 0;
+	background: 4px 4px no-repeat url(/media/images/help.png) #CCDDFF;
+	min-height: 30px;
+	border: 1px solid #3333FF;
+	padding: 4px 4px 4px 44px;
+}
+
+.healthmeter {
+	position: relative;
+	width: 10px;
+	height: 16px;
+	background-color: #EEE;
+	margin: 1px;
+	border: 1px solid #999;
+}
+.healthmeter .health {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 10px;
+	height: 0;
+	background: url(/media/images/health-green.gif) 0 -2px;
+}
+.healthmeter.green {
+	border: 1px solid #9C9;
+}
+.healthmeter.yellow {
+	border: 1px solid #FC9;
+}
+.healthmeter.red {
+	border: 1px solid #C99;
+}
+.healthmeter.green .health{
+	background-image: url(/media/images/health-green.gif);
+}
+.healthmeter.yellow .health{
+	background-image: url(/media/images/health-yellow.gif);
+}
+.healthmeter.red .health{
+	background-image: url(/media/images/health-red.gif);
+}
+
+.progressmeter {
+	position: relative;
+	width: 100px;
+	height: 16px;
+	background-color: #EEE;
+	border: 1px solid #999;
+	font-size: 9pt;
+}
+.progressmeter .progress {
+	position: absolute;
+	height: 16px;
+	width: 0;
+	background: url(/media/images/progress.gif) 0 -2px;
+}
+.progressmeter .blue {
+	background-image: url(/media/images/progress-blue.gif);
+}
+.progressmeter .yellow {
+	background-image: url(/media/images/progress-yellow.gif);
+}
+.progressmeter .red {
+	background-image: url(/media/images/progress-red.gif);
+}
+.progressmeter .label {
+	position: absolute;
+	width: 100px;
+	height: 16px;
+	top: 0px;
+	left: 0px;
+	font-weight: bold;
+	text-align: center;
+}
+.totalprogress {
+	margin: 5px 0;
+}
+table.detail {
+	border-collapse: collapse;
+	width: 100%;
+}
+table.detail td {
+	vertical-align: top;
+	padding: 3px;
+	border-top: 1px solid #CCC;
+	border-bottom: 1px solid #CCC;
+}
+table.detail td.label {
+	width: 120px;
+	background-color: #EEE;
+}
+table.detail td.value {
+}
+table.detail form {
+	margin: 5px 0;
+}
+table.plain td {
+	border: 0;
+}
+.nowrap {
+	white-space: nowrap;
+}
+a.button {
+	display: block;
+	float: left;
+	width: 100px;
+	padding: 3px 0 3px 10px;
+	margin: 10px 10px 10px 0;
+	border: 1px solid #999;
+	background-color: #EEE;
+	background: url(../images/start.png) 88px center no-repeat #CFC;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	text-decoration: none;
+	font-weight: bold;
+	color: #333;
+}
+a.button.start {
+	background-image: url(../images/start.png);
+	background-color: #CFC;
+}
+a.button.stop {
+	background-image: url(../images/stop.png);
+	background-color: #FCC;
+}
+a.button.seed {
+	background-image: url(../images/seed.png);
+	background-color: #CCF;
+}
+a.button.remove {
+	background-image: url(../images/delete.png);
+	background-color: #FDC;
+}
+a.button.resume {
+	float: right;
+	width: 100px;
+	padding: 1px 20px 1px 10px;
+	margin: 0;
+	margin-top: -3px;
+	background: url(../images/start.png) 108px center no-repeat #CFC;
+}
+a.button.pause {
+	float: right;
+	width: 100px;
+	padding: 1px 20px 1px 10px;
+	margin: 0;
+	margin-top: -3px;
+	background: url(../images/stop.png) 108px center no-repeat #FDC;
+}
+.center {
+	text-align: center;
+}
+.helptext {
+	color: #999;
+}

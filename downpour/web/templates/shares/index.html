@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% set section = "shares" %}
+{% block body %}
+	{% if shares %}
+		<table width="100%" class="list" border="0" cellspacing="0" cellpadding="0">
+			<thead>
+				<td width="18">&nbsp;</td>
+				<td width="50%">Name</td>
+				<td>Address</td>
+				<td>Username</td>
+			</thead>
+			<tbody>
+			{% for s in shares %}
+				<tr>
+					<td><a href="/shares/{{ s.id }}/delete"
+						onclick="return confirm('Are you sure you want to delete this remote share?');"
+						><img src="/media/images/delete.png"/></a></td>
+					<td><a href="/shares/{{ s.id }}/edit">{{ s.name }}</a></td>
+					<td>{{ s.address }}</td>
+					<td>{{ s.username }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	{% else %}
+		<p>You have no remote shares.</p>
+	{% endif %}
+	<a href="/shares/add"><img src="/media/images/add.gif" /></a>
+	<a href="/shares/add">Add a new remote share</a>
+{% endblock %}

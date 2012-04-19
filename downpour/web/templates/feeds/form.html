@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% set section = "feeds" %}
+{% block head %}
+	<script language="javascript">
+		window.onload = function() {
+			document.getElementById('focusonload').select();
+			document.getElementById('focusonload').focus();
+		}
+	</script>
+{% endblock %}
+{% block body %}
+	{% if feed.id %}
+	<form action="/feeds/{{ feed.id }}/save" method="post">
+		<input type="hidden" name="id" value="{{ feed.id }}"/>
+	{% else %}
+	<form action="/feeds/save" method="post">
+	{% endif %}
+		<table border="0" cellpadding="0" cellspacing="0" class="detail">
+			<tr>
+				<td class="label">Feed name</td>
+				<td class="value"><input id="focusonload" type="text" size="40" name="name" value="{{ feed.name|e }}"/></td>
+			</tr>
+			<tr>
+				<td class="label">URL</td>
+				<td class="value"><input type="text" size="40" name="url" value="{{ feed.url|e }}"/></td>
+			</tr>
+			<tr>
+				<td class="label">Media Type</td>
+				<td class="value">
+					<select name="media_type" size="1">
+						{% for t in mediatypes %} 
+							<option {% if t == feed.media_type %}selected{% endif %}
+								value="{{ t }}">{{ mediatypes[t] }}</option>
+						{% endfor %} 
+					</select>
+					<br />
+					<small><i>Determines where downloads will be saved.
+						To configure save locations, go to
+						<a href="/libraries/">My Libraries</a>.</i></small>
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Updated on</td>
+				<td class="value">
+					{% if feed.last_update %}
+						{{ feed.last_update|timestampformat('%m/%d/%y %H:%M:%S %p') }}
+					{% else %}
+						Never
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Result</td>
+				<td class="value">
+					{% if feed.last_error %}
+						{{ feed.last_error }}
+					{% else %}
+						OK
+					{% endif %}
+				</td>
+			</tr>
+		</table>
+		<br />
+
+		<h2>Download Options</h2>
+		<table border="0" cellpadding="0" cellspacing="0" class="detail">
+			<tr>
+				<td class="label">Item Priority</td>
+				<td class="value">
+					<select name="save_priority" size="1">
+						<option {% if feed.save_priority == 0 %}selected{% endif %}
+							value="0">Newest items first</option>
+						<option {% if feed.save_priority == 1 %}selected{% endif %}
+							value="1">Oldest items first</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Keep Last</td>
+				<td class="value">
+					<select name="queue_size" size="1">
+						<option {% if not feed.queue_size %}selected{% endif %}
+							value="0">All items</option>
+						<option {% if feed.queue_size == 1 %}selected{% endif %}
+							value="1">1 item</option>
+						<option {% if feed.queue_size == 2 %}selected{% endif %}
+							value="2">2 items</option>
+						<option {% if feed.queue_size == 3 %}selected{% endif %}
+							value="3">3 items</option>
+						<option {% if feed.queue_size == 4 %}selected{% endif %}
+							value="4">4 items</option>
+						<option {% if feed.queue_size == 5 %}selected{% endif %}
+							value="5">5 items</option>
+						<option {% if feed.queue_size == 10 %}selected{% endif %}
+							value="10">10 items</option>
+						<option {% if feed.queue_size == -1 %}selected{% endif %}
+							value="-1">Current season only</option>
+						<option {% if feed.queue_size == -2 %}selected{% endif %}
+							value="-2">1 full season</option>
+						<option {% if feed.queue_size == -3 %}selected{% endif %}
+							value="-3">2 full seasons</option>
+						<option {% if feed.queue_size == -4 %}selected{% endif %}
+							value="-4">3 full seasons</option>
+					</select>
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Auto Download</td>
+				<td class="value"><input type="checkbox" name="active" value="1"
+					{% if feed.active %}checked{% endif %}/></td>
+			</tr>
+			<tr>
+				<td class="label">Remove When Complete</td>
+				<td class="value"><input type="checkbox" name="auto_clean" value="1"
+					{% if feed.auto_clean %}checked{% endif %}/></td>
+			</tr>
+			<tr>
+				<td class="label">Update Frequency</td>
+				<td class="value">
+					<input type="text" name="update_frequency"
+						value="{{ feed.update_frequency }}" size="2"/> minutes
+				</td>
+			</tr>
+		</table>
+		<br />
+		<input type="submit" value="Save Feed" />
+		<input type="submit" name="updatenow" value="Save and Update Immediately" />
+	</form>
+	<br />
+
+	{% if feed.id %}
+		<h2>Recent Items</h2>
+		{% if feed.items.count() %}
+			<table border="0" cellpadding="0" cellspacing="0" class="list">
+				<thead>
+					<tr>
+						<td>Name</td>
+						<td width="150">Queued On</td>
+						<td>&nbsp;</td>
+					</tr>
+				</thead>
+				<tbody>
+					{% for item in feed.items.order_by('-updated') %}
+					<tr>
+						<td>
+							{% if item.download and not item.download.deleted %}
+								<a href="/downloads/{{ item.download.id }}">
+									{{ item.title }}
+								</a>
+							{% else %}
+								{{ item.title }}
+							{% endif %}
+						</td>
+						<td>
+							{% if item.download and item.download.added %}
+								{{ item.download.added|timestampformat('%m/%d/%Y %H:%M') }}
+							{% else %}
+								Never
+							{% endif %}
+						</td>
+						<td>
+							{% if item.download %}
+								{% if item.download.deleted %}
+									<a href="/feeds/{{ feed.id}}/inject?item={{ item.id }}">
+										<img src="/media/images/start.png" /></a>
+									<a href="/feeds/{{ feed.id}}/inject?item={{ item.id }}">Re-add to queue</a>
+								{% endif %}
+							{% else %}
+								<a href="/feeds/{{ feed.id}}/inject?item={{ item.id }}">
+									<img src="/media/images/start.png" /></a>
+								<a href="/feeds/{{ feed.id}}/inject?item={{ item.id }}">Add to queue</a>
+							{% endif %}
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		{% else %}
+			<p>Feed has not been updated yet.</p>
+		{% endif %}
+	{% endif %}
+{% endblock %}

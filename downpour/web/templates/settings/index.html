@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set section = "settings" %}
+{% block body %}
+	<form action="/settings/save" method="post">
+		<table cellspacing="0" cellpadding="3" border="0">
+			<tr>
+				<td class="label">Max Download Rate</td>
+				<td class="value">
+					<input type="text" name="download_rate" size="4" value="{{ settings.download_rate|d(0, true) }}" /> kB/s
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Max Upload Rate</td>
+				<td class="value">
+					<input type="text" name="upload_rate" size="4" value="{{ settings.upload_rate|d(0, true) }}" /> kB/s
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Target Upload Ratio</td>
+				<td class="value">
+					<input type="text" name="upload_ratio" size="4" value="{{ settings.upload_ratio|d(0, true) }}" />
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Connection Limit</td>
+				<td class="value">
+					<input type="text" name="connection_limit" size="4" value="{{ settings.connection_limit|d(0, true) }}" />
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Active Download Limit</td>
+				<td class="value">
+					<input type="text" name="max_active" size="4" value="{{ settings.max_active|d(0, true) }}" />
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Max Queue Size</td>
+				<td class="value">
+					<input type="text" name="max_queued" size="4" value="{{ settings.max_queued|d(0, true) }}" />
+				</td>
+			</tr>
+		</table>
+		<br />
+		<input type="submit" value="Save Settings" />
+	</form>
+{% endblock %}

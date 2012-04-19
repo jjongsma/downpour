@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% set section = "users" %}
+{% block head %}
+	<script language="javascript">
+		window.onload = function() {
+			el = document.getElementById('focusonload');
+			if (el) {
+				el.select();
+				el.focus();
+			}
+		}
+	</script>
+{% endblock %}
+{% block body %}
+	{% if edituser.id %}
+	<form action="/users/{{ edituser.id }}/save" method="post">
+		<input type="hidden" name="id" value="{{ edituser.id }}"/>
+	{% else %}
+	<form action="/users/save" method="post">
+	{% endif %}
+		<table border="0" cellpadding="0" cellspacing="0" class="detail">
+			<tr>
+				<td class="label">Username</td>
+				<td class="value">
+					{% if edituser.id %}
+						{{ edituser.username }}
+					{% else %}
+						<input id="focusonload" type="text" name="username"/>
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Set Password</td>
+				<td class="value"><input type="text" name="password"/></td>
+			</tr>
+			<tr>
+				<td class="label">Email</td>
+				<td class="value"><input type="text" name="email" value="{{ edituser.email|d('', true) }}"/></td>
+			</tr>
+			<tr>
+				<td class="label">Directory</td>
+				<td class="value"><input type="text" name="directory" value="{{ edituser.directory|d('', true) }}"/></td>
+			</tr>
+			<tr>
+				<td class="label">Administrator</td>
+				<td class="value"><input type="checkbox" name="admin" value="1" {% if edituser.admin %}checked{% endif %}/></td>
+			</tr>
+		</table>
+		<br />
+
+		<h3>Sharing</h3>
+		<table border="0" cellpadding="0" cellspacing="0" class="detail">
+			<tr>
+				<td class="label">Enable Media Sharing</td>
+				<td class="value">
+					<input type="checkbox" name="share_enabled" value="1" {% if edituser.share_enabled %}checked{% endif %}/><br />
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Sharing Password</td>
+				<td class="value"><input type="text" name="password"/></td>
+			</tr>
+		</table>
+		<br />
+
+		<h3>Limits</h3>
+		<table border="0" cellpadding="0" cellspacing="0" class="detail">
+			<tr>
+				<td class="label">Concurrent Downloads</td>
+				<td class="value">
+					<input type="text" name="max_downloads" value="{{ edituser.max_downloads|d(0, true) }}"/><br />
+					<small class="helptext">0 for unlimited</small>
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Download Rate</td>
+				<td class="value">
+					<input type="text" name="max_rate" value="{{ edituser.max_rate|d(0, true) }}"/><br />
+					<small class="helptext">0 for unlimited</small>
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Sharing Rate</td>
+				<td class="value">
+					<input type="text" name="share_max_rate" value="{{ edituser.share_max_rate|d(0, true) }}"/><br />
+					<small class="helptext">0 for unlimited</small>
+				</td>
+			</tr>
+		</table>
+		<br />
+		<input type="submit" value="Save User" />
+	</form>
+{% endblock %}

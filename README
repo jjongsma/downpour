@@ -1,0 +1,82 @@
+Downpour v0.2
+-------------
+Created by Jeremy Jongsma (jeremy@jongsma.org)
+
+MODULE DEPENDENCIES (tested version):
+
+	- twisted (8.2.0+) 	
+	- libtorrent (0.14.2+)
+	- feedparser (4.1+)
+	- jinja2 (2.5+)
+	- dateutil (1.4.1+)
+	- storm (0.14+)
+
+INSTALLATION:
+
+	1.  Download and install libtorrent from
+		http://sourceforge.net/projects/libtorrent/files/
+
+	2.	Run the following command:
+
+			sudo python setup.py install
+
+		If you do not have root access, you can install it in
+		your user directory with:
+
+			python setup.py install --user
+
+	3.	Copy cfg/downpour.cfg to /etc/downpour.cfg and customize it
+
+	4.	Copy bin/downpourd to /usr/sbin/downpourd
+
+	Downpour has not yet been tested on Windows.
+
+STARTING DOWNPOUR:
+
+	To start the downpour daemon, run the following command:
+
+		downpourd -c [config-file]
+	
+	(Note: the daemon does not run on Windows yet; Windows
+	users can only launch it in debug mode (see below).  If
+	anyone wants to create a real launcher for Windows,
+	please email it to me at jeremy@jongsma.org.)
+
+	When launching as root, you can specify the user or group to
+	run as with "--user" and "--group". Specifying a user or
+	group on the command line is unncessary if you have already
+	specfied one in downpour.cfg, since Downpour will
+	automatically drop privileges after setup (useful if you
+	want to use port 80 for the web interface.) User and group
+	options are not available on Windows.
+
+	Run "downpourd --help" to view additional runtime options.
+		
+	You can access the web interface at http://localhost:6280
+	(or whatever address/port you configured in downpour.cfg.)
+	The default login is "admin" / "password".  You can
+	change the admin password in "My Account" once logged in,
+	or setup additional users in the "Users" section.
+
+STOPPING DOWNPOUR:
+
+	To stop the daemon, run the following command:
+
+		downpourd stop
+	
+	It may take a few seconds to stop while it cleanly closes
+	all bittorrent connections.
+
+DEBUGGING DOWNPOUR:
+
+	To prevent Downpour from detaching from the console (and
+	to view debugging messages), run the following command:
+
+		downpourd -c [config-file] -d
+	
+	This is currently the only way to run Downpour on Windows.
+
+HACKING ON DOWNPOUR:
+
+	Edit the code in src/downpour.  You can immediately view your
+	changes by running ./downpour-debug.sh in the current directory.

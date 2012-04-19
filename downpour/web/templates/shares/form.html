@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set section = "shares" %}
+{% block head %}
+	<script language="javascript">
+		window.onload = function() {
+			document.getElementById('focusonload').select();
+			document.getElementById('focusonload').focus();
+		}
+	</script>
+{% endblock %}
+{% block body %}
+	{% if share.id %}
+	<form action="/shares/{{ share.id }}/save" method="post">
+		<input type="hidden" name="id" value="{{ share.id }}"/>
+	{% else %}
+	<form action="/shares/save" method="post">
+	{% endif %}
+		<table border="0" cellpadding="0" cellspacing="0" class="detail">
+			<tr>
+				<td class="label">Share name</td>
+				<td class="value"><input id="focusonload" type="text" size="40" name="name" value="{{ share.name }}"/></td>
+			</tr>
+			<tr>
+				<td class="label">Address</td>
+				<td class="value">
+					<input type="text" size="40" name="address" value="{{ share.address }}"/><br />
+					<small><i>i.e. http://downpour.example.com:6280</i></small>
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Username</td>
+				<td class="value">
+					<input type="text" size="20" name="username" value="{{ share.username }}"/>
+				</td>
+			</tr>
+			<tr>
+				<td class="label">Password</td>
+				<td class="value">
+					<input type="text" size="20" name="password" value="{{ share.password }}"/>
+				</td>
+			</tr>
+		</table>
+		<br />
+		<input type="submit" value="Save Remote Share" />
+	</form>
+{% endblock %}

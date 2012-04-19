@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>{{ title }} - Downpour</title>
+		<link rel="stylesheet" type="text/css" href="/media/css/style.css"/>
+		<link rel="shortcut icon" href="/media/images/downpour-icon.png"/>
+		<script language="javascript" src="/media/js/common.js"></script>
+		{% block head %}
+		{% endblock %}
+	</head>
+	<body>
+		<div id="header">
+			<div id="logo"><a href="/"><img src="/media/images/downpour-logo.png"/></a></div>
+			<div id="account">
+				{% if user %}
+					Logged in as {{ user.username }}
+					- <a href="/account/edit">My Account</a>
+					- <a href="/account/logout">Logout</a>
+				{% else %}
+					Not logged in
+					- <a href="/account/login">Login</a>
+				{% endif %}
+			</div>
+		</div>
+		<div id="main">
+			<div id="navigation">
+				<ul>
+					<li{% if section == 'downloads' %} class="active"{% endif %}><a href="/downloads/">Downloads</a></li>
+					<li{% if section == 'browse' %} class="active"{% endif %}><a href="/browse/">My Media</a></li>
+					<li{% if section == 'history' %} class="active"{% endif %}><a href="/downloads/history/">History</a></li>
+					<li{% if section == 'status' %} class="active"{% endif %}><a href="/status/">Server Status</a></li>
+				</ul>
+				{% if shares %}
+					<h4>Remote Shares</h4>
+					<ul>
+						{% for s in shares %}
+							<li{% if section == ['share', s.id]|join('_') %} class="active"{% endif %}><a href="/shares/{{ s.id }}/browse/">{{ s.name }}</a></li>
+						{% endfor %}
+						<!--
+						<li{% if section == 'neighbors' %} class="active"{% endif %}><a href="/neighbors/">Shared Media</a></li>
+						<li{% if section == 'search' %} class="active"{% endif %}><a href="/search/">Search</a></li>
+						-->
+					</ul>
+				{% endif %}
+				<h4>Setup</h4>
+				<ul>
+					<li{% if section == 'feeds' %} class="active"{% endif %}><a href="/feeds/">Feed Subscriptions</a></li>
+					<li{% if section == 'shares' %} class="active"{% endif %}><a href="/shares/">Remote Shares</a></li>
+					<li{% if section == 'libraries' %} class="active"{% endif %}><a href="/libraries/">Media Locations</a></li>
+					<li{% if section == 'account' %} class="active"{% endif %}><a href="/account/edit">My Account</a></li>
+				</ul>
+				{% if user and user.admin %}
+				<h4>Administration</h4>
+				<ul>
+					<li{% if section == 'work' %} class="active"{% endif %}><a href="/work/">Download Cache</a></li>
+					<li{% if section == 'users' %} class="active"{% endif %}><a href="/users/">Users</a></li>
+					<li{% if section == 'settings' %} class="active"{% endif %}><a href="/settings/">Settings</a></li>
+				</ul>
+				{% endif %}
+			</div>
+			<div id="content">
+				{% if unsupported %}
+				<div class="warning"><b>Unsupported Browser</b><br />
+					Your browser does not support some HTML features used
+					in Downpour.  Please upgrade to a newer browser.</div>
+				{% endif %}
+				{% block heading %}
+				<h1>{{ title }}</h1>
+				{% endblock %}
+				{% block body %}
+				{% endblock %}
+				<br clear="all"/>
+			</div>
+		</div>
+		<div id="footer">
+			Downpour v{{ version }}
+		</div>
+	</body>
+</html>

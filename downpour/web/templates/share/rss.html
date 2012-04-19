@@ -1,0 +1,18 @@
+<?xml version="1.0"?> 
+<rss version="2.0"> 
+    <channel> 
+        <title></title> 
+        <link></link> 
+        <pubDate>{{ timestamp|timestampformat('%a, %d %b %Y %H:%M:%S UTC') }}</pubDate> 
+        <lastBuildDate>{{ timestamp|timestampformat('%a, %d %b %Y %H:%M:%S UTC') }}</lastBuildDate> 
+        <generator>Downpour</generator> 
+        {% for f in files %}
+        <item> 
+            <title>{{ f.text|e }}</title> 
+            <link>{{ f.url|e }}</link> 
+            <pubDate>{{ f.modtime|timestampformat('%a, %d %b %Y %H:%M:%S UTC') }}</pubDate> 
+            <guid>{{ f.url|e }}</guid>
+        </item>
+        {% endfor %}
+    </channel>
+</rss>

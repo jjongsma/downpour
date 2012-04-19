@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+{% set section = "downloads" %}
+{% block head %}
+	<script language="javascript">
+
+		function toggleAll(e, f) {
+			for (i = 0; i < f.elements.length; ++i)
+				if (f.elements[i].type == 'checkbox')
+					f.elements[i].checked = e.checked;
+		}
+
+		function updateTable() {
+			ajax = new AJAX();
+			ajax.getJSON('/downloads/statusjs', statusResponse);
+		}
+
+		function statusResponse(data) {
+			document.getElementById('status_active_downloads').innerHTML =
+				data.status['active_downloads'];
+			document.getElementById('status_downloadrate').innerHTML =
+				data.status['downloadrate'];
+			document.getElementById('status_uploadrate').innerHTML =
+				data.status['uploadrate'];
+			document.getElementById('status_totalrate').innerHTML =
+				data.status['totalrate'];
+			document.getElementById('status_connections').innerHTML =
+				data.status['connections'];
+			setProgress(document.getElementById('totalprogress'),
+				data.status.progress, ' complete');
+			setProgress(document.getElementById('diskspace'),
+				data.status.userdiskfreepct, ' (' + data.status.userdiskfree + ') free');
+
+			for (var i = 0; i < data.downloads.length; ++i) {
+				dl = data.downloads[i];
+				prefix = 'download' + dl.id + '_';
+				var descTrunc = dl.description;
+				if (descTrunc.length > 60)
+					descTrunc = descTrunc.substring(0, 60) + '...';
+				document.getElementById(prefix + 'description').innerHTML =
+					'<a title="' + dl.description + '" href="/downloads/'
+					+ dl.id + '/">' + descTrunc + '</a>';
+				document.getElementById(prefix + 'size').innerHTML = dl.size;
+				if (dl.status_message) {
+					document.getElementById(prefix + 'status').innerHTML =
+						'<a class="status_' + dl.status.toLowerCase() +
+						'" href="/downloads/' + dl.id + '" title="' +
+						dl.status_message + '">' + dl.status + '</a>' +
+						'<a class="status_' + dl.status.toLowerCase() +
+						'" href="/downloads/' + dl.id + '" title="' +
+						dl.status_message + '"> <img src="/media/images/info-small.png"/></a>';
+				} else {
+					document.getElementById(prefix + 'status').innerHTML = dl.status;
+				}
+				style = null;
+				if (dl.status == 'Seeding')
+					style= 'blue';
+				else if (dl.status == 'Failed')
+					style= 'red';
+				setProgress(document.getElementById(prefix + 'progress'),
+					dl.progress, '', style)
+				if (dl.running) {
+					setHealth(document.getElementById(prefix + 'health'), dl.health);
+					document.getElementById(prefix + 'dlrate').innerHTML = dl.downloadrate;
+					document.getElementById(prefix + 'ulrate').innerHTML = dl.uploadrate;
+					document.getElementById(prefix + 'timeleft').innerHTML = dl.timeleft;
+				} else {
+					document.getElementById(prefix + 'health').innerHTML = '&nbsp;';
+					document.getElementById(prefix + 'dlrate').innerHTML = '&nbsp;';
+					document.getElementById(prefix + 'ulrate').innerHTML = '&nbsp;';
+					document.getElementById(prefix + 'timeleft').innerHTML = '&nbsp;';
+				}
+				// TODO set actions
+				actionhtml = '';
+				if (dl.startable) {
+					if (dl.finished)
+						actionhtml += '<a href="/downloads/' + dl.id +
+							'/start"><img title="Seed download" ' +
+							'src="/media/images/seed.png"/></a>';
+					else
+						actionhtml += '<a href="/downloads/' + dl.id +
+							'/start"><img title="Start download" ' +
+							'src="/media/images/start.png"/></a>';
+				}
+				if (dl.stoppable)
+					actionhtml += '<a href="/downloads/' + dl.id +
+						'/stop"><img title="Stop download" ' +
+						'src="/media/images/stop.png"/></a>';
+				document.getElementById(prefix + 'actions').innerHTML = actionhtml;
+			}
+
+			// Remove deleted downloads
+			table = document.getElementById('downloads');
+			for (var i = 0; i < table.rows.length; ++i) {
+				if (table.rows[i].id.substring(0, 8) == 'download') {
+					id = table.rows[i].id.substring(8);
+					found = false;
+					for (var j = 0; j < data.downloads.length; ++j)
+						if (data.downloads[j].id == id) {
+							found = true;
+							break;
+						}
+					if (!found) {
+						table.rows[i].parentNode.removeChild(table.rows[i]);
+						i--;
+					}
+				}
+			}
+			// Only header row is left
+			if (table.rows.length == 1) {
+				clearInterval(updater);
+				nodlMessage = document.createElement('p');
+				nodlMessage.innerHTML = 'There are no downloads in the queue.';
+				table.parentNode.replaceChild(nodlMessage, table);
+			}
+		}
+
+		function setProgress(bar, pct, suffix, className) {
+			children = findElementsByClassName('progress', bar);
+			if (children.length) {
+				progressbar = children[0];
+				progressbar.style.width = Math.ceil(pct) + '%';
+				progresslabel = findElementsByClassName('label', bar)[0];
+				progresslabel.innerHTML = pct.toFixed(1) + '%' + suffix
+				if (className) {
+					removeClass(progressbar, 'red');
+					removeClass(progressbar, 'blue');
+					addClass(progressbar, className);
+				}
+			}
+		}
+
+		function setHealth(bar, pct) {
+			style = '';
+			if (pct < 25) style = 'red';
+			else if (pct < 50) style = 'yellow';
+			else style = 'green';
+			height = Math.ceil((pct/100)*16) + 'px';
+
+			children = findElementsByClassName('healthmeter', bar);
+			if (children.length) {
+				healthmeter = children[0];
+				healthmeter.className = 'healthmeter ' + style;
+				healthbar = findElementsByClassName('health', healthmeter)[0];
+				healthbar.style.height = height;
+				healthbar.className = 'health ' + style;
+			} else {
+				bar.innerHTML = '<div class="healthmeter ' + style +
+					'" style="height: 16px;">' + '<div class="health '
+					+ style + '" style="height: ' + height + ';"></div></div>';
+			}
+		}
+
+		updater = null;
+		addEvent(window, 'load', function() { updater = setInterval(updateTable, 2000); });
+
+	</script>
+{% endblock %}
+{% block heading %}
+	{% if status.paused %}
+		<a class="button resume" style="float: right;" href="/resume">Resume All</a>
+	{% else %}
+		<a class="button pause" style="float: right;" href="/pause">Pause All</a>
+	{% endif %}
+	<h1>{{ title }}</h1>
+{% endblock %}
+{% block body %}
+	<table width="100%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="550" valign="top" class="greenbox">
+				<form action="/downloads/add/torrent" enctype="multipart/form-data" method="post">
+					<table>
+						<tr>
+							<td width="150">Upload new torrent:</td>
+							<td>
+								<input type="file" name="torrent"/>
+								<input type="submit" value="Upload"/>
+							</td>
+						</tr>
+					</table>
+				</form>
+				<form action="/downloads/add/url" method="post">
+					<table>
+						<tr>
+							<td width="150">Download from URL:</td>
+							<td>
+								<input type="text" name="url"/>
+								<input type="submit" value="Add"/>
+							</td>
+						</tr>
+					</table>
+				</form>
+				<form action="/search" method="post">
+					<table>
+						<tr>
+							<td width="150">Find a download:</td>
+							<td>
+								<input type="text" name="query"/>
+								<input type="hidden" name="query" value="torrent"/>
+								<input type="submit" value="Search"/>
+							</td>
+						</tr>
+					</table>
+				</form>
+			</td>
+			<td>&nbsp;</td>
+			<td width="250" valign="top" class="info">
+				<span id="status_active_downloads">{{ status.active_downloads }}</span> active downloads<br />
+				<span id="status_downloadrate">{{ status.downloadrate|filesizeformat|replace('Bytes','b') }}/s</span> download<br />
+				<span id="status_uploadrate">{{ status.uploadrate|filesizeformat|replace('Bytes','b') }}/s</span> upload<br />
+				<span id="status_totalrate">{{ (status.downloadrate + status.uploadrate)|filesizeformat|replace('Bytes','b') }}/s</span> total<br />
+				<span id="status_connections">{{ status.connections }}</span> active connections
+			</td>
+		</tr>
+	</table>
+	<br style="clear: right;"/>
+	{% if status.paused %}
+		<div class="warning">
+			Downpour is currently paused.<br />
+			<a href="/resume">Resume downloading</a>
+		</div>
+	{% endif %}
+
+	<table width="100%" border="0" cellspacing="0" cellpadding="0" class="totalprogress">
+		<tr>
+			<td width="70">Progress</td>
+			<td id="totalprogress">{{ status.progress|progressbar('100%',label='complete') }}</td>
+			<td width="10">&nbsp;</td>
+			<td width="70" align="right">Storage&nbsp;&nbsp;</td>
+			<td width="235" id="diskspace">
+				{% set label = '(' + status.userdiskfree|filesizeformat + ') free' %}
+				{% if status.userdiskfreepct < 10 %}
+					{{ status.userdiskfreepct|progressbar('99%',style='red',label=label) }}
+				{% elif status.userdiskfreepct < 30 %}
+					{{ status.userdiskfreepct|progressbar('99%',style='yellow',label=label) }}
+				{% else %}
+					{{ status.userdiskfreepct|progressbar('99%',label=label) }}
+				{% endif %}
+			</td>
+		</tr>
+	</table>
+	{% if downloads %}
+		<form action="/downloads/bulk" method="post">
+			<table width="100%" id="downloads" class="list" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<tr>
+						<td width="18">&nbsp;</td>
+						<td>
+							{% if sort == 'description' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-description">Download</a>
+									<a href="?sort=-description"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=description">Download</a>
+									<a href="?sort=description"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=description">Download</a>
+							{% endif %}
+						</td>
+						<td align="right" width="65">
+							{% if sort == 'size' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-size">Size</a>
+									<a href="?sort=-size"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=size">Size</a>
+									<a href="?sort=size"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=-size">Size</a>
+							{% endif %}
+						</td>
+						<td align="center" width="65">
+							{% if sort == 'status' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-status">Status</a>
+									<a href="?sort=-status"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=status">Status</a>
+									<a href="?sort=status"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=status">Status</a>
+							{% endif %}
+						</td>
+						<td align="center" width="110">
+							{% if sort == 'progress' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-progress">Progress</a>
+									<a href="?sort=-progress"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=progress">Progress</a>
+									<a href="?sort=progress"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=-progress">Progress</a>
+							{% endif %}
+						</td>
+						<td align="center" width="70">
+							{% if sort == 'downloadrate' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-downloadrate">Down</a>
+									<a href="?sort=-downloadrate"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=downloadrate">Down</a>
+									<a href="?sort=downloadrate"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=-downloadrate">Down</a>
+							{% endif %}
+						</td>
+						<td align="center" width="65">
+							{% if sort == 'uploadrate' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-uploadrate">Up</a>
+									<a href="?sort=-uploadrate"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=uploadrate">Up</a>
+									<a href="?sort=uploadrate"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=-uploadrate">Up</a>
+							{% endif %}
+						</td>
+						<td align="center" width="70">
+							{% if sort == 'timeleft' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-timeleft">ETA</a>
+									<a href="?sort=-timeleft"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=timeleft">ETA</a>
+									<a href="?sort=timeleft"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=timeleft">ETA</a>
+							{% endif %}
+						</td>
+						<td width="65" align="right">
+							<input type="checkbox" onclick="toggleAll(this, this.form)"/>
+						</td>
+					</tr>
+				</thead>
+				<tbody>
+				{% for dl in downloads %}
+					{% set client = clientFactory(dl.id) %}
+					<tr id="download{{ dl.id }}" class="{{ loop.cycle('odd', 'even') }}">
+						<td id="download{{ dl.id }}_health" align="center">
+							{% if client and client.is_running() %}
+								{{ dl.health|healthmeter }}
+							{% else %}
+								&nbsp;
+							{% endif %}
+						</td>
+						<td class="description" id="download{{ dl.id }}_description"><a title="{{ dl.description }}" href="/downloads/{{ dl.id }}">{{ dl.description|truncate(60,true) }}</a></td>
+						<td id="download{{ dl.id }}_size" align="right" class="nowrap">
+							{% if dl.size %}
+								{{ dl.size|filesizeformat|replace('Bytes','b') }}
+							{% else %}
+								Unknown
+							{% endif %}
+						</td>
+						<td id="download{{ dl.id }}_status" align="center" class="nowrap">
+							{% if dl.status_message %}
+								<a class="status_{{ statusdesc[dl.status]|lower }}" href="/downloads/{{ dl.id }}"
+									title="{{ dl.status_message }}">
+							{% endif %}
+							{{ statusdesc[dl.status] }}
+							{% if dl.status_message %}
+								</a>
+								<a href="/downloads/{{ dl.id }}" title="{{ dl.status_message }}">
+									<img src="/media/images/info-small.png"/></a>
+							{% endif %}
+						</td>
+						<td id="download{{ dl.id }}_progress" align="center" class="nowrap">
+							{% if dl.status == statuscode.SEEDING %}
+								{{ dl.seed_progress|progressbar(style='blue') }}
+							{% elif dl.status == statuscode.FAILED %}
+								{{ dl.progress|progressbar(style='red') }}
+							{% else %}
+								{{ dl.progress|progressbar }}
+							{% endif %}
+							</div>
+						</td>
+						<td id="download{{ dl.id }}_dlrate" align="center" class="nowrap">
+							{% if client and client.is_running() %}
+								{{ dl.downloadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
+							{% endif %}
+						</td>
+						<td id="download{{ dl.id }}_ulrate" align="center" class="nowrap">
+							{% if client and client.is_running() and client.can_upload() %}
+								{{ dl.uploadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
+							{% endif %}
+						</td>
+						<td id="download{{ dl.id }}_timeleft" align="center" class="nowrap">
+							{% if client and client.is_running() %}
+								{{ dl.timeleft|intervalformat }}
+							{% else %}
+								&nbsp;
+							{% endif %}
+						</td>
+						<td align="right" class="nowrap">
+							<span id="download{{ dl.id }}_actions">
+								{% if client and client.is_startable() %}
+									{% if client and client.is_finished() %}
+										<a href="/downloads/{{ dl.id }}/start"><img title="Seed download" src="/media/images/seed.png"/></a>
+									{% else %}
+										<a href="/downloads/{{ dl.id }}/start"><img title="Start download" src="/media/images/start.png"/></a>
+									{% endif %}
+								{% endif %}
+								{% if client and client.is_stoppable() %}
+									<a href="/downloads/{{ dl.id }}/stop"><img title="Stop download" src="/media/images/stop.png"/></a>
+								{% endif %}
+							</span>
+							<a onclick="return confirm('Are you sure you want to remove this download?')" href="/downloads/{{ dl.id }}/delete"><img title="Delete download" src="/media/images/delete.png"/></a>
+							<input type="checkbox" name="id" value="{{ dl.id }}"/>
+						</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+			<div style="float: left;">
+				<img src="/media/images/error-small.png"/>
+				<a href="/downloads/cleanup"><b>Remove all imported downloads</b></a>
+			</div>
+			<div style="float: right;">
+				<b>With selected:</b>
+				<select size="1" name="action">
+					<option value="start">Start</option>
+					<option value="stop">Stop</option>
+					<option value="restart">Restart</option>
+					<option value="remove">Remove</option>
+				</select>
+				<input type="submit" value="Go"/>
+			</div>
+		</form>
+	{% else %}
+		<p>There are no downloads in the queue.</p>
+	{% endif %}
+
+	{% if history %}
+		<div class="recently_completed">
+			<h4>Recently Completed</h4>
+			{% for h in history %}
+				<div class="recent_line">
+					<span class="recent_title">{{ h.description }}</span>
+					<span class="recent_type">({{ mediatypes[h.media_type] }})</span>
+					<span class="recent_timestamp"> downloaded at {{ h.completed|timestampformat('%Y/%m/%d %H:%M') }}</span><br />
+				</div>
+			{% endfor %}
+		</div>
+	{% endif %}
+{% endblock %}

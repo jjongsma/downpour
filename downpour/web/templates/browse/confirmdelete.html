@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% set section = "browse" %}
+{% block body %}
+	<p>This will delete all files and directories in <b>{{ path }}</b>!  Are you
+	sure you want to permanently delete this directory?</p>
+
+	<form method="post">
+		<input type="hidden" name="d" value="{{ path }}" />
+		<input type="button" value="No, do not delete" onclick="window.location='{{ redirect }}'"/>
+		<input type="submit" value="Yes, permanently delete this directory" />
+	</form>
+{% endblock %}
