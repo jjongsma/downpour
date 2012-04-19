@@ -1,0 +1,26 @@
+#! /bin/sh
+# /etc/init.d/downpour
+#
+
+# Startup/shutdown
+case "$1" in
+	start)
+		echo "Starting Downpour..."
+		/usr/local/bin/downpourd --stdout /var/log/downpour.log --stderr /var/log/downpour.log start
+		;;
+	stop)
+		echo "Stopping Downpour..."
+		/usr/local/bin/downpourd stop
+		;;
+	restart)
+		echo "Restarting Downpour..."
+		/usr/local/bin/downpourd stop
+		/usr/local/bin/downpourd --stdout /var/log/downpour.log --stderr /var/log/downpour.log start
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+		;;
+esac
+
+exit 0

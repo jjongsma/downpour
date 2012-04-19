@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Downpour Torrent Remote
+GenericName=BitTorrent Client
+Comment=Queue torrent downloads on a remote downpour server 
+Exec=downpour-torrent-handler %F
+Icon=downpour
+Terminal=false
+TryExec=downpour-torrent-handler
+Type=Application
+MimeType=application/x-bittorrent;
+Categories=Network;FileTransfer;P2P;GTK;
