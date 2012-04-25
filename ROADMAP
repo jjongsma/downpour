@@ -21,17 +21,38 @@ Feature List
 ---------------------------
 
 New architecture split - independent modules
-  1. Download module
-  2. Feed module
-  3. Library module
-  4. Search module
-  5. Sharing module
+  1. Transfers module
+  2. Download agents
+  3. Feed module
+  4. Library module
+  5. Search module
+  6. Sharing module
 
 General:
   - Revist unicode support in Twisted
   - Language translations
 
-Download Module:
+Transfers Module:
+  - Rework transfer workflow
+    - Standard download workflow:
+      - Loading (fetch torrent)
+      - Downloading (download agent is fetching)
+      - Copying (fetching from download agent to work dir)
+      - Importing (importing into media library)
+      - Seeding (torrents only)
+      - Completed (imported, safe to delete)
+    - Additional download states:
+      - Stopped (download manually paused)
+      - Failed
+    - Standard upload/seeding workflow:
+      - Initializing (creating ad-hoc torrent)
+      - Uploading (HTTP download)
+      - Completed (HTTP download complete)
+      - Seeding (torrents only)
+      - Failed -> fixed at last progress
+    - Additional upload states:
+      - Stopped (download manually paused)
+      - Failed
   - Fix seeding / upload ratio
   - Create separate seed queue / filter seeds out of default download view
   - Show current peer downloads (from Sharing Module) in seed view
@@ -41,6 +62,37 @@ Download Module:
   - Magnet links for torrents
   - Verify torrent traffic encryption
   - FTP downloads
+
+Download Agents:
+  - Independent download managers that handle bit-moving for
+    core transfer manager
+  - Receives URL or torrent from core transfer manager
+  - A download agent can have acceptance restrictions, such as only
+    handling torrents for a whitelist of trackers
+  - Each download request contains:
+    - User/password of account on download agent (separate from main
+      Downpour account for sharing purposes)
+    - Domain/IP of the requesting Downpour instance
+    - Seeding policy (as percentage)
+	- Whether this download is public or not
+  - API calls:
+    - Add download
+	- View my downloads & status
+	- View all public downloads & status
+	- Get individual download fetch URL
+	- Remove download (and stop seeding)
+  - Downloads are stopped when both are true:
+    - It is complete, and reaches the target seeding ratio, OR
+	- It is cancelled by the requesting Downpour
+  - Downloads are removed from disk when:
+    - All of the following criteria are met:
+      - They are complete
+	  - The reach the target seeding ratio
+	  - They have been fetched by the requesting Downpour
+	  - There is not a fetch currently is progress, and has not
+	    been one for 30 minutes
+	  - The download has not been pinned as permanent
+	- Or, they are manually killed by the requesting Downpour
 
 Library Module:
   - Better media type guessing - use thetvdb.com / themoviedb.com?
