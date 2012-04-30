@@ -101,6 +101,7 @@ Library Module:
   - Move series pruning into library module, based on file scan, not
     feed records
   - Media transcoding on import
+  - Skip video samples on import
   - Generate new searchable index on library update
   - Improve library browser UI - hard to match "X" with media item
   - Store metadata on all library files
