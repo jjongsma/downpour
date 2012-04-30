@@ -27,6 +27,7 @@ New architecture split - independent modules
   4. Library module
   5. Search module
   6. Sharing module
+  7. Client interfaces
 
 General:
   - Revist unicode support in Twisted
@@ -124,3 +125,8 @@ Sharing Module:
   - Ad-hoc torrent creation instead of HTTP downloads for load sharing
   - Queue entire remote folder for download
   - Better logging/monitoring of peer downloads in web UI
+
+Client Interfaces:
+  - Android torrent handler
+  - Windows torrent handler
+  - Mobile web interface
