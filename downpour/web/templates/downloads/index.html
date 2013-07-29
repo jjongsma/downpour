@@ -4,31 +4,22 @@
 	<script language="javascript">
 
 		function toggleAll(e, f) {
-			for (i = 0; i < f.elements.length; ++i)
-				if (f.elements[i].type == 'checkbox')
-					f.elements[i].checked = e.checked;
+			f.find('input[type=checkbox]').prop('checked', e.checked);
 		}
 
 		function updateTable() {
-			ajax = new AJAX();
-			ajax.getJSON('/downloads/statusjs', statusResponse);
+			$.get('/downloads/statusjs?r=' + Math.floor(Math.random() * 1000000), statusResponse, 'json');
 		}
 
 		function statusResponse(data) {
-			document.getElementById('status_active_downloads').innerHTML =
-				data.status['active_downloads'];
-			document.getElementById('status_downloadrate').innerHTML =
-				data.status['downloadrate'];
-			document.getElementById('status_uploadrate').innerHTML =
-				data.status['uploadrate'];
-			document.getElementById('status_totalrate').innerHTML =
-				data.status['totalrate'];
-			document.getElementById('status_connections').innerHTML =
-				data.status['connections'];
-			setProgress(document.getElementById('totalprogress'),
-				data.status.progress, ' complete');
-			setProgress(document.getElementById('diskspace'),
-				data.status.userdiskfreepct, ' (' + data.status.userdiskfree + ') free');
+			$('#status_active_downloads').html(data['summary']['active_downloads']);
+			$('#status_downloadrate').html(data['summary']['downloadrate']);
+			$('#status_uploadrate').html(data['summary']['uploadrate']);
+			$('#status_totalrate').html(data['summary']['totalrate']);
+			$('#status_connections').html(data['summary']['connections']);
+			setProgress($('#totalprogress'), data['summary'].progress, ' complete');
+			setProgress($('#diskspace'), data['summary'].userdiskfreepct,
+				' (' + data['summary'].userdiskfree + ') free');
 
 			for (var i = 0; i < data.downloads.length; ++i) {
 				dl = data.downloads[i];
@@ -36,60 +27,59 @@
 				var descTrunc = dl.description;
 				if (descTrunc.length > 60)
 					descTrunc = descTrunc.substring(0, 60) + '...';
-				document.getElementById(prefix + 'description').innerHTML =
+				$('#' + prefix + 'description').html(
 					'<a title="' + dl.description + '" href="/downloads/'
-					+ dl.id + '/">' + descTrunc + '</a>';
-				document.getElementById(prefix + 'size').innerHTML = dl.size;
+					+ dl.id + '/">' + descTrunc + '</a>');
+				$('#' + prefix + 'size').html(dl.size);
 				if (dl.status_message) {
-					document.getElementById(prefix + 'status').innerHTML =
+					$('#' + prefix + 'status').html(
 						'<a class="status_' + dl.status.toLowerCase() +
 						'" href="/downloads/' + dl.id + '" title="' +
 						dl.status_message + '">' + dl.status + '</a>' +
 						'<a class="status_' + dl.status.toLowerCase() +
 						'" href="/downloads/' + dl.id + '" title="' +
-						dl.status_message + '"> <img src="/media/images/info-small.png"/></a>';
+						dl.status_message + '"> <img src="/media/images/info-small.png"/></a>');
 				} else {
-					document.getElementById(prefix + 'status').innerHTML = dl.status;
+					$('#' + prefix + 'status').html(dl.status);
 				}
 				style = null;
 				if (dl.status == 'Seeding')
 					style= 'blue';
 				else if (dl.status == 'Failed')
 					style= 'red';
-				setProgress(document.getElementById(prefix + 'progress'),
-					dl.progress, '', style)
+				setProgress($('#' + prefix + 'progress'), dl.progress, '', style);
 				if (dl.running) {
-					setHealth(document.getElementById(prefix + 'health'), dl.health);
-					document.getElementById(prefix + 'dlrate').innerHTML = dl.downloadrate;
-					document.getElementById(prefix + 'ulrate').innerHTML = dl.uploadrate;
-					document.getElementById(prefix + 'timeleft').innerHTML = dl.timeleft;
+					setHealth($('#' + prefix + 'health'), dl.health);
+					$('#' + prefix + 'dlrate').html(dl.downloadrate);
+					$('#' + prefix + 'ulrate').html(dl.uploadrate);
+					$('#' + prefix + 'timeleft').html(dl.timeleft);
 				} else {
-					document.getElementById(prefix + 'health').innerHTML = '&nbsp;';
-					document.getElementById(prefix + 'dlrate').innerHTML = '&nbsp;';
-					document.getElementById(prefix + 'ulrate').innerHTML = '&nbsp;';
-					document.getElementById(prefix + 'timeleft').innerHTML = '&nbsp;';
+					$('#' + prefix + 'health').html('&nbsp;');
+					$('#' + prefix + 'dlrate').html('&nbsp;');
+					$('#' + prefix + 'ulrate').html('&nbsp;');
+					$('#' + prefix + 'timeleft').html('&nbsp;');
 				}
 				// TODO set actions
 				actionhtml = '';
 				if (dl.startable) {
 					if (dl.finished)
 						actionhtml += '<a href="/downloads/' + dl.id +
-							'/start"><img title="Seed download" ' +
-							'src="/media/images/seed.png"/></a>';
+						'/start"><img title="Seed download" ' +
+						'src="/media/images/seed.png"/></a>';
 					else
 						actionhtml += '<a href="/downloads/' + dl.id +
-							'/start"><img title="Start download" ' +
-							'src="/media/images/start.png"/></a>';
+						'/start"><img title="Start download" ' +
+						'src="/media/images/start.png"/></a>';
 				}
 				if (dl.stoppable)
 					actionhtml += '<a href="/downloads/' + dl.id +
-						'/stop"><img title="Stop download" ' +
-						'src="/media/images/stop.png"/></a>';
-				document.getElementById(prefix + 'actions').innerHTML = actionhtml;
+					'/stop"><img title="Stop download" ' +
+					'src="/media/images/stop.png"/></a>';
+				$('#' + prefix + 'actions').html(actionhtml);
 			}
 
 			// Remove deleted downloads
-			table = document.getElementById('downloads');
+			table = $('#downloads').get(0);
 			for (var i = 0; i < table.rows.length; ++i) {
 				if (table.rows[i].id.substring(0, 8) == 'download') {
 					id = table.rows[i].id.substring(8);
@@ -100,7 +90,7 @@
 							break;
 						}
 					if (!found) {
-						table.rows[i].parentNode.removeChild(table.rows[i]);
+						$(table.rows[i]).remove();
 						i--;
 					}
 				}
@@ -115,18 +105,12 @@
 		}
 
 		function setProgress(bar, pct, suffix, className) {
-			children = findElementsByClassName('progress', bar);
-			if (children.length) {
-				progressbar = children[0];
-				progressbar.style.width = Math.ceil(pct) + '%';
-				progresslabel = findElementsByClassName('label', bar)[0];
-				progresslabel.innerHTML = pct.toFixed(1) + '%' + suffix
-				if (className) {
-					removeClass(progressbar, 'red');
-					removeClass(progressbar, 'blue');
-					addClass(progressbar, className);
-				}
-			}
+			bars = bar.find('.progress');
+			bars.css({ 'width' : Math.ceil(pct) + '%' });
+			bar.find('.label').html(pct.toFixed(1) + '%' + suffix);
+			bars.removeClass('red');
+			bars.removeClass('blue');
+			bars.addClass(className);
 		}
 
 		function setHealth(bar, pct) {
@@ -136,22 +120,26 @@
 			else style = 'green';
 			height = Math.ceil((pct/100)*16) + 'px';
 
-			children = findElementsByClassName('healthmeter', bar);
-			if (children.length) {
-				healthmeter = children[0];
-				healthmeter.className = 'healthmeter ' + style;
-				healthbar = findElementsByClassName('health', healthmeter)[0];
-				healthbar.style.height = height;
-				healthbar.className = 'health ' + style;
+			meters = bar.find('.healthmeter');
+			if (meters.size() > 0) {
+				meters.removeClass();
+				meters.addClass('healthmeter ' + style);
+				inner = meters.find('.health');
+				inner.css({ 'height' : height });
+				inner.removeClass();
+				inner.addClass('health ' + style);
 			} else {
-				bar.innerHTML = '<div class="healthmeter ' + style +
+				bar.html('<div class="healthmeter ' + style +
 					'" style="height: 16px;">' + '<div class="health '
-					+ style + '" style="height: ' + height + ';"></div></div>';
+					+ style + '" style="height: ' + height + ';"></div></div>');
 			}
 		}
 
-		updater = null;
-		addEvent(window, 'load', function() { updater = setInterval(updateTable, 2000); });
+		var updater = null;
+
+		$(function() {
+			updater = setInterval(updateTable, 2000);
+		});
 
 	</script>
 {% endblock %}

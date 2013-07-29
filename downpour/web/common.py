@@ -78,7 +78,7 @@ class Resource(resource.Resource):
             return request.application.get_manager(user)
         return None
 
-    def render_template(self, template, request, context):
+    def render_template(self, template, request, context, content_type = None):
 
         unsupported = False
         ua = request.getHeader('User-Agent')
@@ -111,7 +111,10 @@ class Resource(resource.Resource):
                 'message': 'Could not load page template: %s' % template
                 })
 
-        request.setHeader('Content-type', 'text/html; charset=UTF-8')
+        if content_type:
+            request.setHeader('Content-type', content_type)
+        else:
+            request.setHeader('Content-type', 'text/html; charset=UTF-8')
         return t.render(defaults).encode('utf8')
 
 class AuthenticatedResource(Resource):

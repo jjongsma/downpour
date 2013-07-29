@@ -97,7 +97,7 @@ class StatusJS(common.AuthenticatedResource):
                    'statuscode': download.Status,
                    'statusdesc': download.Status.descriptions
                    }
-        return self.render_template('downloads/status-js.html', request, context)
+        return self.render_template('downloads/status-js.html', request, context, 'application/json')
 
 class Add(common.AuthenticatedResource):
 

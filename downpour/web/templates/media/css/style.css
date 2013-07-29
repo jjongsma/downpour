@@ -394,3 +394,6 @@ a.button.pause {
 .helptext {
 	color: #999;
 }
+.hidden {
+	display: none;
+}
