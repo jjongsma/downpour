@@ -17,6 +17,7 @@ setup(name="Downpour",
     author_email="jeremy@jongsma.org",
     url="http://home.jongsma.org/software/downpour/",
     packages=find_packages(exclude='tests'),
+    package_data={'downpour.web': ['templates/*.html', 'templates/*/*.html', 'templates/media/*/*']},
     include_package_data=True,
     # Not zip-safe until /media/ handler is rewritten
     zip_safe=False,

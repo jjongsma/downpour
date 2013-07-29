@@ -5,7 +5,7 @@ from twisted.web import http
 from twisted.web.client import HTTPDownloader, _makeGetterFactory
 from twisted.internet import defer
 from twisted.protocols.htb import ShapedProtocolFactory
-import time, os
+import time, os, gzip
 
 class HTTPDownloadClient(DownloadClient):
 
@@ -134,6 +134,7 @@ class HTTPManagedDownloader(HTTPDownloader):
 
     def __init__(self, url, file, statusCallback=None, bucketFilter=None, *args, **kwargs):
         self.bytes_received = 0
+        self.encoding = None
         self.statusHandler = statusCallback
         self.bucketFilter = bucketFilter
 
@@ -166,6 +167,7 @@ class HTTPManagedDownloader(HTTPDownloader):
         HTTPDownloader.gotHeaders(self, headers)
         # This method is being called twice sometimes,
         # first time without a content-range
+        self.encoding = headers.get('content-encoding', None)
         contentRange = headers.get('content-range', None)
         if contentRange and self.requestedPartial == 0:
             self.requestedPartial = self.origPartial
@@ -185,6 +187,15 @@ class HTTPManagedDownloader(HTTPDownloader):
     def pageEnd(self):
         if self.statusHandler:
             self.statusHandler.onEnd(self)
+        # And the hacks are piling up, Twisted is really not very flexible
+        if self.encoding[0] == 'gzip':
+            self.file.close()
+            g = gzip.open(self.fileName, 'rb')
+            # This will blow up for large files
+            decompressed = g.read()
+            g.close()
+            self.file = open(self.fileName, 'wb');
+            self.file.write(decompressed);
         HTTPDownloader.pageEnd(self)
 
     def startedConnecting(self, connector):
