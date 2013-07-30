@@ -33,8 +33,10 @@ def feed_parsed(parsed, feeds, manager, feed):
     # Update etag/lastmod for future requests
     feed.last_error = None
     feed.last_check = time()
-    if 'modified' in parsed:
+    if 'modified_parsed' in parsed:
         feed.modified = mktime(parsed.modified_parsed)
+    elif 'modified' in parsed:
+        feed.modified = mktime(parsed.modified)
     if 'etag' in parsed:
         feed.etag = unicode(parsed.etag)
     manager.store.commit()
