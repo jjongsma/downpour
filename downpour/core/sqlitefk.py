@@ -25,8 +25,6 @@ class SQLiteFK(SQLite):
 
         # enable foreign keys
         raw_connection.execute("PRAGMA foreign_keys = ON;")
-        # auto vacuum to reclaim disk space
-        raw_connection.execute("PRAGMA auto_vacuum = FULL;")
 
         return raw_connection
 
