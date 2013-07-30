@@ -34,7 +34,7 @@ def feed_parsed(parsed, feeds, manager, feed):
     feed.last_error = None
     feed.last_check = time()
     if 'modified' in parsed:
-        feed.modified = mktime(parsed.modified)
+        feed.modified = mktime(parsed.modified_parsed)
     if 'etag' in parsed:
         feed.etag = unicode(parsed.etag)
     manager.store.commit()
@@ -281,7 +281,6 @@ def get_episode_definition(item):
     return ed
 
 def feed_parse_failed(failure, feeds, manager, feed):
-    #print failure
     feed.last_update = time()
     feed.last_error = unicode(failure.getErrorMessage())
     manager.store.commit()

@@ -5,7 +5,7 @@ from twisted.internet import defer, task, reactor
 from twisted.web import client
 from twisted.python import failure
 import libtorrent as lt
-import os, marshal, math, sys, socket, logging
+import os, marshal, math, sys, socket, logging, zlib
 
 class LibtorrentManager:
 
@@ -332,6 +332,11 @@ class LibtorrentClient(DownloadClient):
     
     def fetch_torrent_success(self, data):
         if data:
+            try:
+                # Twisted doesn't give us encoding headers, so just try and see
+                data = zlib.decompress(data, 15 + 32)
+            except Exception as e:
+                pass
             self.download.metadata = data
             self.download.status = Status.QUEUED
             self.download.status_message = None

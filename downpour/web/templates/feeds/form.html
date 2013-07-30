@@ -140,7 +140,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{% for item in feed.items.order_by('-updated') %}
+					{% for item in feed.items.order_by('-updated')[:30] %}
 					<tr>
 						<td>
 							{% if item.download and not item.download.deleted %}
