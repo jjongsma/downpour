@@ -226,6 +226,16 @@ def clean_download_feed(d, app):
                     i.removed = True
 
         elif feed.queue_size < 0:
+            latest_season = 1
+            # First pass - find latest season
+            for i in items:
+                if i.download:
+                    ed = get_episode_definition(i)
+                    if (ed['s']):
+                        season = int(ed['s'])
+                        if season > latest_season:
+                            latest_season = season
+            # Second pass - remove old seasons
             for i in items:
                 if i.download:
                     ed = get_episode_definition(i)
@@ -240,12 +250,15 @@ def clean_download_feed(d, app):
             manager.application.fire_event('feed_item_removed', i)
             logging.debug('Removing old feed item %d (%s)' % (i.id, i.title))
             for f in i.download.files:
-                realdir = '/'.join(
-                    (manager.get_library_directory(), f.directory))
-                realpath = '/'.join((realdir, f.filename))
-                if organizer.remove_file(realpath, True):
+                if f.directory:
+                    realdir = '/'.join(
+                        (manager.get_library_directory(), f.directory))
+                    realpath = '/'.join((realdir, f.filename))
+                    if organizer.remove_file(realpath, True):
+                        i.download.files.remove(f)
+                        manager.application.fire_event('library_file_removed', realpath, i.download)
+                else:
                     i.download.files.remove(f)
-                    manager.application.fire_event('library_file_removed', realpath, i.download)
             i.removed = True
 
         manager.store.commit()

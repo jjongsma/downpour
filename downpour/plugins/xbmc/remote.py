@@ -24,23 +24,19 @@ class XBMCRemote:
 
     # Update media libraries (scan for new files)
     def update(self, type=None):
-        #if type == 'audio' or type is None:
-        #    self.call_http('ExecBuiltIn(UpdateLibrary(music))')
-        #if type == 'video' or type is None:
-        #    self.call_http('ExecBuiltIn(UpdateLibrary(video))')
         if type == 'audio' or type is None:
-            self.call('AudioLibrary.ScanForContent')
+            self.call('AudioLibrary.Scan')
         if type == 'video' or type is None:
-            self.call('VideoLibrary.ScanForContent')
+            self.call('VideoLibrary.Scan')
 
     # Clean media libraries (remove missing files)
     # The preferred way to do this is to just configure XBMC to
     # clean on updated (in XBMC settings)
     def clean(self, type=None):
         if type == 'audio' or type is None:
-            self.call_http('ExecBuiltIn(CleanLibrary(music))')
+            self.call('AudioLibrary.Clean')
         if type == 'video' or type is None:
-            self.call_http('ExecBuiltIn(CleanLibrary(video))')
+            self.call('VideoLibrary.Clean')
 
     # Check status of media players (video, audio, pictures)
     def get_active_players(self):
@@ -74,8 +70,7 @@ class XBMCRemote:
 
         response = getPage('%s/jsonrpc' % self.server,
             agent='Downpour %s' % VERSION,
-            headers={'Authorization': 'Basic %s' % base64.b64encode(
-                '%s:%s' % (self.username, self.password)) },
+            headers=authHeaders,
             method='POST',
             postdata=json.dumps(payload))
 
@@ -107,55 +102,6 @@ class XBMCRemote:
                         parsed['error']['code'])))
             else:
                 dfr.callback(parsed['result'])
-
-    # Use deprecated HTTP API (some methods are not supported
-    # in the JSON API yet)
-    def call_http(self, method, multi=True, asdict=True):
-
-        url = '%s/xbmcCmds/xbmcHttp?command=%s' % (self.server, method)
-
-        authHeaders = None
-        if self.username:
-            authHeaders = {'Authorization': 'Basic %s' % base64.b64encode(
-                '%s:%s' % (self.username, self.password)) }
-
-        response = getPage(url,
-            agent='Downpour %s' % VERSION,
-            headers=authHeaders)
-
-        # Chain to a new deferred to do response parsing
-        dfr = Deferred()
-        response.addCallback(self.parse_http_response, dfr, multi, asdict)
-        response.addErrback(dfr.errback)
-
-        return dfr
-
-    def parse_http_response(self, result, dfr, multi=True, asdict=True):
-
-        response = None
-
-        lines = result.split('<li>')[1:]
-        lines[len(lines)-1] = lines[len(lines)-1][:-8]
-        if lines[0].find(':') == -1:
-            asdict = False
-
-        if asdict:
-            response = {}
-        else:
-            response = []
-
-        for l in lines:
-            line = l.strip()
-            if asdict:
-                parts = l.strip().split(':', 1)
-                response[parts[0]] = parts[1]
-            else:
-                response.append(line)
-
-        if multi or asdict:
-            dfr.callback(response)
-        else:
-            dfr.callback(response[0])
 
 class XBMCRemoteException(Exception):
 

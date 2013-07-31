@@ -18,8 +18,14 @@
 			$('#status_totalrate').html(data['summary']['totalrate']);
 			$('#status_connections').html(data['summary']['connections']);
 			setProgress($('#totalprogress'), data['summary'].progress, ' complete');
+			var style = null;
+			if (data['summary'].userdiskfreepct <= 10) {
+				style = 'red';
+			} else if (data['summary'].userdiskfreepct <= 20) {
+				style = 'yellow';
+			}
 			setProgress($('#diskspace'), data['summary'].userdiskfreepct,
-				' (' + data['summary'].userdiskfree + ') free');
+				' (' + data['summary'].userdiskfree + ') free', style);
 
 			for (var i = 0; i < data.downloads.length; ++i) {
 				dl = data.downloads[i];

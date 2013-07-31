@@ -42,8 +42,16 @@ class XBMCPlugin(Plugin):
             self.clean()
 
     def call_on_idle(self, handler):
+
+        def handler_if_idle(response):
+            for player in response:
+                if player['type'] in ['video', 'picture']:
+                    reactor.callLater(10.0, self.call_on_idle, handler)
+                    return;
+            handler();
+            
         dfr = self.xbmc.get_active_players()
-        dfr.addCallback(handler)
+        dfr.addCallback(handler_if_idle)
         dfr.addErrback(self.error_handler)
 
     def error_handler(self, failure):
@@ -60,14 +68,11 @@ class XBMCPlugin(Plugin):
             self.update_type = library
             self.call_on_idle(self.update_if_idle)
 
-    def update_if_idle(self, response):
-        if not response['video'] and not response['picture']:
-            self.update_pending = False
-            library = self.update_type
-            self.update_type = None
-            self.xbmc.update(library)
-        else:
-            reactor.callLater(10.0, self.call_on_idle, self.update_if_idle)
+    def update_if_idle(self):
+        self.update_pending = False
+        library = self.update_type
+        self.update_type = None
+        self.xbmc.update(library)
 
     def clean(self, library=None):
         if self.clean_pending:
@@ -80,10 +85,7 @@ class XBMCPlugin(Plugin):
             self.call_on_idle(self.clean_if_idle)
 
     def clean_if_idle(self, response):
-        if not response['video'] and not response['picture']:
-            self.clean_pending = False
-            library = self.clean_type
-            self.clean_type = None
-            self.xbmc.clean(library)
-        else:
-            reactor.callLater(10.0, self.call_on_idle, self.clean_if_idle)
+        self.clean_pending = False
+        library = self.clean_type
+        self.clean_type = None
+        self.xbmc.clean(library)

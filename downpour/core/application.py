@@ -285,6 +285,7 @@ class Application:
                     l[0](*cargs)
                 except Exception as e:
                     logging.error('Caught error in event listener: %s' % e)
+                    traceback.print_exc()
         else:
             raise ValueError('Unknown event "%s"' % event)
 
