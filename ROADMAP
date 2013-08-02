@@ -20,17 +20,18 @@ Features TBD
 Feature List
 ---------------------------
 
-New architecture split - independent modules
-  1. Transfers module
-  2. Download agents
-  3. Feed module
-  4. Library module
-  5. Search module
-  6. Sharing module
-  7. Client interfaces
+New architecture split - independent modules w/ event bus
+  1. Core event bus
+  2. Transfers module
+  3. Download agents
+  4. Feed module
+  5. Library module
+  6. Search module
+  7. Sharing module
+  8. Client interfaces
 
 General:
-  - Revist unicode support in Twisted
+  - Revisit unicode support in Twisted (upgrade to 13?)
   - Language translations
 
 Transfers Module:
@@ -52,7 +53,7 @@ Transfers Module:
       - Seeding (torrents only)
       - Failed -> fixed at last progress
     - Additional upload states:
-      - Stopped (download manually paused)
+      - Stopped (upload manually paused)
       - Failed
   - Fix seeding / upload ratio
   - Create separate seed queue / filter seeds out of default download view
@@ -114,7 +115,6 @@ Feed Module:
   - Release group / keyword preference
   - Watch a local directory for torrents to auto-download
   - Link to a show in the library, default to auto-detect/auto-create
-  - Limit number of previous feed items shown
 
 Search Module:
   - Pluggable search providers
@@ -131,3 +131,4 @@ Client Interfaces:
   - Android torrent handler
   - Windows torrent handler
   - Mobile web interface
+  - Chrome magnet:// protocol handler

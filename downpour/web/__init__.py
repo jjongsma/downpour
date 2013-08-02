@@ -1,4 +1,5 @@
 from twisted.internet import reactor
+from twisted.internet.error import CannotListenError
 from twisted.web import server
 from twisted.protocols.policies import ThrottlingFactory
 from jinja2 import Environment, PackageLoader
@@ -7,7 +8,7 @@ from downpour.core.net import get_interface
 from downpour.web.common import requestFactory, sessionFactory
 from downpour.web.site import SiteRoot
 from datetime import datetime
-import os, math, urllib
+import os, math, urllib, logging
 
 class WebInterfacePlugin(Plugin):
 
@@ -45,7 +46,15 @@ class WebInterfacePlugin(Plugin):
         site.requestFactory = requestFactory(self)
         site.sessionFactory = sessionFactory(self)
 
-        reactor.listenTCP(port, site, interface=get_interface(iface))
+        self.tryListen(port, site, get_interface(iface))
+
+    def tryListen(self, port, site, iface):
+        try:
+            reactor.listenTCP(port, site, interface=iface)
+        except CannotListenError:
+            # Can happen when wifi connection is not ready, try later
+            logging.info('Interface %s not available, retrying bind in 30 seconds' % iface)
+            reactor.callLater(30.0, self.tryListen, port, site, iface)
 
     def progressbar(self, percentage, width=100, style=None, label=''):
         pixwidth = ''
