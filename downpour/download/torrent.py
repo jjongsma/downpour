@@ -5,7 +5,7 @@ from twisted.internet import defer, task, reactor
 from twisted.web import client
 from twisted.python import failure
 import libtorrent as lt
-import os, marshal, math, sys, socket, logging, zlib
+import os, marshal, math, sys, socket, logging, zlib, time
 
 class LibtorrentManager:
 
@@ -92,6 +92,15 @@ class LibtorrentManager:
         return False
 
     # Pass calls through
+    def add_magnet(self, client, url, params):
+        handle = lt.add_magnet_uri(self.session, url, params)
+        ih = str(handle.info_hash())
+        if ih in self.torrents:
+            raise Exception('Duplicate torrent')
+        self.torrents[ih] = client
+        return handle
+
+    # Pass calls through
     def add_torrent(self, client, *args, **kwargs):
         handle = self.session.add_torrent(*args, **kwargs)
         ih = str(handle.info_hash())
@@ -165,13 +174,26 @@ class LibtorrentClient(DownloadClient):
         if 'state_changed_alert' in self.dfm:
             raise Exception('An operation is already in progress')
         self.dfm['state_changed_alert'] = defer.Deferred()
-        if not self.download.metadata:
+        if not self.torrent and not self.download.metadata:
             if self.download.url:
                 # Don't try to re-fetch until on attempt is done
                 if self.download.status != Status.LOADING:
-                    self.download.status = Status.LOADING
-                    self.download.status_message = u'Getting the torrent tracker file'
-                    client.getPage(str(self.download.url)).addCallback(self.fetch_torrent_success).addErrback(self.fetch_torrent_failure)
+                    if self.download.url.startswith('magnet:'):
+                        params = { 'save_path': str(self.directory), 'auto_managed': True }
+                        resdata = None
+                        if self.download.resume_data:
+                            params['resdata'] = marshal.loads(self.download.resume_data)
+                        self.download.status = Status.LOADING
+                        self.torrent = lt_manager.add_magnet(self, str(self.download.url), params)
+                        self.dfm['metadata_received_alert'] = defer.Deferred()
+                        self.dfm['metadata_received_alert'].addCallback(self.magnet_loaded)
+                        self.dfm['metadata_failed_alert'] = defer.Deferred()
+                        self.dfm['metadata_failed_alert'].addCallback(self.magnet_load_failed)
+                        return self.dfm['state_changed_alert']
+                    else:
+                        self.download.status = Status.LOADING
+                        self.download.status_message = u'Getting the torrent metadata'
+                        client.getPage(str(self.download.url)).addCallback(self.fetch_torrent_success).addErrback(self.fetch_torrent_failure)
                 return self.dfm['state_changed_alert']
             else:
                 raise Exception('Torrent metadata missing and no source URL specified')
@@ -322,6 +344,24 @@ class LibtorrentClient(DownloadClient):
                               'progress': progress})
         files.sort(lambda x,y: cmp(x['path'], y['path']))
         return files
+
+    def magnet_loaded(self, client):
+        del self.dfm['metadata_failed_alert']
+        if self.torrent.has_metadata():
+            self.torrent_info = self.torrent.get_torrent_info()
+            self.download.status_message = None
+            self.download.description = unicode(self.torrent_info.name())
+            self.start_real()
+        else:
+            self.magnet_load_failed();
+
+    def magnet_load_failed(self, failure):
+        del self.dfm['metadata_received_alert']
+        self.torrent.auto_managed(False)
+        self.download.active = False
+        self.download.status = Status.FAILED
+        self.download.status_message = 'Failed to get metadata from magnet link'
+        self.errback(failure.Failure(Exception(error)))
 
     def fetch_torrent_failure(self, failure):
         self.download.status = Status.FAILED

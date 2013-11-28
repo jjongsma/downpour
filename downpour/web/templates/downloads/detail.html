@@ -35,7 +35,7 @@
 				{% endif %}
 			</td>
 		</tr>
-		{% if client.is_running() %}
+		{% if client and client.is_running() %}
 		<tr>
 			<td class="label">Speed</td>
 			<td class="value">
@@ -64,15 +64,15 @@
 		</tr>
 	</table>
 
-	{% if client.is_startable() %}
-		{% if client.is_finished() %}
+	{% if client and client.is_startable() %}
+		{% if client and client.is_finished() %}
 			<a class="button seed" href="/downloads/{{ download.id }}/start?from=detail">Seed</a>
 		{% else %}
 			<a class="button start" href="/downloads/{{ download.id }}/start?from=detail">Start</a>
 		{% endif %}
 	{% else %}
 	{% endif %}
-	{% if client.is_stoppable() %}
+	{% if client and client.is_stoppable() %}
 		<a class="button start" href="/downloads/{{ download.id }}/restart?from=detail">Restart</a>
 		<a class="button stop" href="/downloads/{{ download.id }}/stop?from=detail">Stop</a>
 	{% endif %}
@@ -130,23 +130,25 @@
 			<td class="value">
 				{% block files %}
 					<table cellspacing="0" cellpadding="0" border="0" class="plain">
-						{% for file in client.get_files() %}
-							<tr>
-								{% if download.status != statuscode.COMPLETED %}
-								<td>
-									{% if file.progress < 100 %}
-										{{ file.progress|progressbar(75,style='yellow') }}
-									{% else %}
-										{{ file.progress|progressbar(75) }}
+						{% if client %}
+							{% for file in client.get_files() %}
+								<tr>
+									{% if download.status != statuscode.COMPLETED %}
+									<td>
+										{% if file.progress < 100 %}
+											{{ file.progress|progressbar(75,style='yellow') }}
+										{% else %}
+											{{ file.progress|progressbar(75) }}
+										{% endif %}
+									</td>
 									{% endif %}
-								</td>
-								{% endif %}
-								<td>
-									{{ file.path|workinglink(download) }}
-									({{ file.size|d(0,true)|filesizeformat|replace('Bytes','b') }})
-								</td>
-							</tr>
-						{% endfor %}
+									<td>
+										{{ file.path|workinglink(download) }}
+										({{ file.size|d(0,true)|filesizeformat|replace('Bytes','b') }})
+									</td>
+								</tr>
+							{% endfor %}
+						{% endif %}
 					</table>
 				{% endblock %}
 			</td>

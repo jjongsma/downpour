@@ -23,7 +23,8 @@ class Manager:
         }
     client_protocols = {
         'http': HTTPDownloadClient,
-        'https': HTTPDownloadClient
+        'https': HTTPDownloadClient,
+        'magnet': LibtorrentClient
         }
 
     def __init__(self, application):
@@ -232,7 +233,7 @@ class Manager:
     def get_download_client(self, id, create=False):
         d = self.get_download(id)
         for dc in Manager.download_clients:
-            if dc.download.id == id:
+            if hasattr(dc, 'download') and dc.download.id == id:
                 return dc
 
         if create:
@@ -501,17 +502,20 @@ class GlobalManager(Manager):
                     client_ulrate = int(max_ulrate / active)
                     for d in filter(lambda x: x.active, downloads):
                         dc = self.get_download_client(d.id)
-                        dc.set_upload_rate(client_ulrate)
+                        if (dc):
+                            dc.set_upload_rate(client_ulrate)
                 if max_dlrate > 0:
                     client_dlrate = int(max_dlrate / active)
                     for d in filter(lambda x: x.active, downloads):
                         dc = self.get_download_client(d.id)
-                        dc.set_download_rate(client_dlrate)
+                        if (dc):
+                            dc.set_download_rate(client_dlrate)
                 if max_conn > 0:
                     client_conn = int(max_conn / active)
                     for d in filter(lambda x: x.active, downloads):
                         dc = self.get_download_client(d.id)
-                        dc.set_max_connections(client_conn)
+                        if (dc):
+                            dc.set_max_connections(client_conn)
 
     def get_downloads(self, flush=False):
         return list(self.store.find(models.Download,
