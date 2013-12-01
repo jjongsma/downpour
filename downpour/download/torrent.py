@@ -176,7 +176,7 @@ class LibtorrentClient(DownloadClient):
         self.dfm['state_changed_alert'] = defer.Deferred()
         if not self.torrent and not self.download.metadata:
             if self.download.url:
-                # Don't try to re-fetch until on attempt is done
+                # Don't try to re-fetch until an attempt is done
                 if self.download.status != Status.LOADING:
                     if self.download.url.startswith('magnet:'):
                         params = { 'save_path': str(self.directory), 'auto_managed': True }
@@ -348,6 +348,8 @@ class LibtorrentClient(DownloadClient):
     def magnet_loaded(self, client):
         del self.dfm['metadata_failed_alert']
         if self.torrent.has_metadata():
+            if self.download.status == Status.LOADING:
+                self.download.status = Status.QUEUED
             self.torrent_info = self.torrent.get_torrent_info()
             self.download.status_message = None
             self.download.description = unicode(self.torrent_info.name())

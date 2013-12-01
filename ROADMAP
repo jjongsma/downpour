@@ -21,23 +21,31 @@ Feature List
 ---------------------------
 
 New architecture split - independent modules w/ event bus
-  1. Core event bus
+  1. Core
+     - Event bus
+	 - Data store
+	 - User management
+	 - Agent registry
   2. Transfers module
   3. Download agents
   4. Feed module
   5. Library module
+     - Metadata providers
   6. Search module
   7. Sharing module
   8. Client interfaces
+  9. Third-party plugins (XBMC remote, etc)
 
 General:
+  - Flow state machine
+  - Database cleanup
   - Revisit unicode support in Twisted (upgrade to 13?)
   - Language translations
 
 Transfers Module:
   - Rework transfer workflow
     - Standard download workflow:
-      - Loading (fetch torrent)
+      - Loading (fetch metadata)
       - Downloading (download agent is fetching)
       - Copying (fetching from download agent to work dir)
       - Importing (importing into media library)
@@ -55,14 +63,16 @@ Transfers Module:
     - Additional upload states:
       - Stopped (upload manually paused)
       - Failed
+  - Enforce which actions are allowed for each state to avoid "action in
+    progress" conflicts
   - Fix seeding / upload ratio
   - Create separate seed queue / filter seeds out of default download view
   - Show current peer downloads (from Sharing Module) in seed view
   - Add time-based bandwidth limits
-  - Allow changing media type of a download inline (AJAX) in overview
-  - Ad-hoc torrent creation / publishing
   - Magnet links for torrents
   - Verify torrent traffic encryption
+  - HTTP folder downloads - single download record with multiple individual
+    downloads inside, show a single progress is overview
   - FTP downloads
 
 Download Agents:
@@ -71,11 +81,16 @@ Download Agents:
   - Receives URL or torrent from core transfer manager
   - A download agent can have acceptance restrictions, such as only
     handling torrents for a whitelist of trackers
+  - Global defaults/overrides for bandwidth throttling, connection
+    limit and seeding
+  - Better detection of "hung" downloads (i.e. bad VPN connection)
   - Each download request contains:
     - User/password of account on download agent (separate from main
       Downpour account for sharing purposes)
     - Domain/IP of the requesting Downpour instance
+    - Bandwidth throttling / connection limits
     - Seeding policy (as percentage)
+    - Time to live (to allow other Downpour instances to download)
 	- Whether this download is public or not
   - API calls:
     - Add download
@@ -83,7 +98,7 @@ Download Agents:
 	- View all public downloads & status
 	- Get individual download fetch URL
 	- Remove download (and stop seeding)
-  - Downloads are stopped when both are true:
+  - Downloads are stopped in one of the following conditions:
     - It is complete, and reaches the target seeding ratio, OR
 	- It is cancelled by the requesting Downpour
   - Downloads are removed from disk when:
@@ -93,8 +108,12 @@ Download Agents:
 	  - They have been fetched by the requesting Downpour
 	  - There is not a fetch currently is progress, and has not
 	    been one for 30 minutes
-	  - The download has not been pinned as permanent
-	- Or, they are manually killed by the requesting Downpour
+	  - The time to live has expired
+	- Or, they are manually deleted by the requesting Downpour
+
+Torrent Download Agent:
+  - Fix alert handling
+  - Rethink workflows for adding magnet vs. .torrent downloads
 
 Library Module:
   - Better media type guessing - use thetvdb.com / themoviedb.com?
@@ -103,7 +122,7 @@ Library Module:
     feed records
   - Media transcoding on import
   - Skip video samples on import
-  - Generate new searchable index on library update
+  - Generate searchable index on library update for remote shares
   - Improve library browser UI - hard to match "X" with media item
   - Store metadata on all library files
 
@@ -112,20 +131,34 @@ Feed Module:
   - Parse <description> field for metadata hints
   - Better filtering of duplicates
   - Resolution preference (HD/SD)
+  - Automatically prefer/replace with REPACK
   - Release group / keyword preference
+  - Keyword blacklist (TS, CAM, LINE, etc)
   - Watch a local directory for torrents to auto-download
-  - Link to a show in the library, default to auto-detect/auto-create
+  - Link to a series in the library, default to auto-detect/auto-create
 
 Search Module:
   - Pluggable search providers
+  - Add a "Watchlist" section for monitoring upcoming releases from
+    search sites, integrates with feeds
 
 Sharing Module:
   - Separate sharing bandwidth settings
   - Periodically refresh search indexes from remote shares
   - Add search provider that uses peer indexes to find media
   - Ad-hoc torrent creation instead of HTTP downloads for load sharing
-  - Queue entire remote folder for download
-  - Better logging/monitoring of peer downloads in web UI
+  - Queue an entire remote folder for download
+  - Add peer uploads to central active uploads queue for monitoring
+
+Web UI:
+  - Mobile/desktop responsive design
+  - New homepage contents: active downloads, active uploads, current
+    queue, watchlist matches, download history, agent status, system
+	status
+  - Allow changing media type of a download inline in overview
+  - Per-download settings (seeding, throttling, etc)
+  - UI hooks for modules
+  - REST interface for managing downloads
 
 Client Interfaces:
   - Android torrent handler
