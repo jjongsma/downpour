@@ -22,10 +22,14 @@ Feature List
 
 New architecture split - independent modules w/ event bus
   1. Core
+     - Application launcher
      - Event bus
-	 - Data store
+	 - Data store w/ module-specific
 	 - User management
 	 - Agent registry
+	 - Configuration
+	 - Alerts / requires action
+	 - Module loading
   2. Transfers module
   3. Download agents
   4. Feed module
@@ -49,6 +53,7 @@ Transfers Module:
       - Downloading (download agent is fetching)
       - Copying (fetching from download agent to work dir)
       - Importing (importing into media library)
+      - Blocked (import / media detection failed, requires user interaction)
       - Seeding (torrents only)
       - Completed (imported, safe to delete)
     - Additional download states:
@@ -63,6 +68,10 @@ Transfers Module:
     - Additional upload states:
       - Stopped (upload manually paused)
       - Failed
+  - Additional download attributes
+	- Priority
+	- Bandwidth limit
+	- Seed ratio
   - Enforce which actions are allowed for each state to avoid "action in
     progress" conflicts
   - Fix seeding / upload ratio
@@ -78,60 +87,65 @@ Transfers Module:
 Download Agents:
   - Independent download managers that handle bit-moving for
     core transfer manager
-  - Receives URL or torrent from core transfer manager
+  - Receives URL or metadata from core transfer manager
   - A download agent can have acceptance restrictions, such as only
     handling torrents for a whitelist of trackers
-  - Global defaults/overrides for bandwidth throttling, connection
-    limit and seeding
-  - Better detection of "hung" downloads (i.e. bad VPN connection)
-  - Each download request contains:
-    - User/password of account on download agent (separate from main
-      Downpour account for sharing purposes)
-    - Domain/IP of the requesting Downpour instance
-    - Bandwidth throttling / connection limits
-    - Seeding policy (as percentage)
-    - Time to live (to allow other Downpour instances to download)
-	- Whether this download is public or not
+  - Global settings:
+    - Default download bandwidth limit
+    - Max download bandwidth limit
+    - Default upload bandwidth limit
+    - Max upload bandwidth limit
+	- Default connection limit
+	- Max connection limit
+	- Default seed ratio
+	- Max seed ratio
+	- Default time to live
+	- Max time to live
+	- Default public/private
+	- Force public/private
   - API calls:
+	- Get downloads & status
     - Add download
-	- View my downloads & status
-	- View all public downloads & status
-	- Get individual download fetch URL
+	- Download action (start, pause, resume, queue)
+	- Update download settings (throttling, seeding, ttl,
+	  public/private, etc.)
+	- Copy download to local directory
 	- Remove download (and stop seeding)
   - Downloads are stopped in one of the following conditions:
-    - It is complete, and reaches the target seeding ratio, OR
-	- It is cancelled by the requesting Downpour
-  - Downloads are removed from disk when:
-    - All of the following criteria are met:
-      - They are complete
-	  - The reach the target seeding ratio
-	  - They have been fetched by the requesting Downpour
-	  - There is not a fetch currently is progress, and has not
-	    been one for 30 minutes
-	  - The time to live has expired
-	- Or, they are manually deleted by the requesting Downpour
+    - It is complete, and reaches the target seeding ratio or TTL
+	- It is cancelled by the requestor
+  - Downloads are removed from disk when they are removed
+    by the requestor
 
-Torrent Download Agent:
+Torrent Download Client:
   - Fix alert handling
   - Rethink workflows for adding magnet vs. .torrent downloads
 
+HTTP Download Client:
+  - Folder downloads (ZIP) get unpacked on completion
+  - Metadata mimetypes (torrent, etc) should re-inject into transfer
+    module after setting content as download metadata
+
 Library Module:
-  - Better media type guessing - use thetvdb.com / themoviedb.com?
+  - Better automatic media type guessing - use thetvdb.com / themoviedb.com?
   - New "Series" section configuration separately from feeds
   - Move series pruning into library module, based on file scan, not
     feed records
-  - Media transcoding on import
-  - Skip video samples on import
-  - Generate searchable index on library update for remote shares
+  - Skip video samples on import (prefer largest video file)
+  - Provide searchable index for remote shares
   - Improve library browser UI - hard to match "X" with media item
   - Store metadata on all library files
+  - Allow arbitrary media types (instead of 6 standard types)
+  - Rename / reassign / move / delete media files
+  - Media transcoding on import
 
 Feed Module:
+  - Requires library, transfers module
   - Allow RSS feeds to get show name from the feed for multi-show feeds
   - Parse <description> field for metadata hints
   - Better filtering of duplicates
   - Resolution preference (HD/SD)
-  - Automatically prefer/replace with REPACK
+  - Automatically prefer/replace with REPACK/PROPER
   - Release group / keyword preference
   - Keyword blacklist (TS, CAM, LINE, etc)
   - Watch a local directory for torrents to auto-download
@@ -139,24 +153,27 @@ Feed Module:
 
 Search Module:
   - Pluggable search providers
-  - Add a "Watchlist" section for monitoring upcoming releases from
-    search sites, integrates with feeds
+  - Add a watchlist for notification of new releases
 
 Sharing Module:
-  - Separate sharing bandwidth settings
-  - Periodically refresh search indexes from remote shares
-  - Add search provider that uses peer indexes to find media
-  - Ad-hoc torrent creation instead of HTTP downloads for load sharing
+  - Requires library module
+  - Max bandwidth settings
+  - Periodically refresh search indexes from remote peers
+  - Search provider that uses peer indexes to find media
+  - Ad-hoc torrent creation in addition to HTTP downloads for load sharing
   - Queue an entire remote folder for download
   - Add peer uploads to central active uploads queue for monitoring
 
 Web UI:
   - Mobile/desktop responsive design
-  - New homepage contents: active downloads, active uploads, current
-    queue, watchlist matches, download history, agent status, system
-	status
-  - Allow changing media type of a download inline in overview
+  - Pluggable homepage widgets
+    - Active downloads (+ X queued) -> link to download queue detail
+	- Recently completed + available for seeding -> link to history
+	- Search watchlist -> link to watchlist
+	- Active uploads (+ X queued) -> link to upload queue detail
+	- System/agent status
   - Per-download settings (seeding, throttling, etc)
+  - Allow changing download settings inline in overview (media type, etc)
   - UI hooks for modules
   - REST interface for managing downloads
 
