@@ -7,4 +7,4 @@ if test ! -e "debug"; then
 	mkdir debug/user-dir
 	mkdir debug/work-dir
 fi
-DOWNPOUR_DEBUG=1 bin/downpourd -c cfg/debug.cfg -d
+DOWNPOUR_DEBUG=1 bin/downpourd2 -c cfg/debug.cfg -d

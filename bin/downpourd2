@@ -9,7 +9,7 @@ if 'DOWNPOUR_DEBUG' in os.environ and os.environ['DOWNPOUR_DEBUG'] == '1':
     sys.path.insert(0, devpath)
 # End debug mode
 
-from downpour.core.daemon import Daemon
+from downpour2.core.daemon import Daemon
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -36,10 +36,10 @@ optdict = options.__dict__
 
 if options.debug:
     optdict['log'] = 'debug'
-    from downpour.core import application
+    from downpour2.core import application
     application.Application(optdict).run()
 else:
-    d = Daemon('downpour.core.application.Application', \
+    d = Daemon('downpour2.core.application.Application', \
         pidfile=options.pidfile, user=options.user, group=options.group, \
         stdout=options.stdout, stderr=options.stderr)
     d.args = (optdict,)

@@ -27,3 +27,5 @@ pip-log.txt
 
 # Swap files
 *.swp
+
+debug

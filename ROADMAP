@@ -24,17 +24,16 @@ New architecture split - independent modules w/ event bus
   1. Core
      - Application launcher
      - Event bus
-	 - Data store w/ module-specific
+	 - Data store w/ module-specific models/tables
 	 - User management
-	 - Agent registry
 	 - Configuration
 	 - Alerts / requires action
-	 - Module loading
+	 - Plugin loading
   2. Transfers module
   3. Download agents
   4. Feed module
   5. Library module
-     - Metadata providers
+     - Metadata provider plugins
   6. Search module
   7. Sharing module
   8. Client interfaces
@@ -49,42 +48,34 @@ General:
 Transfers Module:
   - Rework transfer workflow
     - Standard download workflow:
-      - Loading (fetch metadata)
-      - Downloading (download agent is fetching)
+      - Initializing (fetch metadata)
+      - Transferring (download agent is fetching)
       - Copying (fetching from download agent to work dir)
       - Importing (importing into media library)
       - Blocked (import / media detection failed, requires user interaction)
-      - Seeding (torrents only)
       - Completed (imported, safe to delete)
+      - Seeding (torrents only)
     - Additional download states:
       - Stopped (download manually paused)
       - Failed
     - Standard upload/seeding workflow:
       - Initializing (creating ad-hoc torrent)
-      - Uploading (HTTP download)
+      - Transferring (HTTP download)
       - Completed (HTTP download complete)
       - Seeding (torrents only)
       - Failed -> fixed at last progress
     - Additional upload states:
       - Stopped (upload manually paused)
       - Failed
-  - Additional download attributes
+  - Additional transfer attributes (from current download)
+	- Type (upload/download)
 	- Priority
 	- Bandwidth limit
 	- Seed ratio
   - Enforce which actions are allowed for each state to avoid "action in
     progress" conflicts
-  - Fix seeding / upload ratio
-  - Create separate seed queue / filter seeds out of default download view
-  - Show current peer downloads (from Sharing Module) in seed view
-  - Add time-based bandwidth limits
-  - Magnet links for torrents
-  - Verify torrent traffic encryption
-  - HTTP folder downloads - single download record with multiple individual
-    downloads inside, show a single progress is overview
-  - FTP downloads
 
-Download Agents:
+Transfer Agents:
   - Independent download managers that handle bit-moving for
     core transfer manager
   - Receives URL or metadata from core transfer manager
@@ -92,11 +83,11 @@ Download Agents:
     handling torrents for a whitelist of trackers
   - Global settings:
     - Default download bandwidth limit
-    - Max download bandwidth limit
+    - Max download bandwidth limit (+ time-based)
     - Default upload bandwidth limit
-    - Max upload bandwidth limit
+    - Max upload bandwidth limit (+ time-based)
 	- Default connection limit
-	- Max connection limit
+	- Max connection limit (+ time-based)
 	- Default seed ratio
 	- Max seed ratio
 	- Default time to live
@@ -117,14 +108,24 @@ Download Agents:
   - Downloads are removed from disk when they are removed
     by the requestor
 
+Local Agent
+
+rTorrent Agent
+
 Torrent Download Client:
   - Fix alert handling
+  - Fix seeding / upload ratio
+  - Magnet links for torrents
   - Rethink workflows for adding magnet vs. .torrent downloads
+  - Verify torrent traffic encryption
 
 HTTP Download Client:
   - Folder downloads (ZIP) get unpacked on completion
   - Metadata mimetypes (torrent, etc) should re-inject into transfer
     module after setting content as download metadata
+
+FTP Download Client:
+  - FTP downloads
 
 Library Module:
   - Better automatic media type guessing - use thetvdb.com / themoviedb.com?
