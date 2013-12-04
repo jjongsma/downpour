@@ -17,7 +17,7 @@ setup(name="Downpour",
     author="Jeremy Jongsma",
     author_email="jeremy@jongsma.org",
     url="http://home.jongsma.org/software/downpour/",
-    packages=find_packages('src', exclude='*.tests'),
+    packages=find_packages('src', exclude=['*.tests','*.tests.*']),
     package_data={'downpour2.web': ['templates/*.html', 'templates/*/*.html', 'templates/media/*/*']},
     include_package_data=True,
     # Not zip-safe until /media/ handler is rewritten

@@ -1,6 +1,7 @@
 import logging
 from twisted.internet import task, defer
 from downpour2.core.plugin import Plugin
+from downpour2.transfers import store
 
 class TransferManager(Plugin):
 
@@ -14,6 +15,8 @@ class TransferManager(Plugin):
                     os.makedirs(config['work_directory'])
                 except OSError as oe:
                     logging.error('Could not create working directory')
+
+        store.update_store(self.application.store)
 
     def start(self):
 

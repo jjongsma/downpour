@@ -7,16 +7,17 @@ class Application:
     def __init__(self, options=None):
 
         self.config = config.Config(options)
-        self.store = store.get_store(self.config)
-        self.event_bus = event.EventBus()
-        self.user_manager = users.UserManager(self.store)
-        
+
         # Logging configuration
         logging.basicConfig(
             level=getattr(logging, self.config.value(('downpour', 'log'),
                 'info').upper(), logging.INFO),
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
+        self.store = store.get_store(self.config)
+        self.event_bus = event.EventBus()
+        self.user_manager = users.UserManager(self.store)
+        
         self.plugins = []
 
         # Load plugins
@@ -42,8 +43,8 @@ class Application:
 
         logging.info('Downpour started')
 
-        self.state = list(self.store.find(store.models.State))
-        self.settings = list(self.store.find(store.models.Setting))
+        self.state = list(self.store.find(store.State))
+        self.settings = list(self.store.find(store.Setting))
 
         # Start plugins
         dfl = [ plugin.start() for plugin in self.plugins ]
@@ -102,7 +103,7 @@ class Application:
                 state = s
                 break
         if not state:
-            state = store.models.State()
+            state = store.State()
             state.name = name
             self.state.append(state)
             self.store.add(state)
@@ -122,7 +123,7 @@ class Application:
                 setting = s
                 break
         if not setting:
-            setting = store.models.Setting()
+            setting = store.Setting()
             setting.name = name
             self.settings.append(setting)
             self.store.add(setting)

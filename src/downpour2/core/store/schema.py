@@ -1,184 +1,129 @@
-from downpour2.core.store import patches
-from storm.schema.schema import Schema
+#
+# Copyright (c) 2006, 2007 Canonical
+#
+# Written by Gustavo Niemeyer <gustavo@niemeyer.net>
+#
+# This file is part of Storm Object Relational Mapper.
+#
+# Storm is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 2.1 of
+# the License, or (at your option) any later version.
+#
+# Storm is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+"""Manage database shemas.
 
-class DownpourSchema(Schema):
+The L{Schema} class can be used to create, drop, clean and upgrade database
+schemas.
 
-    create_statements = [
+A database L{Schema} is defined by the series of SQL statements that should be
+used to create, drop and clear the schema, respectively and by a patch module
+used to upgrade it (see also L{PatchApplier}).
 
-        "CREATE TABLE state (" +
-            "id INTEGER PRIMARY KEY," +
-            "name TEXT," +
-            "value TEXT" +
-            ")",
+For example:
 
-        "CREATE TABLE settings (" +
-            "id INTEGER PRIMARY KEY," +
-            "name TEXT," +
-            "value TEXT" +
-            ")",
+>>> store =  Store(create_database('sqlite:'))
+>>> creates = ['CREATE TABLE person (id INTEGER, name TEXT)']
+>>> drops = ['DROP TABLE person']
+>>> deletes = ['DELETE FROM person']
+>>> import patch_module
+>>> schema = Schema(creates, drops, deletes, patch_module)
+>>> schema.create(store)
 
-        "CREATE TABLE users (" +
-            "id INTEGER PRIMARY KEY," +
-            "username TEXT," +
-            "password TEXT," +
-            "email TEXT," +
-            "directory TEXT," +
-            "max_downloads INTEGER," +
-            "max_rate INTEGER," +
-            "share_enabled BOOLEAN," +
-            "share_password TEXT," +
-            "share_max_rate INTEGER," +
-            "admin BOOLEAN" +
-            ")",
 
-        "CREATE TABLE remote_shares (" +
-            "id INTEGER PRIMARY KEY," +
-            "user_id INTEGER," +
-            "name TEXT," +
-            "address TEXT," +
-            "username TEXT," +
-            "password TEXT," +
-            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
-            ")",
+where patch_module is a Python module containing database patches used to
+upgrade the schema over time.
+"""
 
-        "CREATE TABLE options (" +
-            "id INTEGER PRIMARY KEY," +
-            "user_id INTEGER," +
-            "name TEXT," +
-            "value TEXT," +
-            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
-            ")",
+from storm.locals import StormError
+from downpour2.core.store.patch import PatchApplier
 
-        "CREATE TABLE libraries (" +
-            "id INTEGER PRIMARY KEY," +
-            "user_id INTEGER," +
-            "media_type TEXT," +
-            "directory TEXT," +
-            "pattern TEXT," +
-            "keepall BOOLEAN," +
-            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
-            ")",
 
-        "CREATE TABLE feeds (" +
-            "id INTEGER PRIMARY KEY," +
-            "user_id INTEGER," +
-            "name TEXT," +
-            "url TEXT," +
-            "media_type TEXT," +
-            "etag TEXT," +
-            "modified INTEGER," +
-            "active BOOLEAN," +
-            "auto_clean BOOLEAN," +
-            "last_update INTEGER," +
-            "last_check INTEGER," +
-            "last_error TEXT," +
-            "update_frequency INTEGER," +
-            "queue_size INTEGER," +
-            "save_priority INTEGER," +
-            "download_directory TEXT," +
-            "rename_pattern TEXT," +
-            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
-            ")",
+class Schema(object):
+    """Create, drop, clean and patch table schemas.
 
-        "CREATE TABLE downloads (" +
-            "id INTEGER PRIMARY KEY," +
-            "user_id INTEGER," +
-            "feed_id INTEGER," +
-            "url TEXT," +
-            "filename TEXT," +
-            "media_type TEXT," +
-            "mime_type TEXT," +
-            "description TEXT," +
-            "metadata BLOB," +
-            "info_hash BLOB," +
-            "resume_data BLOB," +
-            "active BOOLEAN," +
-            "status INTEGER," +
-            "status_message TEXT," +
-            "progress REAL," +
-            "size REAL," +
-            "downloaded REAL," +
-            "uploaded REAL," +
-            "added INTEGER," +
-            "started INTEGER," +
-            "completed INTEGER," +
-            "deleted BOOLEAN," +
-            "imported BOOLEAN," +
-            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,"
-            "FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE"
-            ")",
+    @param creates: A list of C{CREATE TABLE} statements.
+    @param drops: A list of C{DROP TABLE} statements.
+    @param deletes: A list of C{DELETE FROM} statements.
+    @param patch_package: The Python package containing patch modules to apply.
+    @param committer: Optionally a committer to pass to the L{PatchApplier}.
 
-        "CREATE INDEX downloads_completed on downloads(completed)",
-        "CREATE INDEX downloads_deleted on downloads(deleted)",
+    @see: L{PatchApplier}.
+    """
+    _create_patch = "CREATE TABLE patch (version TEXT NOT NULL PRIMARY KEY)"
+    _drop_patch = "DROP TABLE IF EXISTS patch"
+    _autocommit = True
 
-        "CREATE TABLE feed_items (" +
-            "id INTEGER PRIMARY KEY," +
-            "feed_id INTEGER," +
-            "download_id INTEGER," +
-            "guid TEXT," +
-            "title TEXT," +
-            "link TEXT," +
-            "updated INTEGER," +
-            "content TEXT," +
-            "removed BOOLEAN," +
-            "FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE,"
-            "FOREIGN KEY(download_id) REFERENCES downloads(id) ON DELETE SET NULL ON UPDATE CASCADE"
-            ")",
+    def __init__(self, creates, drops, deletes, patch_package, committer=None):
+        self._creates = creates
+        self._drops = drops
+        self._deletes = deletes
+        self._patch_package = patch_package
+        self._committer = committer
 
-        "CREATE INDEX feed_items_updated on feed_items(updated)",
-        "CREATE INDEX feed_items_removed on feed_items(removed)",
+    def _execute_statements(self, store, statements):
+        """Execute the given statements in the given store."""
+        for statement in statements:
+            try:
+                store.execute(statement)
+            except Exception:
+                print "Error running %s" % statement
+                raise
+        if self._autocommit:
+            store.commit()
 
-        "CREATE TABLE files (" +
-            "id INTEGER PRIMARY KEY," +
-            "user_id INTEGER," +
-            "directory TEXT," +
-            "filename TEXT," +
-            "size INTEGER," +
-            "media_type TEXT," +
-            "mime_type TEXT," +
-            "download_id INTEGER," +
-            "original_filename TEXT," +
-            "description TEXT," +
-            "added INTEGER," +
-            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,"
-            "FOREIGN KEY(download_id) REFERENCES downloads(id) ON DELETE CASCADE ON UPDATE CASCADE"
-            ")",
+    def autocommit(self, flag):
+        """Control whether to automatically commit/rollback schema changes.
 
-        "INSERT INTO state(name, value) VALUES ('paused', '0')",
+        The default is C{True}, if set to C{False} it's up to the calling code
+        to handle commits and rollbacks.
 
-        # Initial admin user
-        "INSERT INTO users(username, password, admin) VALUES ('admin', 'password', 1)"
+        @note: In case of rollback the exception will just be propagated, and
+            no rollback on the store will be performed.
+        """
+        self._autocommit = flag
 
-    ]
+    def create(self, store):
+        """Run C{CREATE TABLE} SQL statements with C{store}."""
+        self._execute_statements(store, [self._create_patch])
+        self._execute_statements(store, self._creates)
 
-    drop_statements = [
-        "DROP TABLE state",
-        "DROP TABLE settings",
-        "DROP TABLE users",
-        "DROP TABLE remote_shares",
-        "DROP TABLE options",
-        "DROP TABLE libraries",
-        "DROP TABLE feeds",
-        "DROP TABLE downloads",
-        "DROP TABLE feed_items",
-        "DROP TABLE files"
-    ]
+    def drop(self, store):
+        """Run C{DROP TABLE} SQL statements with C{store}."""
+        self._execute_statements(store, self._drops)
+        self._execute_statements(store, [self._drop_patch])
 
-    delete_statements = [
-        "DELETE FROM state",
-        "DELETE FROM settings",
-        "DELETE FROM users",
-        "DELETE FROM remote_shares",
-        "DELETE FROM options",
-        "DELETE FROM libraries",
-        "DELETE FROM feeds",
-        "DELETE FROM downloads",
-        "DELETE FROM feed_items",
-        "DELETE FROM files",
-        "INSERT INTO state(name, value) VALUES ('paused', '0')",
-        "INSERT INTO users(username, password, admin) VALUES ('admin', 'password', 1)"
-    ]
+    def delete(self, store):
+        """Run C{DELETE FROM} SQL statements with C{store}."""
+        self._execute_statements(store, self._deletes)
 
-    def __init__(self):
-        super(DownpourSchema, self).__init__(DownpourSchema.create_statements,
-            DownpourSchema.drop_statements, DownpourSchema.delete_statements, patches)
+    def upgrade(self, store):
+        """Upgrade C{store} to have the latest schema.
+
+        If a schema isn't present a new one will be created.  Unapplied
+        patches will be applied to an existing schema.
+        """
+        class NoopCommitter(object):
+            commit = lambda _: None
+            rollback = lambda _: None
+
+        committer = self._committer if self._autocommit else NoopCommitter()
+        patch_applier = PatchApplier(store, self._patch_package, committer)
+        try:
+            store.execute("SELECT * FROM patch LIMIT 1")
+        except StormError:
+            # No schema at all. Create it from the ground.
+            store.rollback()
+            self.create(store)
+            patch_applier.mark_applied_all()
+            if self._autocommit:
+                store.commit()
+        else:
+            patch_applier.apply_all()

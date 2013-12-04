@@ -1,4 +1,4 @@
-from downpour2.core.store import models
+from downpour2.core import store
 
 class UserManager:
 
@@ -8,15 +8,15 @@ class UserManager:
 
     def login(self, username, password):
 
-        user = self.store.find(models.User,
-            models.User.username == username,
-            models.User.password == password).one()
+        user = self.store.find(store.User,
+            store.User.username == username,
+            store.User.password == password).one()
 
         return user
 
     def get(self, username):
 
-        user = self.store.find(models.User,
-            models.User.username == username).one()
+        user = self.store.find(store.User,
+            store.User.username == username).one()
 
         return user
