@@ -40,6 +40,7 @@ class EventBus:
 
     def __init__(self):
         self.listeners = {}
+        self.LOG = logging.getLogger(__name__);
 
     def subscribe(self, event, listener, *args):
         if event not in self.listeners:
@@ -47,7 +48,7 @@ class EventBus:
         self.listeners[event].append([listener, args])
 
     def fire(self, event, *args):
-        logging.debug('event: %s' % event)
+        self.LOG.debug('event: %s' % event)
         if event in self.listeners:
             for l in self.listeners[event]:
                 try:
@@ -56,7 +57,7 @@ class EventBus:
                     cargs.extend(l[1])
                     l[0](*cargs)
                 except Exception as e:
-                    logging.error('Caught error in event listener: %s' % e)
+                    self.LOG.error('Caught error in event listener: %s' % e)
                     traceback.print_exc()
 
     def callback(self, result, event, *args):

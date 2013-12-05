@@ -1,6 +1,7 @@
 import os, copy, ConfigParser
+from UserDict import DictMixin
 
-class Config:
+class Config(DictMixin):
 
     default_values = {
         'config': ['/etc/downpour.cfg',
@@ -9,9 +10,8 @@ class Config:
             'state': os.path.expanduser('~/.config/downpour/downpour.db'),
             'log': 'info',
             'interface': '0.0.0.0',
-            'plugins': 'downpour2.web.WebInterfacePlugin'
         },
-        'downpour2.web.WebInterfacePlugin': {
+        'http': {
             'port': 6280
         }
     }
@@ -23,7 +23,7 @@ class Config:
         # Load configuration from file
         config = self.values['config']
         if options and options.has_key('config'):
-            config.append(os.path.expanduser(options['config']))
+            config = [os.path.expanduser(options['config'])]
         self.values['config'] = config
         cfgparser = ConfigParser.RawConfigParser()
         cfgparser.read(config)
@@ -38,7 +38,7 @@ class Config:
             sections = {
                 'log': self.values['downpour'],
                 'interface': self.values['downpour'],
-                'port': self.values['downpour2.web.WebInterfacePlugin']
+                'port': self.values['http']
             }
             for key in options:
                 if options[key] is not None and sections.has_key(key):
@@ -53,3 +53,15 @@ class Config:
         if option[0] in self.values and option[1] in self.values[option[0]]:
             return self.values[option[0]][option[1]]
         return default
+
+    def __getitem__(self, key):
+        return self.values[key]
+
+    def __setitem__(self, key, value):
+        self.values[key] = value
+
+    def __delitem__(self, key, value):
+        del self.values[key]
+
+    def keys(self):
+        return self.values.keys()

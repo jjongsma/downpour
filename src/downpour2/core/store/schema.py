@@ -92,7 +92,11 @@ class Schema(object):
 
     def create(self, store):
         """Run C{CREATE TABLE} SQL statements with C{store}."""
-        self._execute_statements(store, [self._create_patch])
+        try:
+            store.execute("SELECT * FROM patch LIMIT 1")
+        except StormError:
+            store.rollback()
+            self._execute_statements(store, [self._create_patch])
         self._execute_statements(store, self._creates)
 
     def drop(self, store):
@@ -104,7 +108,7 @@ class Schema(object):
         """Run C{DELETE FROM} SQL statements with C{store}."""
         self._execute_statements(store, self._deletes)
 
-    def upgrade(self, store):
+    def upgrade(self, store, checkTable='patch'):
         """Upgrade C{store} to have the latest schema.
 
         If a schema isn't present a new one will be created.  Unapplied
@@ -117,7 +121,7 @@ class Schema(object):
         committer = self._committer if self._autocommit else NoopCommitter()
         patch_applier = PatchApplier(store, self._patch_package, committer)
         try:
-            store.execute("SELECT * FROM patch LIMIT 1")
+            store.execute("SELECT * FROM %s LIMIT 1" % checkTable)
         except StormError:
             # No schema at all. Create it from the ground.
             store.rollback()

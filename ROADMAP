@@ -27,8 +27,9 @@ New architecture split - independent modules w/ event bus
 	 - Data store w/ module-specific models/tables
 	 - User management
 	 - Configuration
-	 - Alerts / requires action
 	 - Plugin loading
+	 - Alerts / action required
+     - Flow state machine
   2. Transfers module
   3. Download agents
   4. Feed module
@@ -39,10 +40,9 @@ New architecture split - independent modules w/ event bus
   8. Client interfaces
   9. Third-party plugins (XBMC remote, etc)
 
-General:
-  - Flow state machine
+All modules:
   - Database cleanup
-  - Revisit unicode support in Twisted (upgrade to 13?)
+  - Revisit unicode support in Twisted
   - Language translations
 
 Transfers Module:
@@ -79,6 +79,7 @@ Transfer Agents:
   - Independent download managers that handle bit-moving for
     core transfer manager
   - Receives URL or metadata from core transfer manager
+  - May be local or remote (seed box)
   - A download agent can have acceptance restrictions, such as only
     handling torrents for a whitelist of trackers
   - Global settings:

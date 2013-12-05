@@ -1,15 +1,16 @@
 import os
-from downpour2.core.store import schema
+from storm.locals import *
+from downpour2.core.store import schema, User
 from downpour2.transfers import patches
 
 def update_store(store):
-    TransferSchema().upgrade(store)
+    TransferSchema().upgrade(store, checkTable='transfers')
 
 class TransferSchema(schema.Schema):
 
     create_statements = [
 
-        "CREATE TABLE downloads (" +
+        "CREATE TABLE transfers (" +
             "id INTEGER PRIMARY KEY," +
             "user_id INTEGER," +
             "feed_id INTEGER," +
@@ -37,26 +38,26 @@ class TransferSchema(schema.Schema):
             "FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE"
             ")",
 
-        "CREATE INDEX downloads_completed on downloads(completed)",
-        "CREATE INDEX downloads_deleted on downloads(deleted)"
+        "CREATE INDEX transfers_completed on transfers(completed)",
+        "CREATE INDEX transfers_deleted on transfers(deleted)"
 
     ]
 
     drop_statements = [
-        "DROP TABLE downloads"
+        "DROP TABLE transfers"
     ]
 
     delete_statements = [
-        "DELETE FROM downloads"
+        "DELETE FROM transfers"
     ]
 
     def __init__(self):
         super(TransferSchema, self).__init__(TransferSchema.create_statements,
             TransferSchema.drop_statements, TransferSchema.delete_statements, patches)
 
-class Download(object):
+class Transfer(object):
 
-    __storm_table__ = 'downloads'
+    __storm_table__ = 'transfers'
 
     id = Int(primary=True)
     user_id = Int()
@@ -83,7 +84,7 @@ class Download(object):
     imported = Bool()
 
     user = Reference(user_id, User.id)
-    feed = Reference(feed_id, Feed.id)
+    # feed = Reference(feed_id, Feed.id)
 
     # Non-persistent fields
     health = 0
