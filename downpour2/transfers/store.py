@@ -23,7 +23,7 @@ class TransferSchema(schema.Schema):
             "info_hash BLOB," +
             "resume_data BLOB," +
             "active BOOLEAN," +
-            "status INTEGER," +
+            "state INTEGER," +
             "status_message TEXT," +
             "progress REAL," +
             "size REAL," +
@@ -71,7 +71,7 @@ class Transfer(object):
     info_hash = RawStr()
     resume_data = RawStr()
     active = Bool()
-    status = Int()
+    state = Int()
     status_message = Unicode()
     progress = Float()
     size = Int()

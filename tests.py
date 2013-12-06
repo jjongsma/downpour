@@ -2,7 +2,7 @@
 import unittest
 
 modules_to_test = (
-    'downpour.core.tests',
+    'downpour2.core.tests',
     # 'downpour.core.tests.store',
     # 'downpour.core.tests.event',
     # 'downpour.core.tests.rest',

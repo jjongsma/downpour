@@ -2,7 +2,6 @@ from ez_setup import use_setuptools
 use_setuptools()
 from setuptools import setup, find_packages
 import sys, os
-sys.path.insert(0, 'src')
 from downpour2.core import VERSION
 
 setup(name="Downpour",
@@ -17,7 +16,7 @@ setup(name="Downpour",
     author="Jeremy Jongsma",
     author_email="jeremy@jongsma.org",
     url="http://home.jongsma.org/software/downpour/",
-    packages=find_packages('src', exclude=['*.tests','*.tests.*']),
+    packages=find_packages(exclude=['*.tests','*.tests.*']),
     package_data={'downpour2.web': ['templates/*.html', 'templates/*/*.html', 'templates/media/*/*']},
     include_package_data=True,
     # Not zip-safe until /media/ handler is rewritten
@@ -33,5 +32,5 @@ setup(name="Downpour",
     #    ('/usr/share/icons/hicolor/scalable/apps', ['graphics/icons/scalable/apps/downpour.svg'])
     #    ],
     #install_requires=['Twisted-Core>=9.0', 'Twisted-Web>=9.0', 'storm>=0.14', 'jinja2==2.5', 'FeedParser>=4.1', 'python-dateutil==1.5']
-    install_requires=['Twisted>=13.0', 'storm>=0.20', 'jinja2>=2.7', 'FeedParser>=5.1', 'python-dateutil>=2.2']
+    install_requires=['Twisted>=13.0', 'storm>=0.20', 'jinja2>=2.7', 'FeedParser>=5.1', 'python-dateutil>=2.2', 'fysom>=1.0']
 )

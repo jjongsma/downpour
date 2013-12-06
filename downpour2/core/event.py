@@ -6,21 +6,6 @@ DOWNPOUR_SHUTDOWN = 'downpour_shutdown'
 DOWNPOUR_PAUSED = 'downpour_paused'
 DOWNPOUR_RESUMED = 'downpour_resumed'
 
-# Upload / download
-TRANSFER_ADDED = 'transfer_added'
-TRANSFER_INITIALIZED = 'transfer_initialized'
-TRANSFER_STARTED = 'transfer_started'
-TRANSFER_COMPLETE = 'transfer_complete'
-TRANSFER_STOPPED = 'transfer_stopped'
-TRANSFER_FAILED = 'transfer_failed'
-TRANSFER_REMOVED = 'transfer_removed'
-
-# Download only
-TRANSFER_FETCHED = 'transfer_fetched'
-TRANSFER_IMPORTED = 'transfer_imported'
-TRANSFER_BLOCKED = 'transfer_blocked'
-TRANSFER_SEEDING = 'transfer_seeding'
-
 LIBRARY_FILE_ADDED = 'library_file_added'
 LIBRARY_FILE_UPDATED = 'library_file_updated'
 LIBRARY_FILE_REMOVED = 'library_file_removed'
