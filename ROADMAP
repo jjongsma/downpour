@@ -1,35 +1,17 @@
 ---------------------------
-0.3: "Sharing is Caring"
----------------------------
-Focused on seeding, sharing, private trackers
-Features TBD
-
----------------------------
-0.4: "Conan the Librarian"
----------------------------
-Focused on better library management
-Features TBD
-
----------------------------
-0.5: "Social Butterfly"
----------------------------
-Focused on remote shares and searching
-Features TBD
-
----------------------------
 Feature List
 ---------------------------
 
 New architecture split - independent modules w/ event bus
   1. Core
-     - Application launcher
-     - Event bus
-	 - Data store w/ module-specific models/tables
+     X Application launcher
+     X Event bus
+	 X Data store w/ module-specific models/tables
 	 - User management
-	 - Configuration
-	 - Plugin loading
+	 X Configuration
+	 X Plugin loading
 	 - Alerts / action required
-     - Flow state machine
+     X Flow state machine
   2. Transfers module
   3. Download agents
   4. Feed module
@@ -46,34 +28,34 @@ All modules:
   - Language translations
 
 Transfers Module:
-  - Rework transfer workflow
-    - Standard download workflow:
-      - Initializing (fetch metadata)
-      - Transferring (download agent is fetching)
-      - Copying (fetching from download agent to work dir)
-      - Importing (importing into media library)
-      - Blocked (import / media detection failed, requires user interaction)
-      - Completed (imported, safe to delete)
-      - Seeding (torrents only)
-    - Additional download states:
-      - Stopping
-      - Stopped (download manually paused)
-      - Failed
-    - Standard upload/seeding workflow:
-      - Initializing (creating ad-hoc torrent)
-      - Transferring (HTTP download)
-      - Completed (HTTP download complete)
-      - Seeding (torrents only)
-      - Failed -> fixed at last progress
-    - Additional upload states:
-      - Stopping
-      - Stopped (upload manually paused)
-      - Failed
-  - Additional transfer attributes (from current download)
-	- Type (upload/download)
-	- Priority
-	- Bandwidth limit
-	- Seed ratio
+  X Rework transfer workflow
+    X Standard download workflow:
+      X Initializing (fetch metadata)
+      X Transferring (download agent is fetching)
+      X Copying (fetching from download agent to work dir)
+      X Importing (importing into media library)
+      X Blocked (import / media detection failed, requires user interaction)
+      X Completed (imported, safe to delete)
+      X Seeding (torrents only)
+    X Additional download states:
+      X Stopping
+      X Stopped (download manually paused)
+      X Failed
+    X Standard upload/seeding workflow:
+      X Initializing (creating ad-hoc torrent)
+      X Transferring (HTTP download)
+      X Completed (HTTP download complete)
+      X Seeding (torrents only)
+      X Failed -> fixed at last progress
+    X Additional upload states:
+      X Stopping
+      X Stopped (upload manually paused)
+      X Failed
+  X Additional transfer attributes (from current download)
+	X Type (upload/download)
+	X Priority
+	X Bandwidth limit
+	X Seed ratio
   - Enforce which actions are allowed for each state to avoid "action in
     progress" conflicts
 

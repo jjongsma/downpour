@@ -1,4 +1,5 @@
 from fysom import Fysom
+import mimetypes, logging
 
 # Upload / download
 ADDED = 'transfer_added'
@@ -19,53 +20,16 @@ IMPORTED = 'transfer_imported'
 IMPORT_FAILED = 'transfer_import_failed'
 SEEDED = 'transfer_seed_complete'
 
-class DownloadFlow(Fysom):
+class TransferFlow(Fysom):
 
-    def __init__(self, transfer, application):
+    def __init__(self, transfer, application, rules):
+
+        super(TransferFlow, self).__init__(rules)
 
         self.transfer = transfer
         self.application = application
 
-        super(TransferFlow, self).__init__({
-            'initial': State.QUEUED,
-            'events': [
-                # Start download
-                {'name': START, 'src': State.QUEUED, 'dst': State.INITIALIZING},
-                {'name': INITIALIZED, 'src': State.INITIALIZING, 'dst': State.STARTING},
-                {'name': STARTED, 'src': State.STARTING, 'dst': State.TRANSFERRING},
-                # Download paused
-                {'name': STOP, 'src': State.TRANSFERRING, 'dst': State.STOPPING},
-                {'name': STOPPED, 'src': State.STOPPING, 'dst': State.STOPPED},
-                # Download resumed
-                {'name': ENQUEUE, 'src': State.STOPPED, 'dst': State.QUEUED},
-                {'name': START, 'src': [ State.STOPPED, State.FAILED ],
-                    'dst': State.INITIALIZING},
-                # Download completed/failed
-                {'name': FAILED, 'src': State.TRANSFERRING, 'dst': State.FAILED},
-                {'name': COMPLETE, 'src': State.TRANSFERRING, 'dst': State.COPYING},
-                # Fetch files from agent
-                {'name': FETCH_FAILED, 'src': State.COPYING, 'dst': State.PENDING_COPY},
-                {'name': STOP, 'src': State.COPYING, 'dst': State.PENDING_COPY},
-                {'name': START, 'src': State.PENDING_COPY, 'dst': State.COPYING},
-                {'name': FETCHED, 'src': State.COPYING, 'dst': State.IMPORTING},
-                # Import to library
-                {'name': IMPORT_FAILED, 'src': State.IMPORTING, 'dst': State.PENDING_IMPORT},
-                {'name': STOP, 'src': State.IMPORTING, 'dst': State.PENDING_IMPORT},
-                {'name': START, 'src': State.PENDING_IMPORT, 'dst': State.IMPORTING},
-                {'name': IMPORTED, 'src': State.IMPORTING, 'dst': State.SEEDING},
-                # Completed
-                {'name': SEEDED, 'src': State.SEEDING, 'dst': State.COMPLETED},
-                # Remove from queue
-                {'name': REMOVE, 'src': [ State.TRANSFERRING, State.SEEDING ],
-                    'dst': State.REMOVING},
-                {'name': STOPPED, 'src': State.REMOVING, 'dst': State.REMOVED},
-                {'name': REMOVE, 'src': [ State.QUEUED, State.FAILED, State.COMPLETED,
-                        State.PENDING_COPY, State.PENDING_IMPORT ], 
-                    'dst': State.REMOVED},
-            ]
-        }); 
-
-    def onstatechange(self, e):
+    def onchangestate(self, e):
 
         self.transfer.state = e.dst
         self.application.store.commit()
@@ -76,6 +40,70 @@ class DownloadFlow(Fysom):
             getattr(self, transition)(e)
 
         self.application.event_bus.fire(e.event, self.transfer)
+
+class DownloadFlow(TransferFlow):
+
+    def __init__(self, transfer, application):
+
+        super(DownloadFlow, self).__init__(transfer, application, {
+            'initial': State.QUEUED,
+            'events': [
+                # Start download
+                {'src': State.QUEUED, 'name': START, 'dst': State.INITIALIZING},
+                {'src': State.INITIALIZING, 'name': INITIALIZED, 'dst': State.STARTING},
+                {'src': State.STARTING, 'name': STARTED, 'dst': State.TRANSFERRING},
+                # Download paused
+                {'src': State.TRANSFERRING, 'name': STOP, 'dst': State.STOPPING},
+                {'src': State.STOPPING, 'name': STOPPED, 'dst': State.STOPPED},
+                # Download resumed
+                {'src': State.STOPPED, 'name': ENQUEUE, 'dst': State.QUEUED},
+                {'src': [ State.STOPPED, State.FAILED ], 'name': START, 'dst': State.INITIALIZING},
+                # Download completed/failed
+                {'src': State.TRANSFERRING, 'name': FAILED, 'dst': State.FAILED},
+                {'src': State.TRANSFERRING, 'name': COMPLETE, 'dst': State.COPYING},
+                # Fetch files from agent
+                {'src': State.COPYING, 'name': FETCH_FAILED, 'dst': State.PENDING_COPY},
+                {'src': State.COPYING, 'name': STOP, 'dst': State.PENDING_COPY},
+                {'src': State.PENDING_COPY, 'name': START, 'dst': State.COPYING},
+                {'src': State.COPYING, 'name': FETCHED, 'dst': State.IMPORTING},
+                # Import to library
+                {'src': State.IMPORTING, 'name': IMPORT_FAILED, 'dst': State.PENDING_IMPORT},
+                {'src': State.IMPORTING, 'name': STOP, 'dst': State.PENDING_IMPORT},
+                {'src': State.PENDING_IMPORT, 'name': START, 'dst': State.IMPORTING},
+                {'src': State.IMPORTING, 'name': IMPORTED, 'dst': State.SEEDING},
+                # Completed
+                {'src': State.SEEDING, 'name': SEEDED, 'dst': State.COMPLETED},
+                # Remove from queue
+                {'src': [ State.TRANSFERRING, State.SEEDING ], 'name': REMOVE, 'dst': State.REMOVING},
+                {'src': State.REMOVING, 'name': STOPPED, 'dst': State.REMOVED},
+                {'src': [ State.QUEUED, State.FAILED, State.COMPLETED, State.PENDING_COPY,
+                    State.PENDING_IMPORT ], 'name': REMOVE, 'dst': State.REMOVED},
+            ]
+        }); 
+
+class UploadFlow(TransferFlow):
+
+    def __init__(self, transfer, application):
+
+        super(UploadFlow, self).__init__(transfer, application, {
+            'initial': State.QUEUED,
+            'events': [
+                # Start upload
+                {'src': State.QUEUED, 'name': START, 'dst': State.INITIALIZING},
+                {'src': State.INITIALIZING, 'name': INITIALIZED, 'dst': State.STARTING},
+                {'src': State.STARTING, 'name': STARTED, 'dst': State.TRANSFERRING},
+                # Upload paused
+                {'src': State.TRANSFERRING, 'name': STOP, 'dst': State.STOPPING},
+                {'src': State.STOPPING, 'name': STOPPED, 'dst': State.STOPPED},
+                # Upload completed/failed
+                {'src': State.TRANSFERRING, 'name': FAILED, 'dst': State.FAILED},
+                {'src': State.TRANSFERRING, 'name': COMPLETE, 'dst': State.COMPLETED},
+                # Remove from queue
+                {'src': State.TRANSFERRING, 'name': REMOVE, 'dst': State.REMOVING},
+                {'src': State.REMOVING, 'name': STOPPED, 'dst': State.REMOVED},
+                {'src': [ State.FAILED, State.COMPLETED ], 'name': REMOVE, 'dst': State.REMOVED},
+            ]
+        }); 
 
 class State:
 

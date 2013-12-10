@@ -23,6 +23,10 @@ class TransferSchema(schema.Schema):
             "info_hash BLOB," +
             "resume_data BLOB," +
             "active BOOLEAN," +
+            "type TEXT," +
+            "priority INTEGER," +
+            "bandwidth REAL," +
+            "seed_ratio REAL," +
             "state INTEGER," +
             "status_message TEXT," +
             "progress REAL," +
@@ -71,6 +75,10 @@ class Transfer(object):
     info_hash = RawStr()
     resume_data = RawStr()
     active = Bool()
+    type = Unicode()
+    priority = Int()
+    bandwidth = Float()
+    seed_ratio = Float()
     state = Int()
     status_message = Unicode()
     progress = Float()
@@ -93,5 +101,3 @@ class Transfer(object):
     connections = 0
     elapsed = 0
     timeleft = 0
-    importing = False
-
