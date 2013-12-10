@@ -29,8 +29,8 @@ class TransferManager(Plugin):
             self.LOG.error('Working directory not available, not starting plugin')
             return defer.fail(IOError('Working directory not available, not starting plugin'))
 
-        self.application.event_bus.subscribe(event.DOWNPOUR_PAUSED, self.pause)
-        self.application.event_bus.subscribe(event.DOWNPOUR_RESUMED, self.resume)
+        self.application.events.subscribe(event.DOWNPOUR_PAUSED, self.pause)
+        self.application.events.subscribe(event.DOWNPOUR_RESUMED, self.resume)
 
         self.LOG.info('Resuming previous transfers')
 

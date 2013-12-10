@@ -1,8 +1,9 @@
 import os
+import datetime
 from storm.locals import *
 from downpour2.core.store import schema, sqlitefk, patches
 
-def get_store(config=None):
+def make_store(config=None):
 
     db_path = os.path.expanduser(config.value(('downpour', 'state')))
 
@@ -53,6 +54,17 @@ class CoreSchema(schema.Schema):
             "user_id INTEGER," +
             "name TEXT," +
             "value TEXT," +
+            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
+            ")",
+
+        "CREATE TABLE alerts (" +
+            "id INTEGER PRIMARY KEY," +
+            "user_id INTEGER," +
+            "timestamp INTEGER," +
+            "title TEXT," +
+            "description TEXT," +
+            "url TEXT," +
+            "viewed BOOLEAN," +
             "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
             ")",
 
@@ -125,3 +137,20 @@ class Option(object):
     value = Unicode()
 
     user = Reference(user_id, User.id)
+
+class Alert(object):
+
+    __storm_table__ = 'alerts'
+
+    id = Int(primary=True)
+    user_id = Int()
+    timestamp = Int()
+    title = Unicode()
+    description = Unicode()
+    url = Unicode()
+    viewed = Bool()
+
+    user = Reference(user_id, User.id)
+
+def cleanup(store):
+    pass

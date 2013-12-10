@@ -39,7 +39,7 @@ class TransferFlow(Fysom):
         if hasattr(self, transition) and callable(getattr(self, transition)):
             getattr(self, transition)(e)
 
-        self.application.event_bus.fire(e.event, self.transfer)
+        self.application.events.fire(e.event, self.transfer)
 
 class DownloadFlow(TransferFlow):
 

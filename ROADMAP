@@ -7,11 +7,12 @@ New architecture split - independent modules w/ event bus
      X Application launcher
      X Event bus
 	 X Data store w/ module-specific models/tables
-	 - User management
+	 X User management
 	 X Configuration
 	 X Plugin loading
-	 - Alerts / action required
+	 X Alerts / action required
      X Flow state machine
+     X Janitor / cleanup scheduler
   2. Transfers module
   3. Download agents
   4. Feed module
@@ -58,6 +59,8 @@ Transfers Module:
 	X Seed ratio
   - Enforce which actions are allowed for each state to avoid "action in
     progress" conflicts
+  - Oh yeah, implement the actual transfer action logic (functionality!
+    it's an afterthought!)
 
 Transfer Agents:
   - Independent download managers that handle bit-moving for

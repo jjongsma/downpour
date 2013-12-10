@@ -1,6 +1,6 @@
 import os, pwd, grp, logging, atexit, traceback
 from twisted.internet import reactor, defer
-from downpour2.core import config, plugin, event, store, users
+from downpour2.core import config, plugin, event, store, users, alerts, janitor
 
 class Application:
 
@@ -23,9 +23,13 @@ class Application:
 
         self.LOG = logging.getLogger(__name__);
 
-        self.store = store.get_store(self.config)
-        self.event_bus = event.EventBus()
-        self.user_manager = users.UserManager(self.store)
+        self.store = store.make_store(self.config)
+        self.events = event.EventBus()
+        self.users = users.UserManager(self.store)
+        self.alert = alerts.AlertManager(self.store)
+        self.janitor = janitor.Janitor()
+
+        self.janitor.add_job(janitor.DAILY, store.cleanup, self.store)
         
         self.plugins = {}
 
@@ -80,22 +84,22 @@ class Application:
                 traceback.print_exc()
         self.wait_for_deferred(defer.DeferredList(dfl, consumeErrors=1))
 
-        self.event_bus.fire(event.DOWNPOUR_STARTED)
+        self.events.fire(event.DOWNPOUR_STARTED)
 
         # Shutdown handler
         atexit.register(self.stop)
 
     def pause(self):
         self.set_state(u'paused', u'1');
-        self.event_bus.fire(DOWNPOUR_PAUSED)
+        self.events.fire(DOWNPOUR_PAUSED)
 
     def resume(self):
         self.set_state(u'paused', u'0');
-        self.event_bus.fire(DOWNPOUR_RESUMED)
+        self.events.fire(DOWNPOUR_RESUMED)
 
     def stop(self):
 
-        self.event_bus.fire(event.DOWNPOUR_SHUTDOWN)
+        self.events.fire(event.DOWNPOUR_SHUTDOWN)
 
         # Stop plugins
         dfl = []

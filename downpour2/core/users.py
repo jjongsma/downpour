@@ -14,9 +14,22 @@ class UserManager:
 
         return user
 
-    def get(self, username):
+    def get(self, id=None, username=None):
 
-        user = self.store.find(store.User,
-            store.User.username == username).one()
+        user = None
+
+        if username is not None:
+            user = self.store.find(store.User,
+                store.User.username == username).one()
+        elif id is not None:
+            user = self.store.find(store.User,
+                store.User.id == id).one()
 
         return user
+
+    def delete(self, id):
+        self.store.remove(self.get(id))
+
+    def save(self, user):
+        self.store.add(user)
+        selt.store.commit()
