@@ -19,8 +19,7 @@ setup(name="Downpour",
     packages=find_packages(exclude=['*.tests','*.tests.*']),
     package_data={'downpour2.web': ['templates/*.html', 'templates/*/*.html', 'templates/media/*/*']},
     include_package_data=True,
-    # Not zip-safe until /media/ handler is rewritten
-    zip_safe=False,
+    zip_safe=True,
     #scripts=['bin/downpourd', 'bin/downpour-torrent-handler'],
     #data_files=[
     #    ('/usr/share/applications', ['bin/downpour-torrent-handler.desktop']),

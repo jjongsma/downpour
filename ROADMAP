@@ -137,6 +137,7 @@ Feed Module:
   - Automatically prefer/replace with REPACK/PROPER
   - Release group / keyword preference
   - Keyword blacklist (TS, CAM, LINE, etc)
+  - Media format blacklist (i.e. MKV for Chromecast playback)
   - Watch a local directory for torrents to auto-download
   - Link to a series in the library, default to auto-detect/auto-create
 

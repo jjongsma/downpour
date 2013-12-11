@@ -9,7 +9,7 @@ class TransferManager(Plugin):
 
     def setup(self, config):
 
-        self.LOG = logging.getLogger(__name__);
+        self.LOG = logging.getLogger(__name__)
 
         self.config = config;
 

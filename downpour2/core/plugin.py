@@ -6,7 +6,7 @@ TRANSFERS = 'downpour2.transfers.TransferManager'
 FEEDS = 'downpour2.feeds.FeedManager'
 SEARCH = 'downpour2.search.SearchManager'
 SHARING = 'downpour2.sharing.SharingManager'
-WEB = 'downpour2.web.WebInterfacePlugin'
+WEB = 'downpour2.web.WebInterface'
 
 class Plugin(object):
 

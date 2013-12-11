@@ -48,7 +48,8 @@ class Application:
                     self.LOG.error('setup() failed for %s: %s' % (pn, e))
                     traceback.print_exc()
             except Exception as e:
-                self.LOG.debug('Plugin not found: %s' % pn)
+                self.LOG.debug('Could not load plugin: %s' % pn)
+                traceback.print_exc()
 
     def plugin(self, name):
         if name in self.plugins:
