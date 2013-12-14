@@ -6,14 +6,14 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>{{ title }} - Downpour</title>
         <meta name="description" content="Downpour web-based BitTorrent manager">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 		<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <link rel="stylesheet" href="/media/css/normalize.css">
         <link rel="stylesheet" href="/media/css/perfect-scrollbar.css">
         <link rel="stylesheet" href="/media/css/main.css">
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
         <script src="/media/js/vendor/modernizr-2.6.2.min.js"></script>
-        <script src="/media/js/vendor/perfect-scrollbar-0.4.5.with-mousewheel.min.js"></script>
+        <script src="/media/js/vendor/jquery.touchSwipe.min.js"></script>
         <script src="/media/js/vendor/spin.min.js"></script>
         <script src="/media/js/main.js"></script>
 		{% block head %}
@@ -23,30 +23,36 @@
 	<body>
 
 		<div id="header" class="clearfix">
-			<div id="menu" class="mobile fa fa-bars"></div>
-			<a href="/"><div id="logo"><img src="/media/images/downpour-logo.png"/></div></a>
-			<div id="account" class="desktop">
-				{% if user %}
-					Logged in as {{ user.username }}
-					- <a href="/account/edit">My Account</a>
-					- <a href="/account/logout">Logout</a>
-				{% else %}
-					Not logged in
-					- <a href="/account/login">Login</a>
-				{% endif %}
+			<div id="menutoggle" class="mobile clearfix">
+				<div id="menu">
+					<span id="menuicon" class="fa fa-bars"></span>
+					<img src="/media/images/downpour-icon-white.png" />
+				</div>
+				<h1>{{ title }}</h1>
+			</div>
+			<div class="desktop">
+				<a href="/"><div id="logo"><img src="/media/images/downpour-logo.png"/></div></a>
+				<div id="account">
+					{% if user %}
+						Logged in as {{ user.username }}
+						- <a href="/account/edit">My Account</a>
+						- <a href="/account/logout">Logout</a>
+					{% else %}
+						Not logged in
+						- <a href="/account/login">Login</a>
+					{% endif %}
+				</div>
 			</div>
 		</div>
 
-		<div id="navigation" class="desktop">
+		<div id="navigation">
 			<ul>
 				<li{% if section == 'status' %} class="active"{% endif %}><a href="/status/">Server Status</a></li>
-				{% if user %}
 				<li{% if section == 'downloads' %} class="active"{% endif %}><a href="/downloads/">Downloads</a></li>
 				<li{% if section == 'browse' %} class="active"{% endif %}><a href="/browse/">My Media</a></li>
 				<li{% if section == 'history' %} class="active"{% endif %}><a href="/downloads/history/">History</a></li>
-				{% endif %}
 			</ul>
-			{% if user and shares %}
+			{% if shares %}
 				<h4>Remote Shares</h4>
 				<ul>
 					<li><a href="#">Jeremy</a></li>
@@ -55,7 +61,6 @@
 					{% endfor %}
 				</ul>
 			{% endif %}
-			{% if user %}
 			<h4>Settings</h4>
 			<ul>
 				<li{% if section == 'feeds' %} class="active"{% endif %}><a href="/feeds/">Feed Subscriptions</a></li>
@@ -69,7 +74,6 @@
 				<li{% if section == 'users' %} class="active"{% endif %}><a href="/users/">Users</a></li>
 				<li{% if section == 'settings' %} class="active"{% endif %}><a href="/settings/">Settings</a></li>
 			</ul>
-			{% endif %}
 			{% endif %}
 			<div class="mobile">
 				<h4>Account</h4>
@@ -91,7 +95,7 @@
 				in Downpour.  Please upgrade to a newer browser.</div>
 			{% endif %}
 			{% block heading %}
-			<h1>{{ title }}</h1>
+			<h1 class="desktop">{{ title }}</h1>
 			{% endblock %}
 			{% block body %}
 			{% endblock %}
