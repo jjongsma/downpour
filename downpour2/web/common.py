@@ -1,4 +1,4 @@
-import os, hashlib
+import os, hashlib, logging
 from twisted.web import resource, server
 from storm import expr
 from downpour2.core import VERSION, store
@@ -105,7 +105,8 @@ class Resource(resource.Resource):
             'version': VERSION,
             'unsupported': unsupported,
             'user': user,
-            'shares': shares
+            'shares': shares,
+            'standalone': request.requestHeaders.hasHeader('X-Standalone-Content')
             }
 
         defaults.update(context);
@@ -113,7 +114,7 @@ class Resource(resource.Resource):
         try:
             t = request.templateFactory.get_template(template)
         except Exception as e:
-            return self.render_error(request, 'Template Not Found',
+            return self.render_error(request, defaults, 'Template Not Found',
                 'Could not load page template: %s' % template)
 
         if content_type:
@@ -123,15 +124,15 @@ class Resource(resource.Resource):
 
         return t.render(defaults).encode('utf8')
 
-    def render_error(self, request, title, message):
+    def render_error(self, request, context, title, message):
 
         try:
             # Check for existence first so we don't go into a loop
             t = request.templateFactory.get_template('errors/error.html')
-            return self.render_template('errors/error.html', request, {
+            return self.render_template('errors/error.html', request, context.update({
                 'title': title,
                 'message': message
-                })
+                }))
 
         except Exception as e:
             return '<h1>%s</h1><p>%s</p><p>%s</p>' % (title, message,

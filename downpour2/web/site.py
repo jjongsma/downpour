@@ -14,13 +14,10 @@ class SiteRoot(common.Resource):
     
     def render_GET(self, request):
 
-        if self.is_logged_in(request):
-            request.redirect('/downloads/')
-        else:
-            request.redirect('/status/')
-        request.finish()
-
-        return server.NOT_DONE_YET
+        # TODO populate overview/status info depending on login state
+        return self.render_template('index.html', request, {
+                'title': 'Downpour'
+            });
 
 class MediaPath(static.File):
 

@@ -9,11 +9,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 		<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <link rel="stylesheet" href="/media/css/normalize.css">
-        <link rel="stylesheet" href="/media/css/perfect-scrollbar.css">
+        <link rel="stylesheet" href="/media/css/meters.css">
         <link rel="stylesheet" href="/media/css/main.css">
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
         <script src="/media/js/vendor/modernizr-2.6.2.min.js"></script>
-        <script src="/media/js/vendor/jquery.touchSwipe.min.js"></script>
+        <script src="/media/js/vendor/jquery.nicescroll.min.js"></script>
         <script src="/media/js/vendor/spin.min.js"></script>
         <script src="/media/js/main.js"></script>
 		{% block head %}
@@ -23,6 +23,14 @@
 	<body>
 
 		<div id="header" class="clearfix">
+			<div class="mobile">
+				<a href="/notifications/">
+					<span class="fa-stack fa-lg unread">
+						<span class="fa fa-lg fa-stack-1x fa-square"></span>
+						<span class="fa-stack-1x unread-count">12</span>
+					</span>
+				</a>
+			</div>
 			<div id="menutoggle" class="mobile clearfix">
 				<div id="menu">
 					<span id="menuicon" class="fa fa-bars"></span>
@@ -47,15 +55,24 @@
 
 		<div id="navigation">
 			<ul>
-				<li{% if section == 'status' %} class="active"{% endif %}><a href="/status/">Server Status</a></li>
-				<li{% if section == 'downloads' %} class="active"{% endif %}><a href="/downloads/">Downloads</a></li>
-				<li{% if section == 'browse' %} class="active"{% endif %}><a href="/browse/">My Media</a></li>
-				<li{% if section == 'history' %} class="active"{% endif %}><a href="/downloads/history/">History</a></li>
+				<li title="Downpour"{% if section == 'overview' %} class="active"{% endif %}><a href="/">Overview</a></li>
+				<li{% if section == 'transfers' %} class="active"{% endif %}><a href="/transfers/">Transfers</a></li>
+				<li{% if section == 'feeds' %} class="active"{% endif %}><a href="/feeds/">Feeds</a></li>
+				<li{% if section == 'library' %} class="active"{% endif %}><a href="/library/">Media Library</a></li>
+				<li{% if section == 'search' %} class="active"{% endif %}><a href="/search/">Search</a></li>
+				<li{% if section == 'notifications' %} class="active"{% endif %}>
+					<span class="fa-stack fa-lg unread">
+						<span class="fa fa-lg fa-stack-1x fa-square"></span>
+						<span class="fa-stack-1x unread-count">12</span>
+					</span>
+					<a href="/notifications/">Notifications</a>
+				</li>
+				<li{% if section == 'status' %} class="active"{% endif %}><a href="/status/">System Status</a></li>
 			</ul>
 			{% if shares %}
 				<h4>Remote Shares</h4>
 				<ul>
-					<li><a href="#">Jeremy</a></li>
+					<li><a href="/share/1">Jeremy</a></li>
 					{% for s in shares %}
 						<li{% if section == ['share', s.id]|join('_') %} class="active"{% endif %}><a href="/shares/{{ s.id }}/browse/">{{ s.name }}</a></li>
 					{% endfor %}
@@ -63,9 +80,10 @@
 			{% endif %}
 			<h4>Settings</h4>
 			<ul>
-				<li{% if section == 'feeds' %} class="active"{% endif %}><a href="/feeds/">Feed Subscriptions</a></li>
+				<li{% if section == 'media-types' %} class="active"{% endif %}><a href="/media-types/">Media Types</a></li>
 				<li{% if section == 'shares' %} class="active"{% endif %}><a href="/shares/">Remote Shares</a></li>
-				<li{% if section == 'libraries' %} class="active"{% endif %}><a href="/libraries/">Media Locations</a></li>
+				<li{% if section == 'media-center' %} class="active"{% endif %}><a href="/media-center/">Media Center Sync</a></li>
+				<li{% if section == 'advanced' %} class="active"{% endif %}><a href="/advanced/">Advanced</a></li>
 			</ul>
 			{% if user.admin %}
 			<h4>Administration</h4>
@@ -88,15 +106,16 @@
 			</div>
 		</div>
 
+		{% if unsupported %}
+		<div class="unsupported">
+			<div class="fa fa-times remove"></div>
+			<b>Unsupported Browser</b><br />
+			Your browser does not support many of the features used in Downpour.
+			Please upgrade to a <a href="http://browsehappy.com/">newer browser</a>.
+		</div>
+		{% endif %}
+
 		<div id="content" class="clearfix">
-			{% if unsupported %}
-			<div class="warning"><b>Unsupported Browser</b><br />
-				Your browser does not support some HTML features used
-				in Downpour.  Please upgrade to a newer browser.</div>
-			{% endif %}
-			{% block heading %}
-			<h1 class="desktop">{{ title }}</h1>
-			{% endblock %}
 			{% block body %}
 			{% endblock %}
 		</div>

@@ -1,6 +1,4 @@
-{% extends "base.html" %}
+{% if not standalone %}{% extends "base.html" %}{% endif %}
 {% block body %}
-
 <p>{{ message }}</p>
-
 {% endblock %}

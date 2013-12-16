@@ -1,0 +1,193 @@
+.meter { 
+	height: 16px;
+	position: relative;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	border: 1px solid #354B5E;
+}
+.meter > div {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	font-size: 12px;
+	font-weight: bold;
+	text-align: center;
+}
+.meter > span {
+	display: block;
+	height: 100%;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	border-radius: 2px;
+	background-color: rgb(43,194,83);
+	background-image: -webkit-gradient(
+	  linear,
+	  left bottom,
+	  left top,
+	  color-stop(0, rgb(43,194,83)),
+	  color-stop(1, rgb(84,240,84))
+	 );
+	background-image: -moz-linear-gradient(
+	  center bottom,
+	  rgb(43,194,83) 37%,
+	  rgb(84,240,84) 69%
+	 );
+	-webkit-box-shadow: 
+	  inset 0 2px 9px  rgba(255,255,255,0.3),
+	  inset 0 -2px 6px rgba(0,0,0,0.4);
+	-moz-box-shadow: 
+	  inset 0 2px 9px  rgba(255,255,255,0.3),
+	  inset 0 -2px 6px rgba(0,0,0,0.4);
+	box-shadow: 
+	  inset 0 2px 9px  rgba(255,255,255,0.3),
+	  inset 0 -2px 6px rgba(0,0,0,0.4);
+	position: relative;
+	overflow: hidden;
+}
+.meter > span:after {
+	content: "";
+	position: absolute;
+	top: 0; left: 0; bottom: 0; right: 0;
+	background-image: 
+	   -webkit-gradient(linear, 0 0, 100% 100%, 
+		  color-stop(.25, rgba(255, 255, 255, .2)), 
+		  color-stop(.25, transparent), color-stop(.5, transparent), 
+		  color-stop(.5, rgba(255, 255, 255, .2)), 
+		  color-stop(.75, rgba(255, 255, 255, .2)), 
+		  color-stop(.75, transparent), to(transparent)
+	   );
+	background-image: 
+		-moz-linear-gradient(
+		  -45deg, 
+		  rgba(255, 255, 255, .2) 25%, 
+		  transparent 25%, 
+		  transparent 50%, 
+		  rgba(255, 255, 255, .2) 50%, 
+		  rgba(255, 255, 255, .2) 75%, 
+		  transparent 75%, 
+		  transparent
+	   );
+	z-index: 1;
+	-webkit-background-size: 50px 50px;
+	-moz-background-size: 50px 50px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+@-webkit-keyframes move {
+	0% {
+	   background-position: 0 0;
+	}
+	100% {
+	   background-position: 50px 50px;
+	}
+}
+
+.meter.animate > span:after {
+	-webkit-animation: move 4s linear infinite;
+}
+
+.meter.orange > span {
+	background-color: #f1a165;
+	background-image: -moz-linear-gradient(top, #f1a165, #f36d0a);
+	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #f1a165),color-stop(1, #f36d0a));
+	background-image: -webkit-linear-gradient(#f1a165, #f36d0a); 
+}
+
+.meter.red > span {
+	background-color: #f0a3a3;
+	background-image: -moz-linear-gradient(top, #f0a3a3, #f42323);
+	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #f0a3a3),color-stop(1, #f42323));
+	background-image: -webkit-linear-gradient(#f0a3a3, #f42323);
+}
+
+.meter.blue > span {
+	background-color: #728dcb;
+	background-image: -moz-linear-gradient(top, #728dcb, #1897f2);
+	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #728dcb),color-stop(1, #1897f2));
+	background-image: -webkit-linear-gradient(#728dcb, #1897f2);
+}
+
+.nostripes > span > span, .nostripes > span:after {
+	background-image: none;
+}
+
+.health {
+	position: relative;
+	float: left;
+	height: 16px;
+	width: 10px;
+	background-color: #EEE;
+	border: 1px solid rgb(43,194,83);
+	border-radius: 2px;
+}
+.health:after {
+	content: "";
+	display: block;
+	position: absolute;
+	width: 100%;
+	bottom: 0;
+	background-color: rgb(43,194,83);
+}
+
+.health.excellent {
+	border: 1px solid rgb(43,194,83);
+}
+.health.excellent:after {
+	background-color: rgb(43,194,83);
+	height: 100%;
+}
+
+.health.good {
+	border: 1px solid rgb(43,194,83);
+}
+.health.good:after {
+	background-color: rgb(43,194,83);
+	height: 80%;
+}
+
+.health.average {
+	border: 1px solid rgb(43,194,83);
+}
+.health.average:after {
+	background-color: rgb(43,194,83);
+	height: 60%;
+}
+
+.health.poor {
+	border: 1px solid #ffc550; 
+}
+.health.poor:after {
+	background-color: #ffc550; 
+	height: 40%;
+}
+
+.health.bad {
+	border: 1px solid #D74B4B;
+}
+.health.bad:after {
+	background-color: #D74B4B;
+	height: 20%;
+}
+
+.health.dead {
+	border: 1px solid #D74B4B;
+}
+.health.dead:after {
+	background-color: #D74B4B;
+	height: 0%;
+}
+
+.health.unknown {
+	border: 1px solid #666;
+}
+.health.unknown:after {
+	background-color: #DDD;
+	height: 100%;
+	border-radius: 1px;
+}
