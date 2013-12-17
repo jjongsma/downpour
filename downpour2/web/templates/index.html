@@ -6,8 +6,8 @@
 
 <div class="column main">
 	<div class="columnContent">
-		<a href="/transfers/" class="button">View All</a>
-		<h3>Current Transfers</h3>
+		<a href="/transfers/downloads">View All</a>
+		<div class="section">Downloading</div>
 		<div class="boxContent">
 			<div class="transferSummary">
 				<div class="transfer clearfix">
@@ -98,6 +98,7 @@
 		</div>
 	</div>
 	<div class="columnContent">
+		<a href="/transfers/uploads">View All</a>
 		<div class="section">Sharing / Seeding</div>
 		<div class="boxContent">
 			<div class="transferSummary">
@@ -126,6 +127,7 @@
 		</div>
 	</div>
 	<div class="columnContent">
+		<a href="/transfers/history">View All</a>
 		<div class="section">Recently Imported</div>
 		<div class="boxContent">
 			<div class="transferSummary">
@@ -141,9 +143,6 @@
 					<div class="date">12/10</div>
 					<div class="imported"><a href="/transfers/1">Thor 2 (2013).mp4</a> <span class="mediaType">(Movie, 793 MB)</span></div>
 				</div>
-				<div class="queued">
-					<a href="/transfers/history">see more...</a>
-				</div>
 			</div>
 		</div>
 	</div>
@@ -152,13 +151,35 @@
 
 <div class="column side desktop">
 	<div class="box columnContent">
-		<h4>System Status</h4>
-		<div class="boxContent">
-			<strong>Host:</strong> media-center (46.246.38.178)<br />
-			<strong>Download Rate:</strong> 2.3 MB/s<br />
-			<strong>Upload Rate:</strong> 25.6 KB/s<br />
-			<strong>Connections:</strong> 198<br />
-			<strong>Disk:</strong> 85%
+		<h4 class="hostHeader lightgray-bg clearfix">
+			<span class="host">media-center</span>
+			<span class="ip">IP: 46.246.38.178</span>
+		</h4>
+		<div class="hostMetric download">
+			<div class="title">Downloads</div>
+			<div class="value">2.3 MB/s</div>
+		</div>
+		<div class="hostMetric upload">
+			<div class="title">Uploads</div>
+			<div class="value">25.6 KB/s</div>
+		</div>
+		<div class="hostMetric connections">
+			<div class="title">Connections</div>
+			<div class="value">198</div>
+		</div>
+		<div class="hostDisk clearfix">
+			<div class="title">Media Volume</div>
+			<div class="free">
+				<div class="meter yellow nostripes">
+					<span style="width: 85%;"></span><div>15% Free (150 GB)</div>
+				</div>
+			</div>
+			<div class="title">System Volume</div>
+			<div class="free">
+				<div class="meter nostripes">
+					<span style="width: 40%;"></span><div>60% Free (600 GB)</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
@@ -167,7 +188,7 @@
 	<div class="box columnContent">
 		<h4>Notifications</h4>
 		<div class="boxContent">
-			Something
+			Something needs your attention
 		</div>
 	</div>
 </div>
@@ -176,9 +197,18 @@
 	<div class="box columnContent">
 		<h4>Now Available</h4>
 		<div class="boxContent">
-			Grimm.S03E08.HDTV.x264-LOL.[VTV].mp4	335.8 MB	Running	72.9% 1.5 MB/s	6.8 KB/s	0:00:59
-			Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4	402.3 MB	Running	22.7% 621.7 KB/s	0 b/s	0:08:20
-			Haven.S04E13.HDTV.x264-EXCELLENCE.[VTV].mp4	379.0 MB	Running	28.0% 650.8 KB/s	728 b/s	0:06:59
+			<div class="section">Feeds</div>
+			<div class="nowAvailable">
+				Grimm.S03E08.HDTV.x264-LOL.[VTV].mp4
+				Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4
+				Haven.S04E13.HDTV.x264-EXCELLENCE.[VTV].mp4
+			</div>
+			<div class="section">Saved Searches</div>
+			<div class="nowAvailable">
+				Grimm.S03E08.HDTV.x264-LOL.[VTV].mp4
+				Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4
+				Haven.S04E13.HDTV.x264-EXCELLENCE.[VTV].mp4
+			</div>
 		</div>
 	</div>
 </div>
