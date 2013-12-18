@@ -191,8 +191,9 @@ function contentChanged(content) {
 function standardBehaviors(content) {
 
 	// "Remove" buttons
-	content.find(".remove").on('click', function() {
-		$(this).parent().remove();
+	content.find('.remove').on('click', function() {
+		var p = $(this).parent();
+		p.fadeOut(400, function() { p.remove(); });
 	});
 
 }
