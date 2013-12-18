@@ -96,9 +96,10 @@
 
 .meter.orange > span {
 	background-color: #f1a165;
-	background-image: -moz-linear-gradient(top, #f1a165, #f36d0a);
+	background-image: -moz-linear-gradient(top, #f1a165 0%, #f36d0a 100%);
+	background-image: -o-linear-gradient(top, #f1a165 0%, #f36d0a 100%);
+	background-image: -webkit-linear-gradient(top, #f1a165 0%, #f36d0a 100%); 
 	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #f1a165),color-stop(1, #f36d0a));
-	background-image: -webkit-linear-gradient(#f1a165, #f36d0a); 
 }
 
 .meter.yellow > span {

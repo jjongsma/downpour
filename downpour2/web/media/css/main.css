@@ -77,8 +77,8 @@ pre, pre code {
 .unsupported { position: relative; margin-left: 200px; background-color: #FFC; padding: 5px 10px; border-right: 1px solid #CC9; border-bottom: 1px solid #CC9; }
 .notice { position: relative; background-color: #FFC; padding: 5px 10px; border: 1px solid #CC9; border-radius: 3px; }
 .notice a { text-decoration: underline; }
-.remove { position: absolute; top: 5px; right: 5px; }
-.remove:hover { color: #666; }
+.remove { position: absolute; top: 5px; right: 5px; color: #666; }
+.remove:hover { color: #444; }
 
 .mobile { display: none; }
 
@@ -136,7 +136,7 @@ pre, pre code {
 
 #content { position: relative; padding: 10px; margin-left: 200px; }
 .column { float: left; width: 50%; margin: 0; padding: 0; }
-.column.main { float: left; width: 60%; margin: 0; padding: 0; }
+.column.main { float: left; width: 59%; margin: 0; padding: 0; }
 .column.side { float: left; width: 40%; margin: 0; padding: 0; }
 .column.full { width: 100%; }
 .column .columnContent { margin: 10px; }
@@ -166,21 +166,55 @@ pre, pre code {
 .box .hostHeader .host { float: left; }
 .box .hostHeader .ip { float: right; text-transform: uppercase; color: #CCC; font-size: 12px; padding: 1px 5px 0; font-weight: bold; }
 .box .hostMetric { float: left; width: 33.333333333333%; color: white; }
-.box .hostMetric .title { text-transform: uppercase; margin: 2px 5px; text-align: center; color: #FFF; font-size: 12px; font-weight: bold; border-bottom: 1px solid #FFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.box .hostMetric .title { text-transform: uppercase; padding: 2px 0; margin: 0 10px; text-align: center; color: #FFF; font-size: 12px; font-weight: bold; border-bottom: 1px solid #FFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .box .hostMetric .value { padding: 5px; text-align: center; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.box .hostMetric.download { background-color: #2bc253; }
+.box .hostMetric.download {
+	background: #29b24b;
+	background: -moz-linear-gradient(top,#60c179 0%, #29b24b 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#60c179), color-stop(100%,#29b24b)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #60c179 0%,#29b24b 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #60c179 0%,#29b24b 100%); /* Opera 11.10+ */
+}
 .box .hostMetric.download .title { color: #060; border-bottom: 1px solid #060; }
-.box .hostMetric.upload { background-color: #D74B4B; }
+.box .hostMetric.upload {
+	background: #D74B4B;
+	background: -moz-linear-gradient(top, #d66b6b 0%, #D74B4B 100%);
+	background: -o-linear-gradient(top, #d66b6b 0%, #D74B4B 100%);
+	background: -webkit-linear-gradient(top, #d66b6b 0%, #D74B4B 100%);
+	background: -webkit-gradient(linear,left top,left bottom,color-stop(0, #d66b6b),color-stop(1, #D74B4B));
+}
 .box .hostMetric.upload .title { color: #600; border-bottom: 1px solid #600; }
-.box .hostMetric.connections { background-color: #1897f2; }
+.box .hostMetric.connections {
+	background: #147fcc;
+	background: -moz-linear-gradient(top, #5fb3ef 0%, #147fcc 100%);
+	background: -o-linear-gradient(top, #5fb3ef 0%, #147fcc 100%);
+	background: -webkit-linear-gradient(top, #5fb3ef 0%, #147fcc 100%);
+	background: -webkit-gradient(linear,left top,left bottom,color-stop(0, #5fb3ef),color-stop(1, #147fcc));
+}
 .box .hostMetric.connections .title { color: #006; border-bottom: 1px solid #006; }
-.box .hostDisk { background-color: #DCDDD8; padding: 0 5px; border-radius: 0 0 3px 3px; }
+.box .hostDisk { background-color: #DCDDD8; padding: 0 5px; border-radius: 0 0 3px 3px;
+	border-left: 1px solid #CCC;
+	border-bottom: 1px solid #CCC;
+	border-right: 1px solid #CCC;
+}
 .box .hostDisk .meter { background-color: #FFF; }
 .box .hostDisk .title { float: left; width: 35%; margin: 5px 0; }
 .box .hostDisk .free { float: right; width: 65%; margin: 5px 0; }
 
 .nowAvailable { margin-bottom: 10px; }
+.nowAvailable a { display: block; margin: 5px; line-height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nowAvailable a.queue { float: right; display: block; margin: 0 5px; color: #2bc253; }
+.nowAvailable a.queue:hover { color: #29b24b; }
+.nowAvailable a.queue .fa-download { color: #FFF; }
 .nowAvailable:last-child { margin-bottom: 0; }
+
+.notification { position: relative; margin: 5px 0; }
+.notification:first-child { margin-top: 0; }
+.notification:last-child { margin-bottom: 0; }
+.notification a { text-decoration: underline; padding: 0 5px; }
+.notification .fa-check-circle { color: #1897f2; }
+.notification .fa-exclamation-circle { color: #ffb219; }
+.notification .fa-exclamation-triangle { color: #D74B4B; }
 
 .transferSummary .transfer { margin: 7px 0; }
 .transferSummary .healthmeter { float: left; width: 3%; }
