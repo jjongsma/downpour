@@ -22,7 +22,7 @@
 	-moz-border-radius: 2px;
 	-webkit-border-radius: 2px;
 	border-radius: 2px;
-	background-color: rgb(43,194,83);
+	background-color: rgb(84,240,84);
 	background-image: -webkit-gradient(
 	  linear,
 	  left bottom,
@@ -95,7 +95,7 @@
 }
 
 .meter.orange > span {
-	background-color: #f1a165;
+	background-color: #f36d0a;
 	background-image: -moz-linear-gradient(top, #f1a165 0%, #f36d0a 100%);
 	background-image: -o-linear-gradient(top, #f1a165 0%, #f36d0a 100%);
 	background-image: -webkit-linear-gradient(top, #f1a165 0%, #f36d0a 100%); 
@@ -103,24 +103,25 @@
 }
 
 .meter.yellow > span {
-	background-color: #ffe5b2;
+	background-color: #ffb219;
 	background-image: -moz-linear-gradient(top, #ffe5b2, #ffb219);
 	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #ffe5b2),color-stop(1, #ffb219));
 	background-image: -webkit-linear-gradient(#ffe5b2, #ffb219); 
 }
 
 .meter.red > span {
-	background-color: #f0a3a3;
+	background-color: #f42323;
 	background-image: -moz-linear-gradient(top, #f0a3a3, #f42323);
 	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #f0a3a3),color-stop(1, #f42323));
 	background-image: -webkit-linear-gradient(#f0a3a3, #f42323);
 }
 
 .meter.blue > span {
-	background-color: #728dcb;
-	background-image: -moz-linear-gradient(top, #728dcb, #1897f2);
-	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #728dcb),color-stop(1, #1897f2));
-	background-image: -webkit-linear-gradient(#728dcb, #1897f2);
+	background-color: #147fcc;
+	background: -moz-linear-gradient(top, #5fb3ef 0%, #147fcc 100%);
+	background: -o-linear-gradient(top, #5fb3ef 0%, #147fcc 100%);
+	background: -webkit-linear-gradient(top, #5fb3ef 0%, #147fcc 100%);
+	background: -webkit-gradient(linear,left top,left bottom,color-stop(0, #5fb3ef),color-stop(1, #147fcc));
 }
 
 .nostripes > span > span, .nostripes > span:after {
