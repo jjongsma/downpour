@@ -15,9 +15,9 @@ New architecture split - independent modules w/ event bus
      X Janitor / cleanup scheduler
   2. Transfers module
   3. Download agents
-  4. Feed module
-  5. Library module
+  4. Library module
      - Metadata provider plugins
+  5. Feed module
   6. Search module
   7. Sharing module
   8. Client interfaces

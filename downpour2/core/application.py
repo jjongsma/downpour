@@ -80,7 +80,7 @@ class Application:
                 if dfr is not None:
                     dfl.append(dfr)
             except Exception as e:
-                self.LOG.error('Plugin.start() failed for %s.%s: %s'
+                self.LOG.error('Failed to start plugin %s.%s: %s'
                     % (plugin.__module__, plugin.__class__.__name__, e))
                 traceback.print_exc()
         self.wait_for_deferred(defer.DeferredList(dfl, consumeErrors=1))
@@ -111,7 +111,7 @@ class Application:
                 if dfr is not None:
                     dfl.append(dfr)
             except Exception as e:
-                self.LOG.error('Plugin.stop() failed for %s.%s: %s'
+                self.LOG.error('Failed to stop plugin %s.%s: %s'
                     % (plugin.__module__, plugin.__class__.__name__, e))
                 traceback.print_exc()
         self.wait_for_deferred(defer.DeferredList(dfl, consumeErrors=1))

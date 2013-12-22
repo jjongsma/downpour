@@ -3,7 +3,7 @@ import logging
 from twisted.internet import task, defer
 from downpour2.core import event
 from downpour2.core.plugin import Plugin
-from downpour2.transfers import store
+from downpour2.transfers import store, manager
 
 class TransferManager(Plugin):
 
@@ -26,8 +26,7 @@ class TransferManager(Plugin):
 
         work_dir = self.application.config.value(('downpour', 'work_directory'));
         if not os.path.exists(work_dir):
-            self.LOG.error('Working directory not available, not starting plugin')
-            return defer.fail(IOError('Working directory not available, not starting plugin'))
+            raise IOError('Working directory not available, not starting plugin')
 
         self.application.events.subscribe(event.DOWNPOUR_PAUSED, self.pause)
         self.application.events.subscribe(event.DOWNPOUR_RESUMED, self.resume)

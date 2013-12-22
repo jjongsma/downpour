@@ -136,7 +136,7 @@ pre, pre code {
 
 #content { position: relative; padding: 10px; margin-left: 200px; }
 .column { float: left; width: 50%; margin: 0; padding: 0; }
-.column.main { float: left; width: 59%; margin: 0; padding: 0; }
+.column.main { float: left; width: 60%; margin: 0; padding: 0; }
 .column.side { float: left; width: 40%; margin: 0; padding: 0; }
 .column.full { width: 100%; }
 .column .columnContent { margin: 10px; }
