@@ -1,7 +1,7 @@
 import os
 from storm.locals import *
 from downpour2.core.store import schema, User
-from downpour2.library import patches
+from downpour2.sharing import patches
 
 def update_store(store):
     SharingSchema().upgrade(store, checkTable='remote_shares')
