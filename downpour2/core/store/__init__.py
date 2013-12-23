@@ -62,6 +62,7 @@ class CoreSchema(schema.Schema):
             "user_id INTEGER," +
             "timestamp INTEGER," +
             "title TEXT," +
+            "level TEXT," +
             "description TEXT," +
             "url TEXT," +
             "viewed BOOLEAN," +
@@ -146,6 +147,7 @@ class Alert(object):
     user_id = Int()
     timestamp = Int()
     title = Unicode()
+    level = Unicode()
     description = Unicode()
     url = Unicode()
     viewed = Bool()

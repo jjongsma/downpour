@@ -13,7 +13,6 @@ class TransferSchema(schema.Schema):
         "CREATE TABLE transfers (" +
             "id INTEGER PRIMARY KEY," +
             "user_id INTEGER," +
-            "feed_id INTEGER," +
             "url TEXT," +
             "filename TEXT," +
             "media_type TEXT," +
@@ -22,13 +21,12 @@ class TransferSchema(schema.Schema):
             "metadata BLOB," +
             "info_hash BLOB," +
             "resume_data BLOB," +
-            "active BOOLEAN," +
-            "type TEXT," +
             "priority INTEGER," +
             "bandwidth REAL," +
             "seed_ratio REAL," +
-            "state INTEGER," +
-            "status_message TEXT," +
+            "seed_until INTEGER," +
+            "state TEXT," +
+            "status TEXT," +
             "progress REAL," +
             "size REAL," +
             "downloaded REAL," +
@@ -36,14 +34,12 @@ class TransferSchema(schema.Schema):
             "added INTEGER," +
             "started INTEGER," +
             "completed INTEGER," +
-            "deleted BOOLEAN," +
-            "imported BOOLEAN," +
-            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,"
-            "FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE"
+            "removed BOOLEAN," +
+            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
             ")",
 
         "CREATE INDEX transfers_completed on transfers(completed)",
-        "CREATE INDEX transfers_deleted on transfers(deleted)"
+        "CREATE INDEX transfers_removed on transfers(removed)"
 
     ]
 
@@ -65,22 +61,22 @@ class Transfer(object):
 
     id = Int(primary=True)
     user_id = Int()
-    feed_id = Int()
     url = Unicode()
     filename = Unicode()
     media_type = Unicode()
     mime_type = Unicode()
     description = Unicode()
+    ## Torrent only - put somewhere else?
     metadata = RawStr()
     info_hash = RawStr()
     resume_data = RawStr()
-    active = Bool()
-    type = Unicode()
+    ## End torrent only
     priority = Int()
     bandwidth = Float()
     seed_ratio = Float()
+    seed_until = Int()
     state = Int()
-    status_message = Unicode()
+    status = Unicode()
     progress = Float()
     size = Int()
     downloaded = Int()
@@ -88,11 +84,9 @@ class Transfer(object):
     added = Int()
     started = Int()
     completed = Int()
-    deleted = Bool()
-    imported = Bool()
+    removed = Bool()
 
     user = Reference(user_id, User.id)
-    # feed = Reference(feed_id, Feed.id)
 
     # Non-persistent fields
     health = 0
