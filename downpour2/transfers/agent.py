@@ -22,9 +22,12 @@ class TransferAgent(object):
 
 class AgentStatus(object):
 
+    host = None
+    version = None
     active_downloads = 0
     queued_downloads = 0
     active_uploads = 0
+    progress = 0.0
     downloadrate = 0
     uploadrate = 0
     diskfree = 0

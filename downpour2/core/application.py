@@ -7,6 +7,7 @@ class Application:
     default_plugins = [
         plugin.LIBRARY,
         plugin.TRANSFERS,
+        plugin.AGENT,
         plugin.FEEDS,
         plugin.SHARING,
         plugin.WEB ]

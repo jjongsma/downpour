@@ -2,6 +2,11 @@ import logging
 from twisted.internet import defer
 import state, event
 
+"""
+Pulled from Fysom with some renovations for Deferred async
+state transitions with Twisted
+"""
+
 WILDCARD = '*'
 
 class FlowError(Exception):
@@ -19,7 +24,7 @@ class Flow(object):
 
     def can(self, event):
         return (event in self._map and ((self.current in self._map[event]) or WILDCARD in self._map[event])
-            and not self._transition
+            and not self._transition)
 
     def cannot(self, event):
         return not self.can(event)
@@ -109,12 +114,12 @@ class Flow(object):
 
             def _enter():
                 self.current = dst
-                defer.maybeDeferred(self._enter_state, e)
+                defer.maybeDeferred(self._enter_state, e) \
                     .addCallback(_after).addErrback(dfr.errback)
 
             def _leave():
                 self._transition = True
-                defer.maybeDeferred(self._leave_state, e)
+                defer.maybeDeferred(self._leave_state, e) \
                     .addCallback(_enter).addErrback(dfr.errback)
 
             _leave()

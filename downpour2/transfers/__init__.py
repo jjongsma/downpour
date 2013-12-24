@@ -3,11 +3,13 @@ import logging
 from time import time
 from twisted.internet import task, defer
 from storm.locals import *
-from downpour2.core import event, store
+from downpour2.core import VERSION
+from downpour2.core.net import get_interface
 from downpour2.core.plugin import Plugin
-from downpour2.transfers import store, manager, agent
+from downpour2.transfers import store, agent
+from downpour2.transfers import event
 
-class TransferManager(Plugin, agent.TransferAgent):
+class TransferManager(Plugin):
 
     def setup(self, config):
 
@@ -15,28 +17,11 @@ class TransferManager(Plugin, agent.TransferAgent):
 
         self.config = config
 
-        work_dir = self.application.config.value(('downpour', 'work_directory'))
-        if not os.path.exists(work_dir):
-            try:
-                os.makedirs(work_dir)
-            except OSError as oe:
-                self.LOG.error('Could not create directory: %s' % work_dir)
-
         store.update_store(self.application.store)
 
         self.agents = []
-        self.paused = False
 
     def start(self):
-
-        work_dir = self.application.config.value(('downpour', 'work_directory'))
-        if not os.path.exists(work_dir):
-            raise IOError('Working directory not available, not starting plugin')
-
-        self.application.events.subscribe(event.DOWNPOUR_PAUSED, self.pause)
-        self.application.events.subscribe(event.DOWNPOUR_RESUMED, self.resume)
-
-        self.LOG.info('Resuming previous transfers')
 
         # Recently completed downloads
         self.recent = list(self.application.store.find(store.Transfer,
@@ -49,10 +34,7 @@ class TransferManager(Plugin, agent.TransferAgent):
             consumeErrors=True).addCallback(self.resume)
 
     def stop(self):
-        return self.pause()
-
-    def paused(self):
-        return self.paused
+        pass
 
     def add(self, transfer):
 
@@ -72,7 +54,7 @@ class TransferManager(Plugin, agent.TransferAgent):
                     ))
 
         self.application.store.add(transfer)
-        self.store.commit()
+        self.application.store.commit()
 
         self.LOG.info(u'Added new download ' + transfer.description)
         self.application.events.fire(event.ADDED, transfer)
@@ -145,10 +127,26 @@ class TransferManager(Plugin, agent.TransferAgent):
 
     def aggregate_status(statuses, dfr=None):
 
+        interface = None
+        try:
+            interface = get_interface(self.get_option(
+                ('downpour', 'interface'), '0.0.0.0'))
+            if interface == '0.0.0.0':
+                # Load IPs for local host
+                ips = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
+                ips = filter(lambda ip: ip[:4] != '127.' and ip[:2] != '::', ips)
+                interface = ', '.join(dict(map(lambda i: (i,1), ips)).keys())
+        except IOError as ioe:
+            interface = 'disconnected'
+
+        hostname = '%s (%s)' % (socket.gethostname(), interface)
+
         ssum = lambda sl, f: sum([getattr(s, f) for s in sl])
         savg = lambda sl, f: ssum(sl, f) / len(sl)
 
         status = agent.AgentStatus()
+        status.host = hostname
+        status.version = VERSION
         status.active_downloads = ssum(statuses, 'active_downloads')
         status.queued_downloads = ssum(statuses, 'queued_downloads')
         status.active_uploads = ssum(statuses, 'active_uploads')
