@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-from downpour2.core.cli import main
 
 # Debug mode for development
 if 'DOWNPOUR_DEBUG' in os.environ and os.environ['DOWNPOUR_DEBUG'] == '1':
@@ -9,5 +8,7 @@ if 'DOWNPOUR_DEBUG' in os.environ and os.environ['DOWNPOUR_DEBUG'] == '1':
     devpath = dirname(dirname(realpath(__file__)))
     sys.path.insert(0, devpath)
     # End debug mode
+
+from downpour2.core.cli import main
 
 main()

@@ -1,4 +1,3 @@
-import os
 from optparse import OptionParser
 from downpour2.core.daemon import Daemon
 
