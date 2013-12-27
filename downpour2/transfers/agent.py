@@ -1,24 +1,34 @@
-from twisted.internet import defer
+import abc
+
 
 class TransferAgent(object):
 
-    def pause(self, transfer):
-        return defer.fail(NotImplementedError());
+    __metaclass__ = abc.ABCMeta
 
-    def resume(self, transfer):
-        return defer.fail(NotImplementedError());
+    @abc.abstractmethod
+    def pause(self):
+        return NotImplemented
 
+    @abc.abstractmethod
+    def resume(self):
+        return NotImplemented
+
+    @abc.abstractmethod
     def accepts(self, transfer):
         return False
 
+    @abc.abstractmethod
     def provision(self, transfer):
-        return defer.fail(NotImplementedError());
+        return NotImplemented
 
+    @abc.abstractproperty
     def transfers(self):
-        return defer.fail(NotImplementedError());
+        return NotImplemented
 
+    @abc.abstractmethod
     def status(self):
-        return defer.fail(NotImplementedError());
+        return NotImplemented
+
 
 class AgentStatus(object):
 
