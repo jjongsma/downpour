@@ -6,15 +6,24 @@ from downpour2.transfers import agent
 from downpour2.core import VERSION, plugin, event
 from downpour2.core.net import get_interface
 
+
 class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
     transports = [
         # TODO
     ]
-    
-    def setup(self, config):
 
-        self.LOG = logging.getLogger(__name__)
+    def __init__(self, app):
+
+        super(LocalAgent, self).__init__(app)
+
+        self.log = logging.getLogger(__name__)
+        self.config = {}
+        self.working_directory = None
+        self.paused = False
+        self.transfers = []
+
+    def setup(self, config):
 
         self.config = config
 
@@ -23,11 +32,7 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
             try:
                 os.makedirs(work_dir)
             except OSError as oe:
-                self.LOG.error('Could not create directory: %s' % work_dir)
-
-        self.working_directory = work_dir
-        self.paused = False
-        self.transfers = []
+                self.log.error('Could not create directory: %s' % work_dir)
 
         self.application.plugins[plugin.TRANSFERS].register_agent(self)
 
@@ -40,7 +45,7 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         self.application.events.subscribe(event.DOWNPOUR_PAUSED, self.pause)
         self.application.events.subscribe(event.DOWNPOUR_RESUMED, self.resume)
 
-        self.LOG.info('Resuming previous transfers')
+        self.log.info('Resuming previous transfers')
 
         self.resume()
 
@@ -135,4 +140,3 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         status.paused = self.paused
 
         return status
-    
