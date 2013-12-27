@@ -1,8 +1,14 @@
-import os, pwd, grp, logging, atexit, traceback
+import os
+import pwd
+import grp
+import logging
+import atexit
+import traceback
 from twisted.internet import reactor, defer
 from downpour2.core import config, plugin, event, store, users, alerts, janitor
 
-class Application:
+
+class Application(object):
 
     default_plugins = [
         plugin.LIBRARY,
@@ -10,19 +16,21 @@ class Application:
         plugin.AGENT,
         plugin.FEEDS,
         plugin.SHARING,
-        plugin.WEB ]
+        plugin.WEB]
 
     def __init__(self, options=None):
 
         self.config = config.Config(options)
+        self.state = []
+        self.settings = []
 
         # Logging configuration
         logging.basicConfig(
-            level=getattr(logging, self.config.value(('downpour', 'log'),
-                'info').upper(), logging.INFO),
+            level=getattr(logging, self.config.value(
+                ('downpour', 'log'), 'info').upper(), logging.INFO),
             format='%(asctime)s [%(levelname)-8s] %(name)s:%(lineno)d - %(message)s')
 
-        self.LOG = logging.getLogger(__name__);
+        self.log = logging.getLogger(__name__)
 
         self.store = store.make_store(self.config)
         self.events = event.EventBus()
@@ -31,25 +39,25 @@ class Application:
         self.janitor = janitor.Janitor()
 
         self.janitor.add_job(janitor.DAILY, store.cleanup, self.store)
-        
+
         self.plugins = {}
 
         # Load plugins
         toload = [section for section in self.config.keys() if section.find('.') > -1]
         for pn in set(Application.default_plugins + toload):
             try:
-                p = self.get_class(pn)(self)
+                p = get_class(pn)(self)
                 try:
                     if isinstance(p, plugin.Plugin):
                         self.plugins[pn] = p
                         p.setup(self.config.get(pn, {}))
                     else:
-                        self.LOG.error('Not a Plugin subclass: %s' % pn)
+                        self.log.error('Not a Plugin subclass: %s' % pn)
                 except Exception as e:
-                    self.LOG.error('setup() failed for %s: %s' % (pn, e))
+                    self.log.error('setup() failed for %s: %s' % (pn, e))
                     traceback.print_exc()
             except Exception as e:
-                self.LOG.debug('Could not load plugin: %s' % pn)
+                self.log.debug('Could not load plugin %s: %s' % (pn, e))
                 traceback.print_exc()
 
     def plugin(self, name):
@@ -57,17 +65,9 @@ class Application:
             return self.plugins[name]
         return None
 
-    def get_class(self, kls):
-        parts = kls.split('.')
-        module = ".".join(parts[:-1])
-        m = __import__( module )
-        for comp in parts[1:]:
-            m = getattr(m, comp)            
-        return m
-
     def start(self):
 
-        self.LOG.info('Downpour started')
+        self.log.info('Downpour started')
 
         self.state = list(self.store.find(store.State))
         self.settings = list(self.store.find(store.Setting))
@@ -75,16 +75,16 @@ class Application:
         # Start plugins
         dfl = []
         for name in self.plugins:
-            plugin = self.plugins[name]
+            pl = self.plugins[name]
             try:
-                dfr = plugin.start()
+                dfr = pl.start()
                 if dfr is not None:
                     dfl.append(dfr)
             except Exception as e:
-                self.LOG.error('Failed to start plugin %s.%s: %s'
-                    % (plugin.__module__, plugin.__class__.__name__, e))
+                self.log.error('Failed to start plugin %s.%s: %s'
+                               % (pl.__module__, pl.__class__.__name__, e))
                 traceback.print_exc()
-        self.wait_for_deferred(defer.DeferredList(dfl, consumeErrors=1))
+        wait_for_deferred(defer.DeferredList(dfl, consumeErrors=True))
 
         self.events.fire(event.DOWNPOUR_STARTED)
 
@@ -92,12 +92,12 @@ class Application:
         atexit.register(self.stop)
 
     def pause(self):
-        self.set_state(u'paused', u'1');
-        self.events.fire(DOWNPOUR_PAUSED)
+        self.set_state(u'paused', u'1')
+        self.events.fire(event.DOWNPOUR_PAUSED)
 
     def resume(self):
-        self.set_state(u'paused', u'0');
-        self.events.fire(DOWNPOUR_RESUMED)
+        self.set_state(u'paused', u'0')
+        self.events.fire(event.DOWNPOUR_RESUMED)
 
     def stop(self):
 
@@ -106,27 +106,22 @@ class Application:
         # Stop plugins
         dfl = []
         for name in self.plugins:
-            plugin = self.plugins[name]
+            pl = self.plugins[name]
             try:
-                dfr = plugin.stop()
+                dfr = pl.stop()
                 if dfr is not None:
                     dfl.append(dfr)
             except Exception as e:
-                self.LOG.error('Failed to stop plugin %s.%s: %s'
-                    % (plugin.__module__, plugin.__class__.__name__, e))
+                self.log.error('Failed to stop plugin %s.%s: %s'
+                               % (pl.__module__, pl.__class__.__name__, e))
                 traceback.print_exc()
-        self.wait_for_deferred(defer.DeferredList(dfl, consumeErrors=1))
+        wait_for_deferred(defer.DeferredList(dfl, consumeErrors=True))
 
         # Stop reactor
         if reactor.running:
             reactor.stop()
 
-        self.LOG.info('Downpour stopped')
-
-    @defer.inlineCallbacks
-    def wait_for_deferred(self, dfr):
-        result = yield dfr
-        defer.returnValue(result)
+        self.log.info('Downpour stopped')
 
     def drop_privileges(self, pidfile=None):
         if 'user' in self.config.values['downpour'] and os.getuid() == 0:
@@ -138,9 +133,9 @@ class Application:
                 os.setgid(grp.getgrnam(group)[2])
                 os.setuid(pwd.getpwnam(user)[2])
             except OSError as e:
-                self.LOG.error('Could not set user or group: %s' % e)
+                self.log.error('Could not set user or group: %s' % e)
         if 'umask' in self.config.values['downpour']:
-            old_umask = os.umask(self.config.values['downpour']['umask'])
+            os.umask(self.config.values['downpour']['umask'])
 
     def set_state(self, name, value):
         state = None
@@ -193,3 +188,18 @@ class Application:
         # Start server
         reactor.callWhenRunning(self.start)
         reactor.run()
+
+
+def get_class(kls):
+    parts = kls.split('.')
+    module = ".".join(parts[:-1])
+    m = __import__(module)
+    for comp in parts[1:]:
+        m = getattr(m, comp)
+    return m
+
+
+@defer.inlineCallbacks
+def wait_for_deferred(dfr):
+    result = yield dfr
+    defer.returnValue(result)

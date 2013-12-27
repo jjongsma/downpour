@@ -91,22 +91,22 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         upload_rate = 0
         connections = 0
 
-        for c in self.transfers:
+        for client in self.transfers:
 
-            if c.transfer.size:
-                queuedsize += c.transfer.size
-                queueddone += c.transfer.downloaded
+            if client.transfer.size:
+                queuedsize += client.transfer.size
+                queueddone += client.transfer.downloaded
 
-            if c.transfer.state == state.DOWNLOADING:
+            if client.transfer.state == state.DOWNLOADING:
                 active_downloads += 1
-            elif c.transfer.state == state.SEEDING:
+            elif client.transfer.state == state.SEEDING:
                 active_uploads += 1
-            elif c.transfer.state == state.QUEUED:
+            elif client.transfer.state == state.QUEUED:
                 queued_downloads += 1
 
-            download_rate += c.transfer.downloadrate
-            upload_rate += c.transfer.uploadrate
-            connections += c.transfer.connections
+            download_rate += client.transfer.downloadrate
+            upload_rate += client.transfer.uploadrate
+            connections += client.transfer.connections
 
         if queuedsize:
             progress = round((float(queueddone) / queuedsize) * 100, 2)
@@ -114,7 +114,7 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
             progress = 0
 
         try:
-            interface = get_interface(self.get_option(
+            interface = get_interface(self.application.config.value(
                 ('downpour', 'interface'), '0.0.0.0'))
             if interface == '0.0.0.0':
                 # Load IPs for local host
@@ -142,5 +142,62 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
         return status
 
+    # Start as many downloads as allowed by current configuration,
+    # in the order they were added
     def auto_queue(self):
-        pass
+
+        if not self.application.is_paused():
+
+            logging.debug(u'Running auto-queue')
+            status = self.status()
+
+            active = status['active_downloads']
+            ulrate = status['uploadrate']
+            dlrate = status['downloadrate']
+            conn = status['connections']
+
+            max_active = int(self.get_setting('max_active', 0))
+            max_ulrate = int(self.get_setting('upload_rate', 0)) * 1024
+            max_dlrate = int(self.get_setting('download_rate', 0)) * 1024
+            max_conn = int(self.get_setting('connection_limit', 0))
+
+            # TODO make this fairly distributed among users
+            for d in filter(lambda x: x.status == state.QUEUED and not x.active, downloads):
+                if not max_active or active < max_active:
+                    self.start_download(d.id)
+                    active = active + 1
+
+            self.store.commit()
+
+            # Auto stop downloads if we're over config limits
+            if max_active and active > max_active:
+                downloads.reverse()
+                for d in filter(lambda x: x.active, downloads):
+                    if active > max_active:
+                        sdfr = self.stop_download(d.id)
+                        sdfr.addCallback(self.update_status, d, state.QUEUED)
+                        sdfr.addErrback(self.update_status, d, state.QUEUED)
+                        active -= 1
+                    else:
+                        break
+
+            if active > 0:
+                # Reset transfer limits
+                if max_ulrate > 0:
+                    client_ulrate = int(max_ulrate / active)
+                    for d in filter(lambda x: x.active, downloads):
+                        dc = self.get_download_client(d.id)
+                        if (dc):
+                            dc.set_upload_rate(client_ulrate)
+                if max_dlrate > 0:
+                    client_dlrate = int(max_dlrate / active)
+                    for d in filter(lambda x: x.active, downloads):
+                        dc = self.get_download_client(d.id)
+                        if (dc):
+                            dc.set_download_rate(client_dlrate)
+                if max_conn > 0:
+                    client_conn = int(max_conn / active)
+                    for d in filter(lambda x: x.active, downloads):
+                        dc = self.get_download_client(d.id)
+                        if (dc):
+                            dc.set_max_connections(client_conn)
