@@ -5,16 +5,15 @@ import logging
 import atexit
 import traceback
 from twisted.internet import reactor, defer
-from downpour2.core import config, plugin, event, store, users, alerts, janitor
+from downpour2.core import config, plugin, event, store, users, alerts, janitor, transfers
 
 
 class Application(object):
 
     default_plugins = [
         plugin.LIBRARY,
-        plugin.TRANSFERS,
-        plugin.AGENT,
         plugin.FEEDS,
+        plugin.AGENT,
         plugin.SHARING,
         plugin.WEB]
 
@@ -35,8 +34,10 @@ class Application(object):
         self.store = store.make_store(self.config)
         self.events = event.EventBus()
         self.users = users.UserManager(self.store)
-        self.alert = alerts.AlertManager(self.store)
+        self.alerts = alerts.AlertManager(self.store)
         self.janitor = janitor.Janitor()
+
+        self.transfer_manager = transfers.TransferManager(self)
 
         self.janitor.add_job(janitor.DAILY, store.cleanup, self.store)
 
@@ -92,11 +93,9 @@ class Application(object):
         atexit.register(self.stop)
 
     def pause(self):
-        self.set_state(u'paused', u'1')
         self.events.fire(event.DOWNPOUR_PAUSED)
 
     def resume(self):
-        self.set_state(u'paused', u'0')
         self.events.fire(event.DOWNPOUR_RESUMED)
 
     def stop(self):
@@ -176,9 +175,6 @@ class Application(object):
             if s.name == name:
                 return s.value
         return default
-
-    def is_paused(self):
-        return self.get_state(u'paused', u'0') == u'1'
 
     def run(self, pidfile=None):
 

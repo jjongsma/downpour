@@ -1,7 +1,5 @@
-import os
 from storm.locals import *
-from downpour2.core.store import schema, User
-from downpour2.transfers.store import Transfer
+from downpour2.core.store import schema, User, Transfer
 from downpour2.feeds import patches
 
 def update_store(store):

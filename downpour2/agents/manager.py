@@ -1,17 +1,17 @@
-from downpour.core import VERSION, models, organizer
-from downpour.core.net import get_interface
+import os
+import logging
+import shutil
+from time import time
+from twisted.internet import defer
+from urlparse import urlparse
+from downpour.core import models, organizer
 from downpour.download import Status
 from downpour.download.throttling import ThrottledBucketFilter
 from downpour.download.http import HTTPDownloadClient
 from downpour.download.torrent import LibtorrentClient
-from twisted.web import http
-from twisted.internet import threads, defer
-from time import time
-from urlparse import urlparse
-import feedparser, os, mimetypes, logging, tempfile, shutil
-import urllib, socket
 
-class Manager:
+
+class Manager(object):
 
     download_clients = []
     downloads = None
@@ -20,140 +20,13 @@ class Manager:
 
     client_mimetypes = {
         'application/x-bittorrent': LibtorrentClient
-        }
+    }
+
     client_protocols = {
         'http': HTTPDownloadClient,
         'https': HTTPDownloadClient,
         'magnet': LibtorrentClient
-        }
-
-    def __init__(self, application):
-        self.application = application
-        self.store = application.get_store()
-        self.paused = self.application.is_paused()
-
-    def get_status(self):
-
-        s = os.statvfs(self.get_work_directory())
-        diskfree = s.f_bfree * s.f_bsize
-        diskfreepct = (float(s.f_bfree) / s.f_blocks) * 100
-
-        s = os.statvfs(self.get_user_directory())
-        userdiskfree = s.f_bfree * s.f_bsize
-        userdiskfreepct = (float(s.f_bfree) / s.f_blocks) * 100
-
-        queuedsize = 0
-        queueddone = 0
-        active_downloads = 0
-        queued_downloads = 0
-        download_rate = 0
-        upload_rate = 0
-        connections = 0
-
-        downloads = self.get_downloads()
-        for d in downloads:
-            if d.size:
-                queuedsize += d.size
-                queueddone += d.downloaded
-            if d.active:
-                active_downloads += 1
-            if d.status == Status.QUEUED:
-                queued_downloads += 1
-            download_rate += d.downloadrate
-            upload_rate += d.uploadrate
-            connections += d.connections
-
-        if queuedsize:
-            progress = round((float(queueddone) / queuedsize) * 100, 2)
-        else:
-            progress = 0
-
-        interface = None
-        try:
-            interface = get_interface(self.get_option(
-                ('downpour', 'interface'), '0.0.0.0'))
-            if interface == '0.0.0.0':
-                # Load IPs for local host
-                ips = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
-                ips = filter(lambda ip: ip[:4] != '127.' and ip[:2] != '::', ips)
-                interface = ', '.join(dict(map(lambda i: (i,1), ips)).keys())
-        except IOError as ioe:
-            interface = 'disconnected'
-
-        hostname = '%s (%s)' % (socket.gethostname(), interface)
-
-        status = {'host': hostname,
-                'version': VERSION,
-                'downloads': len(downloads),
-                'active_downloads': active_downloads,
-                'queued_downloads': queued_downloads,
-                'downloadrate': download_rate,
-                'uploadrate': upload_rate,
-                'progress': progress,
-                'diskfree': diskfree,
-                'diskfreepct': diskfreepct,
-                'userdiskfree': userdiskfree,
-                'userdiskfreepct': userdiskfreepct,
-                'connections': connections,
-                'paused': self.paused
-            }
-        return status
-    
-    def add_download(self, d):
-        max_queued = int(self.get_setting('max_queued', 0))
-        if max_queued and (len(self.get_downloads()) >= max_queued):
-            raise Exception('Too many downloads queued (see "max_queued" config var)')
-
-        if d.url:
-            if not d.description:
-                d.description = d.url
-            if not d.filename:
-                d.filename = unicode(urllib.unquote(
-                    os.path.basename(http.urlparse(str(d.url))[2])
-                    ))
-
-        # Rather than guess mimetypes, just let default downloaders grab
-        # the file and pass it off to secondary handlers if needed
-        #if d.filename and not d.mime_type:
-            #d.mime_type = unicode(mimetypes.guess_type(d.filename)[0])
-
-        if not d.feed_id and not d.media_type:
-            mt = d.mime_type
-            if not mt and d.filename:
-                mt = mimetypes.guess_type(d.filename)[0]
-            if mt:
-                if mt.startswith('video'):
-                    d.media_type = u'video/other'
-                elif mt.startswith('audio'):
-                    d.media_type = u'audio/other'
-
-        d.added = time()
-        d.deleted = False
-        d.active = False
-        d.progress = 0
-        d.status = Status.QUEUED
-        d.downloaded = 0
-
-        self.store.add(d)
-        self.get_downloads().append(d)
-        self.store.commit()
-        logging.info(u'Added new download ' + d.description)
-        self.application.fire_event('download_added', d)
-
-        self.application.auto_queue()
-
-        return d.id
-
-    def get_downloads(self, flush=False):
-        if not self.downloads is None:
-            return self.downloads
-        raise NotImplementedError('Manager must be subclassed')
-
-    def get_download(self, id):
-        for d in self.get_downloads():
-            if d.id == id:
-                return d
-        raise Exception('Download not found')
+    }
 
     def pause_download(self, id):
         d = self.get_download(id)
@@ -221,14 +94,6 @@ class Manager:
     def remove_download_failed(self, failure, dc, d):
         d.status_message = unicode(failure.getErrorMessage())
         logging.error(u'Failed to stop download %s: %s' % (d.id, failure.getErrorMessage()))
-
-    def get_work_directory(self, download=None):
-        workdir = os.path.expanduser(
-                self.get_option(('downpour', 'work_directory'),
-                                tempfile.gettempdir()))
-        if download:
-            workdir = os.path.join(workdir, 'dldir%s' % download.id)
-        return workdir
 
     def get_download_client(self, id, create=False):
         d = self.get_download(id)
@@ -353,39 +218,6 @@ class Manager:
         self.store.commit()
         return dfr
 
-    def pause(self):
-        dfl = None
-        if not self.paused:
-            logging.info(u'Pausing all downloads')
-            self.paused = True
-            dl = [self.pause_download(d.id) for d in self.get_downloads() if d.active]
-            self.store.commit()
-            dfl = defer.DeferredList(dl, consumeErrors=True)
-        else:
-            dfl = defer.DeferredList([defer.succeed(False)])
-        dfl.addCallback(lambda x: self.application.fire_event('downpour_paused'))
-        return dfl
-
-    def update_status(self, result, d, status, message=None):
-        if status == Status.STOPPED:
-            self.application.fire_event('download_stopped', d)
-            if d.progress == 100:
-                status = Status.COMPLETED
-        d.status = status
-        d.status_message = message
-        self.store.commit()
-
-    def resume(self):
-        if self.paused:
-            logging.info(u'Resuming all downloads')
-            self.paused = False
-            dl = [self.resume_download(d.id) \
-                for d in self.get_downloads() if d.active]
-            self.auto_queue()
-            self.application.fire_event('downpour_resumed')
-            return defer.DeferredList(dl, consumeErrors=True)
-        return defer.DeferredList([defer.succeed(False)])
-
     def add_feed(self, f):
         self.store.add(f)
         self.store.commit()
@@ -452,74 +284,11 @@ class Manager:
         # among all users
         return self.application.manager.get_download_rate_filter()
 
+
 class GlobalManager(Manager):
 
     upload_rate_filter = None
     download_rate_filter = None
-
-    # Start as many downloads as allowed by current configuration,
-    # in the order they were added
-    def auto_queue(self):
-        if not self.application.is_paused():
-            logging.debug(u'Running auto-queue')
-            status = self.get_status()
-
-            active = status['active_downloads']
-            ulrate = status['uploadrate']
-            dlrate = status['downloadrate']
-            conn = status['connections']
-
-            max_active = int(self.get_setting('max_active', 0))
-            max_ulrate = int(self.get_setting('upload_rate', 0)) * 1024
-            max_dlrate = int(self.get_setting('download_rate', 0)) * 1024
-            max_conn = int(self.get_setting('connection_limit', 0))
-
-            downloads = self.get_downloads()[:]
-
-            # TODO make this fairly distributed among users
-            for d in filter(lambda x: x.status == Status.QUEUED and not x.active, downloads):
-                if not max_active or active < max_active:
-                    self.start_download(d.id)
-                    active = active + 1
-
-            self.store.commit()
-
-            # Auto stop downloads if we're over config limits
-            if max_active and active > max_active:
-                downloads.reverse()
-                for d in filter(lambda x: x.active, downloads):
-                    if active > max_active:
-                        sdfr = self.stop_download(d.id)
-                        sdfr.addCallback(self.update_status, d, Status.QUEUED)
-                        sdfr.addErrback(self.update_status, d, Status.QUEUED)
-                        active = active - 1;
-                    else:
-                        break
-
-            if active > 0:
-                # Reset transfer limits
-                if max_ulrate > 0:
-                    client_ulrate = int(max_ulrate / active)
-                    for d in filter(lambda x: x.active, downloads):
-                        dc = self.get_download_client(d.id)
-                        if (dc):
-                            dc.set_upload_rate(client_ulrate)
-                if max_dlrate > 0:
-                    client_dlrate = int(max_dlrate / active)
-                    for d in filter(lambda x: x.active, downloads):
-                        dc = self.get_download_client(d.id)
-                        if (dc):
-                            dc.set_download_rate(client_dlrate)
-                if max_conn > 0:
-                    client_conn = int(max_conn / active)
-                    for d in filter(lambda x: x.active, downloads):
-                        dc = self.get_download_client(d.id)
-                        if (dc):
-                            dc.set_max_connections(client_conn)
-
-    def get_downloads(self, flush=False):
-        return list(self.store.find(models.Download,
-            models.Download.deleted == False).order_by(models.Download.added))
 
     def get_feeds(self):
         if self.feeds is None:
@@ -542,27 +311,8 @@ class GlobalManager(Manager):
             self.download_rate_filter.rate = max_dlrate
         return self.download_rate_filter
 
+
 class UserManager(Manager):
-
-    def __init__(self, application, user):
-        Manager.__init__(self, application)
-        self.user = user
-
-    def add_download(self, d):
-        d.user = self.user
-        return Manager.add_download(self, d)
-
-    def get_downloads(self, flush=False):
-        if self.user.admin:
-            return list(self.store.find(models.Download,
-                models.Download.deleted == False
-                ).order_by(models.Download.added))
-        elif self.downloads is None or flush:
-            self.downloads = list(self.store.find(models.Download,
-                models.Download.deleted == False,
-                models.Download.user_id == self.user.id
-                ).order_by(models.Download.added))
-        return self.downloads
 
     def add_feed(self, f):
         f.user = self.user

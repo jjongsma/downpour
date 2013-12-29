@@ -1,3 +1,4 @@
+from twisted.internet import defer
 from downpour2.core.plugin import Plugin
 from downpour2.library import store
 
