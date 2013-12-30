@@ -3,9 +3,9 @@ import os
 import gzip
 import logging
 from twisted.web import http
-from twisted.web.client import HTTPDownloader, _makeGetterFactory
-from twisted.protocols.htb import ShapedProtocolFactory
+from twisted.web.client import _makeGetterFactory
 from downpour2.core import VERSION
+from downpour2.core.net.http import HTTPManagedDownloader, DownloadStatus
 from downpour2.core.net.throttling import ThrottledBucketFilter
 from downpour2.core.transfers import state, client, event
 
@@ -49,7 +49,7 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
 
         self.working_directory = transfer_work_dir
 
-    def onstart(self):
+    def onstarting(self):
 
         self.original_mimetype = self.transfer.mime_type
         self.transfer.state = state.STARTING
@@ -59,14 +59,38 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
         factory_factory = lambda url, *a, **kw: HTTPManagedDownloader(
             str(self.transfer.url),
             os.path.join(self.working_directory, self.transfer.filename),
-            statusCallback=DownloadStatus(self.transfer),
+            status_callback=TransferStatus(self),
             bucketFilter=bucket_filter, *a, **kw)
 
         self.factory = _makeGetterFactory(str(self.transfer.url), factory_factory)
-        self.factory.deferred.addCallback(lambda x: self.fire(event.COMPLETE))
-        self.factory.deferred.addErrback(lambda x: self.fire(event.FAILED))
+        self.factory.deferred.addCallbacks(
+            lambda x: self.fire(event.COMPLETE),
+            lambda x: self.fire(event.FAILED))
 
         return True
+
+    def oncopying(self):
+        # Local agent doesn't need to copy anywhere
+        pass
+
+    def oncompleted(self):
+        self.transfer.progress = 100
+
+    def onremoved(self):
+        pass
+
+    def onstopping(self):
+
+        if self.factory.connector:
+            self.factory.connector.disconnect()
+
+        self.fire(event.STOPPED)
+
+    def onpending_copy(self):
+        pass
+
+    def onfailed(self):
+        self.transfer.health = 0
 
     def onbeforetransfer_complete(self):
 
@@ -90,17 +114,11 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
                         f.close()
 
                     if self.agent.reprovision(self):
+                        # Successfully reinjected, block COMPLETE event
                         return False
 
             except NotImplementedError:
                 pass
-
-    def onstopping(self):
-
-        if self.factory.connector:
-            self.factory.connector.disconnect()
-
-        self.fire(event.STOPPED)
 
     @property
     def download_rate(self):
@@ -111,16 +129,30 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
         self.rate = rate
         self.factory.setRateLimit(rate)
 
+    def directory(self):
+        return self.working_directory
+
     def files(self):
         return ({'path': self.transfer.filename,
                  'size': self.transfer.size,
                  'progress': self.transfer.progress},)
 
+    def fetch(self, directory=None):
 
-class DownloadStatus(object):
+        if directory is None:
+            return self.working_directory
 
-    def __init__(self, download):
-        self.download = download
+        if self.is_same_fs(directory, self.working_directory):
+
+            pass
+
+        return directory
+
+
+class TransferStatus(DownloadStatus):
+
+    def __init__(self, transfer_client):
+        self.client = transfer_client
         self.bytes_start = 0
         self.bytes_downloaded = 0
         self.start_time = 0
@@ -129,177 +161,78 @@ class DownloadStatus(object):
         self.last_rate_sample = 0
         self.rate_samples = []
 
-    def onConnect(self, downloader):
-        self.download.state = state.STARTING
+    def onconnect(self, downloader):
+        self.client.started()
 
-    def onError(self, downloader):
-        self.download.state = state.FAILED
-        self.download.health = 0
+    def onerror(self, downloader):
+        self.client.failed()
 
-    def onStop(self, downloader):
-        if self.download.state != state.FAILED:
-            if self.download.progress == 100:
-                self.download.state = state.COMPLETED
+    def onstop(self, downloader):
+        if self.client.transfer.state != state.FAILED:
+            if self.client.transfer.progress == 100:
+                self.client.fire(event.COMPLETE)
             else:
-                self.download.state = state.STOPPED
-        self.download.elapsed = self.download.elapsed + (time.time() - self.start_time)
+                self.client.fire(event.STOP)
+        self.client.transfer.elapsed += (time.time() - self.start_time)
 
-    def onHeaders(self, downloader, headers):
-        contentLength = 0
+    def onheaders(self, downloader, headers):
         if downloader.requestedPartial:
-            contentRange = headers.get('content-range', None)
-            start, end, contentLength = http.parseContentRange(contentRange[0])
+            content_range = headers.get('content-range', None)
+            start, end, content_length = http.parseContentRange(content_range[0])
             self.bytes_start = start - 1
             self.bytes_downloaded = self.bytes_start
         else:
-            contentLength = headers.get('content-length', [0])[0]
-        self.download.size = float(contentLength)
-        contentType = headers.get('content-type', None)
-        if contentType:
-            self.download.mime_type = unicode(contentType[0])
-        contentDisposition = headers.get('content-disposition', None)
-        if contentDisposition and contentDisposition[0].startswith('attachment'):
-            newName = contentDisposition[0].split('=')[1]
-            if newName[0] == '"' and newName[len(newName) - 1] == '"':
-                newName = newName[1:len(newName) - 1]
-            if downloader.renameFile(newName):
-                self.download.filename = unicode(newName)
+            content_length = headers.get('content-length', [0])[0]
+        self.client.transfer.size = float(content_length)
+        content_type = headers.get('content-type', None)
+        if content_type:
+            self.client.transfer.mime_type = unicode(content_type[0])
+        content_disposition = headers.get('content-disposition', None)
+        if content_disposition and content_disposition[0].startswith('attachment'):
+            new_name = content_disposition[0].split('=')[1]
+            if new_name[0] == '"' and new_name[len(new_name) - 1] == '"':
+                new_name = new_name[1:len(new_name) - 1]
+            if downloader.rename_file(new_name):
+                self.client.transfer.filename = unicode(new_name)
 
-    def onStart(self, downloader, partialContent):
+    def onstart(self, downloader, partial_content):
         self.start_time = time.time()
-        self.start_elapsed = self.download.elapsed
-        self.download.state = state.DOWNLOADING
-        self.download.health = 100
+        self.start_elapsed = self.client.transfer.elapsed
+        self.client.transfer.health = 100
 
-    def onPart(self, downloader, data):
-        self.bytes_downloaded = self.bytes_downloaded + len(data)
-        if self.download.size:
-            self.download.progress = (float(self.bytes_downloaded)
-                                      / float(self.download.size)) * 100
+    def onpart(self, downloader, data):
+
+        self.bytes_downloaded += len(data)
+
+        if self.client.transfer.size:
+            self.client.transfer.progress = \
+                (float(self.bytes_downloaded) / float(self.client.transfer.size)) * 100
 
         now = int(time.time())
         if self.last_rate_sample == 0:
             self.last_rate_sample = now
             self.rate_samples.insert(0, self.bytes_downloaded)
         elif now > self.last_rate_sample:
+            # Add value for every second since last sample
             for i in range(self.last_rate_sample, now):
                 self.rate_samples.insert(0, self.bytes_downloaded)
-            while len(self.rate_samples) > 10:
-                self.rate_samples.pop()
+            # Trim sample period to 10 seconds
+            if len(self.rate_samples) > 10:
+                self.rate_samples = self.rate_samples[:10]
             if len(self.rate_samples) > 1:
-                rate_diff = []
-                for i in range(0, len(self.rate_samples) - 1):
-                    rate_diff.append(self.rate_samples[i] - self.rate_samples[i + 1])
+                rate_diff = [self.rate_samples[i] - self.rate_samples[i + 1]
+                             for i in range(0, len(self.rate_samples) - 1)]
                 self.download_rate = float(sum(rate_diff)) / len(rate_diff)
             self.last_rate_sample = now
 
-        self.download.downloadrate = self.download_rate
+        self.client.transfer.downloadrate = self.download_rate
 
-        self.download.downloaded = self.bytes_downloaded
-        self.download.elapsed = self.start_elapsed + (now - self.start_time)
-        if self.download.size and self.download_rate:
-            self.download.timeleft = float(self.download.size - self.bytes_downloaded) / self.download_rate
+        self.client.transfer.downloaded = self.bytes_downloaded
+        self.client.transfer.elapsed = self.start_elapsed + (now - self.start_time)
+        if self.client.transfer.size and self.download_rate:
+            self.client.transfer.timeleft = \
+                float(self.client.transfer.size - self.bytes_downloaded) / self.download_rate
 
-    def onEnd(self, downloader):
-        self.download.progress = 100
-        self.download.state = state.COMPLETED
+    def onend(self, downloader):
         self.download_rate = (self.bytes_downloaded - self.bytes_start) / (time.time() - self.start_time)
-
-
-# noinspection PyPep8Naming,PyClassicStyleClass
-class HTTPManagedDownloader(HTTPDownloader):
-    def __init__(self, url, file, statusCallback=None, bucketFilter=None, *args, **kwargs):
-        self.bytes_received = 0
-        self.encoding = None
-        self.statusHandler = statusCallback
-        self.bucketFilter = bucketFilter
-
-        # TODO: Apparently this only works for servers, not clients :/
-        if self.bucketFilter:
-            self.protocol = ShapedProtocolFactory(self.protocol, self.bucketFilter)
-
-        HTTPDownloader.__init__(self, url, file, supportPartial=1,
-                                agent='Downpour v%s' % VERSION,
-                                *args, **kwargs)
-
-        self.origPartial = self.requestedPartial
-
-    def setRateLimit(self, rate=None):
-        if self.bucketFilter:
-            self.bucketFilter.rate = rate
-
-    def renameFile(self, newName):
-        fullName = os.path.sep.join((os.path.dirname(self.fileName), newName))
-        # Only override filename if we're not resuming a download
-        if not self.requestedPartial or not os.path.exists(self.fileName):
-            self.fileName = fullName
-            return True
-        elif os.rename(self.fileName, fullName):
-            self.fileName = fullName
-            return True
-        return False
-
-    def gotHeaders(self, headers):
-        HTTPDownloader.gotHeaders(self, headers)
-        # This method is being called twice sometimes,
-        # first time without a content-range
-        self.encoding = headers.get('content-encoding', None)
-        contentRange = headers.get('content-range', None)
-        if contentRange and self.requestedPartial == 0:
-            self.requestedPartial = self.origPartial
-        if self.statusHandler:
-            self.statusHandler.onHeaders(self, headers)
-
-    def pageStart(self, partialContent):
-        HTTPDownloader.pageStart(self, partialContent)
-        if self.statusHandler:
-            self.statusHandler.onStart(self, partialContent)
-
-    def pagePart(self, data):
-        HTTPDownloader.pagePart(self, data)
-        if self.statusHandler:
-            self.statusHandler.onPart(self, data)
-
-    def pageEnd(self):
-        if self.statusHandler:
-            self.statusHandler.onEnd(self)
-            # And the hacks are piling up, Twisted is really not very flexible
-        if self.encoding[0] == 'gzip':
-            self.file.close()
-            g = gzip.open(self.fileName, 'rb')
-            # This will blow up for large files
-            decompressed = g.read()
-            g.close()
-            self.file = open(self.fileName, 'wb');
-            self.file.write(decompressed);
-        HTTPDownloader.pageEnd(self)
-
-    def startedConnecting(self, connector):
-        self.connector = connector
-        if self.statusHandler:
-            self.statusHandler.onCnnect(self)
-        HTTPDownloader.startedConnecting(self, connector)
-
-    def clientConnectionFailed(self, connector, reason):
-        if self.statusHandler:
-            self.statusHandler.onError(self)
-        HTTPDownloader.clientConnectionFailed(self, connector, reason)
-
-    def clientConnectionLost(self, connector, reason):
-        if self.statusHandler:
-            self.statusHandler.onStop(self)
-        HTTPDownloader.clientConnectionLost(self, connector, reason)
-
-
-# noinspection PyPep8Naming,PyShadowingNames,PyArgumentList,PyShadowingBuiltins
-def downloadFile(url, file, statusCallback=None, bucketFilter=None, contextFactory=None, *args, **kwargs):
-
-    factory_factory = lambda url, *a, **kw: HTTPManagedDownloader(
-        url, file, statusCallback=statusCallback,
-        bucketFilter=bucketFilter, *a, **kw)
-
-    return _makeGetterFactory(
-        url,
-        factorFactory=factory_factory,
-        contextFactory=contextFactory,
-        *args, **kwargs).deferred
+        self.client.fire(event.COMPLETE)

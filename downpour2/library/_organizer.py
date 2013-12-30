@@ -1,10 +1,8 @@
-from downpour.download import Status
 from downpour.core import models
 from twisted.internet import defer, threads
 from time import time
-from datetime import datetime
 from dateutil.parser import parse as parsedate
-import logging, os, re, mimetypes, shutil
+import os, re, mimetypes, shutil
 
 mediatypes = {
     'audio/music': 'Music',

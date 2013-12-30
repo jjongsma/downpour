@@ -1,4 +1,3 @@
-import logging
 from twisted.internet import defer
 
 #
@@ -16,20 +15,14 @@ class Flow(object):
 
     def __init__(self, cfg):
 
-        self.log = logging.getLogger(__name__)
         self._apply(cfg)
-        self._transition = False
         self._final = None
         self._map = {}
 
         self.current = None
 
-    def isstate(self, state):
-        return self.current == state
-
     def can(self, event):
-        return (event in self._map and ((self.current in self._map[event]) or WILDCARD in self._map[event])
-                and not self._transition)
+        return event in self._map and ((self.current in self._map[event]) or WILDCARD in self._map[event])
 
     def cannot(self, event):
         return not self.can(event)
@@ -38,6 +31,7 @@ class Flow(object):
         return self._final and (self.current == self._final)
 
     def _apply(self, cfg):
+
         init = cfg['initial'] if 'initial' in cfg else None
         if _is_base_string(init):
             init = {'state': init}
@@ -82,9 +76,6 @@ class Flow(object):
 
         def fn(*args, **kwargs):
 
-            if self._transition:
-                raise FlowError(
-                    "event %s inappropriate because previous transition did not complete" % event)
             if not self.can(event):
                 raise FlowError(
                     "event %s inappropriate in current state %s" % (event, self.current))
@@ -103,32 +94,38 @@ class Flow(object):
 
             setattr(e, 'args', args)
 
-            if self._before_event(e) is False:
-                return defer.fail(FlowError('before event handler returned false'))
-
             dfr = defer.Deferred()
 
-            def _after():
-                self._transition = False
-                self._change_state(e)
-                self._after_event(e)
-                dfr.callback(True)
-                return dfr
+            current = self.current
 
-            if self.current == dst:
-                return _after()
+            def _revert(f):
+                self.current = current
+                dfr.errback(f)
+
+            def _after():
+                defer.maybeDeferred(self._after_event, e).addCallbacks(
+                    lambda x: dfr.callback(True), dfr.errback)
 
             def _enter():
+                defer.maybeDeferred(self._enter_state, e).addCallbacks(_after, dfr.errback)
+
+            def _change():
                 self.current = dst
-                defer.maybeDeferred(self._enter_state, e) \
-                    .addCallback(_after).addErrback(dfr.errback)
+                defer.maybeDeferred(self._change_state, e).addCallbacks(_enter, dfr.errback)
 
-            def _leave():
-                self._transition = True
-                defer.maybeDeferred(self._leave_state, e) \
-                    .addCallback(_enter).addErrback(dfr.errback)
+            def _leave(allowed=True):
+                if not allowed:
+                    dfr.errback(FlowError('before event handler returned false'))
+                else:
+                    if self.current == dst:
+                        _after()
+                    else:
+                        defer.maybeDeferred(self._leave_state, e).addCallbacks(_change, _revert)
 
-            _leave()
+            def _before():
+                defer.maybeDeferred(self._before_event, e).addCallbacks(_leave, dfr.errback)
+
+            _before()
 
             return dfr
 

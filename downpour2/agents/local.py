@@ -241,7 +241,8 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
     def auto_queue(self):
         """
-        Start as many downloads as allowed by current configuration, in the order they were added
+        Start as many downloads as allowed by current configuration, according to the order added and
+        their priority.
         """
 
         if not self.status.paused:
