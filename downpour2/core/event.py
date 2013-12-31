@@ -18,6 +18,7 @@ STOP = 'transfer_stop'
 STOPPED = 'transfer_stopped'
 FAILED = 'transfer_failed'
 REMOVE = 'transfer_remove'
+REMOVED = 'transfer_removed'
 
 # Download only
 FETCHED = 'transfer_fetched'

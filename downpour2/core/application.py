@@ -100,6 +100,7 @@ class Application(object):
 
     def stop(self):
 
+        self.store.commit()
         self.events.fire(event.DOWNPOUR_SHUTDOWN)
 
         # Stop plugins

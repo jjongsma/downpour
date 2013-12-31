@@ -60,6 +60,7 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         # Listen for core pause/resume events
         self.application.events.subscribe(event.DOWNPOUR_PAUSED, self.pause)
         self.application.events.subscribe(event.DOWNPOUR_RESUMED, self.resume)
+        self.application.events.subscribe(event.REMOVED, self._remove)
 
         transfers = list(self.application.store.find(
             store.Transfer, store.Transfer.removed == False).order_by(
@@ -68,6 +69,10 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         return defer.DeferredList(
             [self.provision(t) for t in transfers],
             consumeErrors=True).addCallback(self.resume)
+
+    def _remove(self, client):
+        if client in self.clients:
+            self.clients.remove(client)
 
     def reload(self):
         # The only real config-dependent stuff is in auto-queue

@@ -1,10 +1,9 @@
 import time
 import os
-import gzip
 import logging
+import shutil
 from twisted.web import http
 from twisted.web.client import _makeGetterFactory
-from downpour2.core import VERSION
 from downpour2.core.net.http import HTTPManagedDownloader, DownloadStatus
 from downpour2.core.net.throttling import ThrottledBucketFilter
 from downpour2.core.transfers import state, client, event
@@ -53,6 +52,10 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
 
         self.original_mimetype = self.transfer.mime_type
         self.transfer.state = state.STARTING
+        self.transfer.status = None
+
+        if not self.transfer.started:
+            self.transfer.started = time.time()
 
         bucket_filter = ThrottledBucketFilter(0, self.agent.download_filter())
 
@@ -60,7 +63,7 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
             str(self.transfer.url),
             os.path.join(self.working_directory, self.transfer.filename),
             status_callback=TransferStatus(self),
-            bucketFilter=bucket_filter, *a, **kw)
+            bucket_filter=bucket_filter, *a, **kw)
 
         self.factory = _makeGetterFactory(str(self.transfer.url), factory_factory)
         self.factory.deferred.addCallbacks(
@@ -71,23 +74,27 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
 
     def oncopying(self):
         # Local agent doesn't need to copy anywhere
-        pass
+        self.fire(event.FETCHED)
 
     def oncompleted(self):
         self.transfer.progress = 100
+        self.transfer.completed = time.time()
+        self.transfer.status = None
+
+    def onremoving(self):
+        self.onstopping()
 
     def onremoved(self):
-        pass
+        # Cleanup working directory
+        self.transfer.removed = True
+        if os.path.isdir(self.working_directory):
+            shutil.rmtree(self.working_directory)
+        self.application.events.fire(event.REMOVED, self)
 
     def onstopping(self):
-
         if self.factory.connector:
             self.factory.connector.disconnect()
-
         self.fire(event.STOPPED)
-
-    def onpending_copy(self):
-        pass
 
     def onfailed(self):
         self.transfer.health = 0

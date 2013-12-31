@@ -167,8 +167,7 @@ class SimpleDownloadClient(DownloadClient):
                 # Progress updated
                 {'src': state.DOWNLOADING, 'name': event.UPDATED, 'dst': state.DOWNLOADING},
                 # Download paused
-                {'src': [state.STARTING, state.DOWNLOADING],
-                 'name': event.STOP, 'dst': state.STOPPING},
+                {'src': [state.STARTING, state.DOWNLOADING], 'name': event.STOP, 'dst': state.STOPPING},
                 {'src': state.STOPPING, 'name': event.STOPPED, 'dst': state.STOPPED},
                 # Download resumed
                 {'src': state.STOPPED, 'name': event.ENQUEUE, 'dst': state.QUEUED},
@@ -183,7 +182,8 @@ class SimpleDownloadClient(DownloadClient):
                 # Completed
                 {'src': state.COPYING, 'name': event.FETCHED, 'dst': state.COMPLETED},
                 # Remove from queue
-                {'src': state.DOWNLOADING, 'name': event.REMOVE, 'dst': state.REMOVING},
+                {'src': [state.STARTING, state.DOWNLOADING, state.COPYING],
+                 'name': event.REMOVE, 'dst': state.REMOVING},
                 {'src': state.REMOVING, 'name': event.STOPPED, 'dst': state.REMOVED},
                 {'src': [state.QUEUED, state.FAILED, state.COMPLETED, state.PENDING_COPY],
                  'name': event.REMOVE, 'dst': state.REMOVED},
