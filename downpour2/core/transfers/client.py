@@ -187,7 +187,7 @@ class SimpleDownloadClient(DownloadClient):
                 {'src': state.REMOVING, 'name': event.STOPPED, 'dst': state.REMOVED},
                 {'src': [state.QUEUED, state.FAILED, state.COMPLETED, state.PENDING_COPY],
                  'name': event.REMOVE, 'dst': state.REMOVED},
-            ]
+                ]
         })
 
 
@@ -246,7 +246,7 @@ class PeerDownloadClient(DownloadClient):
                 {'src': state.REMOVING, 'name': event.STOPPED, 'dst': state.REMOVED},
                 {'src': [state.QUEUED, state.FAILED, state.COMPLETED,
                          state.PENDING_COPY], 'name': event.REMOVE, 'dst': state.REMOVED},
-            ]
+                ]
         })
 
 
@@ -288,5 +288,5 @@ class SimpleUploadClient(TransferClient):
                 {'src': state.SEEDING, 'name': event.REMOVE, 'dst': state.REMOVING},
                 {'src': state.REMOVING, 'name': event.STOPPED, 'dst': state.REMOVED},
                 {'src': [state.FAILED, state.COMPLETED], 'name': event.REMOVE, 'dst': state.REMOVED},
-            ]
+                ]
         })

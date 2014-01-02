@@ -1,4 +1,7 @@
-import socket, fcntl, struct
+import socket
+import fcntl
+import struct
+
 
 # Set comm interface (useful for routing torrent traffic over VPN, etc)
 def get_interface(interface):
@@ -20,6 +23,7 @@ def get_interface(interface):
             except IOError as ioe:
                 raise IOError('Interface not found')
     return None
+
 
 # Get the IP assigned to an interface name on linux
 def get_device_ip(ifname):

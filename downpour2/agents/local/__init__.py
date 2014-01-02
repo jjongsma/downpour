@@ -6,7 +6,7 @@ from twisted.internet import defer
 from downpour2.core import VERSION, plugin, event, net
 from downpour2.core.transfers import state, agent, store
 from downpour2.core.net.throttling import ThrottledBucketFilter
-from downpour2.core.transfers.client.http import HTTPDownloadClientFactory
+from downpour2.agents.local.http import HTTPDownloadClientFactory
 
 
 class LocalAgent(plugin.Plugin, agent.TransferAgent):
