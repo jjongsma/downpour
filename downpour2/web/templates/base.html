@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{% if not standalone %}<!DOCTYPE html>
 <html class="no-js">
 
     <head>
@@ -57,7 +57,7 @@
 			<ul>
 				<li title="Downpour"{% if section == 'overview' %} class="active"{% endif %}><a href="/">Overview</a></li>
 				<li{% if section == 'transfers' %} class="active"{% endif %}><a href="/transfers/">Transfers</a></li>
-				<li{% if section == 'feeds' %} class="active"{% endif %}><a href="/feeds/">Feeds</a></li>
+                {{ pluginblock('sidelink') }}
 				<li{% if section == 'library' %} class="active"{% endif %}><a href="/library/">Media Library</a></li>
 				<li{% if section == 'search' %} class="active"{% endif %}><a href="/search/">Search</a></li>
 				<li{% if section == 'notifications' %} class="active"{% endif %}>
@@ -69,6 +69,7 @@
 				</li>
 				<li{% if section == 'status' %} class="active"{% endif %}><a href="/status/">System Status</a></li>
 			</ul>
+            {{ pluginblock('sidesection') }}
 			{% if shares %}
 				<h4>Remote Shares</h4>
 				<ul>
@@ -80,6 +81,7 @@
 			{% endif %}
 			<h4>Settings</h4>
 			<ul>
+                {{ pluginblock('settinglink') }}
 				<li{% if section == 'media-types' %} class="active"{% endif %}><a href="/media-types/">Media Types</a></li>
 				<li{% if section == 'shares' %} class="active"{% endif %}><a href="/shares/">Remote Shares</a></li>
 				<li{% if section == 'media-center' %} class="active"{% endif %}><a href="/media-center/">Media Center Sync</a></li>
@@ -88,6 +90,7 @@
 			{% if user.admin %}
 			<h4>Administration</h4>
 			<ul>
+                {{ pluginblock('adminlink') }}
 				<li{% if section == 'work' %} class="active"{% endif %}><a href="/work/">Download Cache</a></li>
 				<li{% if section == 'users' %} class="active"{% endif %}><a href="/users/">Users</a></li>
 				<li{% if section == 'settings' %} class="active"{% endif %}><a href="/settings/">Settings</a></li>
@@ -116,8 +119,8 @@
 		{% endif %}
 
 		<div id="content" class="clearfix">
-			{% block body %}
-			{% endblock %}
+            {% endif %}{% block body %}
+			{% endblock %}{% if not standalone %}
 		</div>
 
 		<div id="footer">
@@ -126,4 +129,4 @@
 
     </body>
 
-</html>
+</html>{% endif %}

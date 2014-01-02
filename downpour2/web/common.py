@@ -1,46 +1,25 @@
-import os, hashlib, logging
+import hashlib
+import traceback
 from twisted.web import resource, server
 from storm import expr
 from downpour2.core import VERSION, store
 from downpour2.web import auth
 from downpour2.sharing.store import RemoteShare
 
-def requestFactory(plugin):
 
-    def factory(*args, **kwargs):
-        return Request(plugin, *args, **kwargs)
-
-    return factory
-
-class Request(server.Request):
-
-    def __init__(self, plugin, *args, **kwargs):
-        server.Request.__init__(self, *args, **kwargs)
-        self.application = plugin.application
-        self.plugin = plugin
-        self.templateFactory = plugin.templateFactory
-
-def sessionFactory(plugin):
-
-    def factory(*args, **kwargs):
-        return Session(plugin, *args, **kwargs)
-
-    return factory
-
-class Session(server.Session):
-
-    def __init__(self, plugin, *args, **kwargs):
-        server.Session.__init__(self, *args, **kwargs)
-        self.setAdapter(auth.IAccount, auth.Account)
-
-class Resource(resource.Resource):
+class Resource(resource.Resource, object):
 
     templates = {}
+
+    def __init__(self, application, environment):
+        super(Resource, self).__init__()
+        self.application = application
+        self.environment = environment
 
     def getChild(self, *args):
         c = resource.Resource.getChild(self, *args)
         if c.__class__ == resource.NoResource:
-            return NotFoundResource()
+            return NotFoundResource(self.application, self.environment)
         return c
 
     def is_logged_in(self, request):
@@ -61,14 +40,14 @@ class Resource(resource.Resource):
 
         if not account.user:
 
-            userinfo = request.getCookie('DOWNPOUR_USER');
+            userinfo = request.getCookie('DOWNPOUR_USER')
 
             if userinfo:
 
                 (userid, userhash) = userinfo.split(':', 1)
-                user = request.application.store.find(store.User,
-                    store.User.id == int(userid)).one()
-                comphash = hashlib.md5('%s:%s' % (user.username, user.password)).hexdigest();
+                user = self.application.store.find(
+                    store.User, store.User.id == int(userid)).one()
+                comphash = hashlib.md5('%s:%s' % (user.username, user.password)).hexdigest()
 
                 if userhash == comphash:
                     account.user = user
@@ -88,7 +67,7 @@ class Resource(resource.Resource):
 
         account.user = user
 
-    def render_template(self, template, request, context, content_type = None):
+    def render_template(self, template, request, context, content_type=None):
 
         unsupported = False
         ua = request.getHeader('User-Agent')
@@ -97,9 +76,9 @@ class Resource(resource.Resource):
 
         user = self.get_user(request)
 
-        shares = request.application.store.find(RemoteShare,
-            RemoteShare.user == user
-            ).order_by(expr.Asc(RemoteShare.name))
+        shares = self.application.store.find(
+            RemoteShare, RemoteShare.user == user).order_by(
+                expr.Asc(RemoteShare.name))
 
         defaults = {
             'version': VERSION,
@@ -107,15 +86,19 @@ class Resource(resource.Resource):
             'user': user,
             'shares': shares,
             'standalone': request.requestHeaders.hasHeader('X-Standalone-Content')
-            }
+        }
 
-        defaults.update(context);
+        defaults.update(context)
+
+        # Hack for jinja2 <= 2.7.1 - PrefixLoader doesn't propagate globals
+        defaults.update(self.environment.globals)
 
         try:
-            t = request.templateFactory.get_template(template)
+            t = self.environment.get_template(template)
         except Exception as e:
+            traceback.print_exc()
             return self.render_error(request, defaults, 'Template Not Found',
-                'Could not load page template: %s' % template)
+                                     'Could not load page template: %s' % template)
 
         if content_type:
             request.setHeader('Content-type', content_type)
@@ -128,59 +111,81 @@ class Resource(resource.Resource):
 
         try:
             # Check for existence first so we don't go into a loop
-            t = request.templateFactory.get_template('errors/error.html')
-            return self.render_template('errors/error.html', request, context.update({
+            self.environment.get_template('core/errors/error.html')
+            return self.render_template('core/errors/error.html', request, context.update({
                 'title': title,
                 'message': message
-                }))
+            }))
 
-        except Exception as e:
-            return '<h1>%s</h1><p>%s</p><p>%s</p>' % (title, message,
-                'Additionally, the error page template could not be found.')
+        except Exception:
+            return '<h1>%s</h1><p>%s</p><p>%s</p>' % (
+                title, message, 'Additionally, the error page template could not be found.')
+
 
 class AuthenticatedResource(Resource):
 
-    def render(self, request, *args):
+    def render(self, request):
         if not self.is_logged_in(request):
             request.redirect('/account/login')
             request.finish()
             return server.NOT_DONE_YET
-        return Resource.render(self, request, *args)
+        return Resource.render(self, request)
+
 
 class AdminResource(Resource):
 
-    def render(self, request, *args):
+    def render(self, request):
+
         user = self.get_user(request)
+
         if not user:
             request.redirect('/account/login')
             request.finish()
             return server.NOT_DONE_YET
+
         elif not user.admin:
             request.setHeader('Status', '401 Unauthorized')
             return self.render_template('errors/error.html', request, {
                 'title': 'Not Authorized',
                 'message': 'You are not authorized to view this page'
-                })
-        return Resource.render(self, request, *args)
+            })
+
+        return Resource.render(self, request)
+
+
+class ModuleRoot(Resource):
+    """
+    The root entry point for a plugin's web interface.
+    """
+
+    def __init__(self, plugin, namespace, loader):
+        super(ModuleRoot, self).__init__(
+            plugin.application, plugin.make_environment(namespace, loader))
+        self.namespace = namespace
+
+    def blocks(self):
+        return {}
+
 
 class ErrorResource(Resource):
 
     def __init__(self, status, title, message, *args, **kwargs):
+        super(ErrorResource, self).__init__(*args, **kwargs)
         self.status = status
         self.title = title
         self.message = message
-        Resource.__init__(self, *args, **kwargs)
 
     def render(self, request):
         if self.status:
             request.setHeader('Status', self.status)
-        return self.render_template('errors/error.html', request, {
+        return self.render_template('core/errors/error.html', request, {
             'title': self.title,
             'message': self.message
-            })
+        })
+
 
 class NotFoundResource(ErrorResource):
 
     def __init__(self, *args, **kwargs):
-        ErrorResource.__init__(self, '404 Not Found', 'Not Found',
-                'That page does not exist', *args, **kwargs)
+        super(NotFoundResource, self).__init__('404 Not Found', 'Not Found',
+                               'That page does not exist', *args, **kwargs)

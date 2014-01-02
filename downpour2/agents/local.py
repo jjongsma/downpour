@@ -6,10 +6,10 @@ from twisted.internet import defer
 from downpour2.core import VERSION, plugin, event, net
 from downpour2.core.transfers import state, agent, store
 from downpour2.core.net.throttling import ThrottledBucketFilter
+from downpour2.core.transfers.client.http import HTTPDownloadClientFactory
 
 
 class LocalAgent(plugin.Plugin, agent.TransferAgent):
-
     """
     Transfer agent that downloads to the local directory specified in the work_directory
     configuration value.
@@ -24,9 +24,8 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         self.config = {}
         self.working_directory = None
         self.paused = False
-        self.clients = []
-        # TODO register supported transports (torrent, http, ftp, etc)
         self.transports = []
+        self.clients = []
 
         self.agent_status = agent.AgentStatus()
         self.agent_status.version = VERSION
@@ -47,6 +46,11 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
                 self.log.error('Could not create directory "%s": %s' % (work_dir, oe))
 
         self.working_directory = work_dir
+
+        # TODO register supported transports (torrent, http, ftp, etc)
+        self.transports.extend([
+            HTTPDownloadClientFactory(self.application, self, self.working_directory)
+        ])
 
         self.application.transfer_manager.register_agent(self)
 
@@ -135,7 +139,7 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
             running = existing.transfer.state.transferring
 
-            existing.transfer.state == state.QUEUED
+            existing.transfer.state = state.QUEUED
             existing.transfer.uploaded = 0
             existing.transfer.downloaded = 0
             existing.transfer.progress = 0

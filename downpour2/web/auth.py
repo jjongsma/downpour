@@ -1,11 +1,12 @@
 from twisted.python import components
-from twisted.web import server
 from zope import interface
+
 
 class IAccount(interface.Interface):
     pass
 
-class Account(components.Adapter):
+
+class Account(components.Adapter, object):
     interface.implements(IAccount)
 
     def __init__(self, *args):

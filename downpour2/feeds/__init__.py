@@ -1,14 +1,20 @@
 from twisted.internet import task, defer
-from downpour2.core.plugin import Plugin
+from downpour2.core import plugin
 from downpour2.feeds import store
+from downpour2.feeds.web.root import FeedModule
 
-class FeedManager(Plugin):
+
+class FeedManager(plugin.Plugin):
 
     def setup(self, config):
 
         self.config = config;
 
         store.update_store(self.application.store)
+
+        if plugin.WEB in self.application.plugins:
+            web = self.application.plugins[plugin.WEB]
+            web.register_module(FeedModule(web))
 
     def start(self):
 

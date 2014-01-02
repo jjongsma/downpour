@@ -1,34 +1,84 @@
-import os, math, urllib, logging
+import urllib
+import logging
 from datetime import datetime
 from twisted.internet import reactor
 from twisted.internet.error import CannotListenError
 from twisted.web import server
-from twisted.protocols.policies import ThrottlingFactory
-from jinja2 import Environment, PackageLoader
-from downpour2.core.plugin import Plugin
-from downpour2.core import net, event
-from downpour2.web import common
-from downpour2.web.site import SiteRoot
+from jinja2 import Environment, PackageLoader, PrefixLoader
+from downpour.web import auth
+from downpour2.core import net, plugin
+from downpour2.web import common, site
 
-class WebInterface(Plugin):
 
-    def setup(self, config):
+class WebInterface(plugin.Plugin):
 
-        self.LOG = logging.getLogger(__name__)
+    def __init__(self, app):
 
-        self.config = self.application.config.section('http')
+        super(WebInterface, self).__init__(app)
 
-        templateLoader = PackageLoader('downpour2.web', 'templates')
-        self.templateFactory = Environment(loader=templateLoader)
-        templateDir = os.path.dirname(templateLoader.get_source(
-                self.templateFactory, 'base.html')[1]);
+        self.log = logging.getLogger(__name__)
+        self.template_loader = PackageLoader('downpour2.web', 'templates')
+        self.blocks = {}
+
+        # Template loader
+        self.environment = Environment(loader=PrefixLoader({
+            'core': self.template_loader
+        }))
 
         # Custom filters for templateFactory
-        self.templateFactory.filters['intervalformat'] = self.intervalformat
-        self.templateFactory.filters['timestampformat'] = self.timestampformat
-        self.templateFactory.filters['urlencode'] = urllib.quote
-        self.templateFactory.filters['workinglink'] = self.workinglink
-        self.templateFactory.filters['librarylink'] = self.librarylink
+        self.environment.filters.update({
+            'intervalformat': interval_format,
+            'timestampformat': timestamp_format,
+            'urlencode': urllib.quote
+        })
+
+        # Block renderer for plugin content injection
+        self.environment.globals.update({
+            'pluginblock': self.render_block
+        })
+
+        self.site_root = site.SiteRoot(app, self.environment)
+
+    def register_module(self, module):
+        """
+        @param module:
+        @ptype module: downpour2.web.common.ModuleRoot
+        """
+
+        self.site_root.add_child(module.namespace, module)
+
+        for block, fnlist in module.blocks().iteritems():
+            if is_sequence(fnlist):
+                for fn in fnlist:
+                    self.register_block(block, fn)
+            else:
+                self.register_block(block, fnlist)
+
+    def register_block(self, block, fn):
+        if block not in self.blocks:
+            self.blocks[block] = []
+        self.blocks[block].append(fn)
+
+    def link_renderer(self, path, name):
+        return lambda: self.environment.get_template('core/blocks/navlink.html').render({
+            'path': path,
+            'name': name
+        })
+
+    def render_block(self, block):
+        if block in self.blocks:
+            for fn in self.blocks[block]:
+                return fn()
+        return ''
+
+    def make_environment(self, path, loader):
+        return self.environment.overlay(loader=PrefixLoader({
+            'core': self.template_loader,
+            path: loader
+        }))
+
+    def setup(self, config):
+        self.config = self.application.config.section('http')
 
     def start(self):
 
@@ -45,93 +95,51 @@ class WebInterface(Plugin):
         if iface is None:
             iface = '0.0.0.0'
 
-        root = SiteRoot(self.application)
-        site = server.Site(root)
-        site.requestFactory = common.requestFactory(self)
-        site.sessionFactory = common.sessionFactory(self)
+        handler = server.Site(self.site_root)
+        handler.sessionFactory = lambda *args, **kwargs: Session(*args, **kwargs)
 
-        self.tryListen(port, site, net.get_interface(iface))
+        self.try_listen(port, handler, net.get_interface(iface))
 
-    def tryListen(self, port, site, iface):
+    def try_listen(self, port, handler, iface):
 
         try:
-            reactor.listenTCP(port, site, interface=iface)
-            self.LOG.info('Web interface listening on %s:%d' % (iface, port))
+            reactor.listenTCP(port, handler, interface=iface)
+            self.log.info('Web interface listening on %s:%d' % (iface, port))
 
         except CannotListenError as cle:
-            # Can happen when wifi connection is not ready, just try later
-            self.LOG.warn('%s (retrying bind in 30 seconds)' % cle)
-            reactor.callLater(30.0, self.tryListen, port, site, iface)
-
-    def intervalformat(self, seconds):
-
-        if seconds == -1:
-            return 'Infinite'
-
-        days, seconds = divmod(seconds, 86400)
-        hours, seconds = divmod(seconds, 3600)
-        minutes, seconds = divmod(seconds, 60)
-
-        daystr = '';
-        if days > 0:
-            daystr = '%dd ' % days
-
-        return '%s%d:%.2d:%.2d' % (daystr, hours, minutes, seconds)
-
-    def workinglink(self, file, download):
-
-        encfile = file.decode('utf8');
-        realpath = self.application.manager.get_work_directory(download) + '/' + encfile
-
-        if os.access(realpath, os.R_OK):
-            return '<a target="_blank" href="/work/dldir%d/%s">%s</a>' % (download.id, encfile, encfile)
-        else:
-            return encfile
-
-    def librarylink(self, file):
-
-        if file.filename is None:
-            return None
-
-        user = file.user
-        fileparts = file.filename.decode('utf8').split('/')
-        parents = []
-
-        if file.directory:
-            parents.append(file.directory)
-
-        linkparts = []
-
-        for f in fileparts:
-            linkparts.append(self.get_library_link(user, '/'.join(parents), f))
-            parents.append(f)
-
-        return ' / '.join(linkparts)
-
-    def get_library_link(self, user, directory, path):
-
-        manager = self.application.get_manager(user)
-        userdir = manager.get_library_directory()
-
-        if userdir:
-
-            relpath = path
-
-            if directory:
-                relpath = '%s/%s' % (directory, path)
-
-            realpath = os.path.normpath('%s/%s' % (userdir, relpath))
-
-            if os.access(realpath, os.R_OK):
-
-                if os.path.isdir(realpath):
-                    return '<a href="/browse/%s/">%s</a>' % (relpath, path)
-                else:
-                    return '<a target="_blank" href="/browse/%s">%s</a>' % (relpath, path)
-
-        return '%s' % path
+            # Can happen when connection is not ready yet after boot, keep trying
+            self.log.warn('%s (retrying bind in 30 seconds)' % cle)
+            reactor.callLater(30.0, self.try_listen, port, handler, iface)
 
 
-    def timestampformat(self, timestamp, format):
+def is_sequence(item):
+    return (not hasattr(item, "strip") and
+            hasattr(item, "__getitem__") or
+            hasattr(item, "__iter__"))
 
-        return datetime.fromtimestamp(timestamp).strftime(format)
+
+def interval_format(seconds):
+
+    if seconds == -1:
+        return 'Infinite'
+
+    days, seconds = divmod(seconds, 86400)
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+
+    daystr = ''
+    if days > 0:
+        daystr = '%dd ' % days
+
+    return '%s%d:%.2d:%.2d' % (daystr, hours, minutes, seconds)
+
+
+def timestamp_format(timestamp, fmt):
+    return datetime.fromtimestamp(timestamp).strftime(fmt)
+
+
+class Session(server.Session, object):
+
+    def __init__(self, *args, **kwargs):
+        server.Session.__init__(self, *args, **kwargs)
+        self.setAdapter(auth.IAccount, auth.Account)

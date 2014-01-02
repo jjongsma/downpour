@@ -1,4 +1,4 @@
-{% if not standalone %}{% extends "base.html" %}{% endif %}
+{% extends "core/base.html" %}
 {% block body %}
 <div class="notice">
 	All transfers are currently paused. <a href="/status/resume">Click to resume transfers</a>
@@ -205,9 +205,14 @@
 				<span><a href="#">Shit done got busted</a></span>
 				<span class="fa fa-times remove"></span>
 			</div>
+            <div class="queued">
+                <a href="/transfers/">and 6 more...</a>
+            </div>
 		</div>
 	</div>
 </div>
+
+{{ pluginblock('homeblock') }}
 
 <div class="column side desktop">
 	<div class="box columnContent">

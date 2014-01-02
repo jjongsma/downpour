@@ -201,6 +201,7 @@ pre, pre code {
 .box .hostDisk .title { float: left; width: 35%; margin: 5px 0; }
 .box .hostDisk .free { float: right; width: 65%; margin: 5px 0; }
 
+.queued { font-style: italic; }
 .nowAvailable { margin-bottom: 10px; }
 .nowAvailable a { display: block; margin: 5px; line-height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nowAvailable a.queue { float: right; display: block; margin: 0 5px; color: #2bc253; }
@@ -211,7 +212,7 @@ pre, pre code {
 .notification { position: relative; margin: 5px 0; }
 .notification:first-child { margin-top: 0; }
 .notification:last-child { margin-bottom: 0; }
-.notification a { text-decoration: underline; padding: 0 5px; }
+.notification a { padding: 0 5px; }
 .notification .fa-check-circle { color: #1897f2; }
 .notification .fa-exclamation-circle { color: #ffb219; }
 .notification .fa-exclamation-triangle { color: #D74B4B; }
@@ -221,7 +222,6 @@ pre, pre code {
 .transferSummary .health { height: 16px; width: 50%; }
 .transferSummary .label { vertical-align: middle; float: left; width: 66%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .transferSummary .progress { float: right; font-size: 11px; width: 30%; text-align: center; font-weight: bold; }
-.transferSummary .queued { font-style: italic; }
 .transferSummary .mediaType { font-style: italic; }
 .transferSummary .date { font-size: 11px; padding: 3px 0 0; float: left; width: 50px; }
 .transferSummary .imported { margin-left: 50px; }

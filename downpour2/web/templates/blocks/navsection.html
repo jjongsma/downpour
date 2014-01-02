@@ -1,0 +1,6 @@
+<h4>{{ sectionname }}</h4>
+<ul>
+    {% for path, name in links.iteritems() %}
+        {% include "blocks/navlink.html" %}
+    {% endfor %}
+</ul>
