@@ -85,6 +85,8 @@ class Resource(resource.Resource, object):
             'unsupported': unsupported,
             'user': user,
             'shares': shares,
+            'paused': self.application.paused,
+            'notifications': self.application.alerts.unread(),
             'standalone': request.requestHeaders.hasHeader('X-Standalone-Content')
         }
 

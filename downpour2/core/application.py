@@ -22,6 +22,7 @@ class Application(object):
         self.config = config.Config(options)
         self.state = []
         self.settings = []
+        self.paused = false
 
         # Logging configuration
         logging.basicConfig(
@@ -93,9 +94,11 @@ class Application(object):
         atexit.register(self.stop)
 
     def pause(self):
+        self.paused = true
         self.events.fire(event.DOWNPOUR_PAUSED)
 
     def resume(self):
+        self.paused = false
         self.events.fire(event.DOWNPOUR_RESUMED)
 
     def stop(self):

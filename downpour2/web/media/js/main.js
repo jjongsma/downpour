@@ -16,13 +16,10 @@ $(function() {
 
 	contentHandler(standardBehaviors);
 
-	// Test notification updates
-	setTimeout(function() {
-		setUnreadCount(0);
-		setTimeout(function() {
-			setUnreadCount(9);
-		}, 2000);
-	}, 1000);
+    // Hide notification if no unread messages
+    console.log($('.unread-count').html());
+    if ($('.unread-count').html() == '0')
+        $('.unread').hide();
 
 	// Configure initial  behaviors
 	contentChanged($('body'));
@@ -115,7 +112,7 @@ function restoreState(state) {
 		contentChanged(content);
 	}
 
-	$('#navigation a').each(function(idx) {
+	$('#navigation').find('a').each(function(idx) {
 		if (document.location.href.substring(0, this.href.length) == this.href) {
 			$('#navigation').find('li').removeClass('active');
 			$(this).parent().addClass('active');
@@ -211,7 +208,7 @@ function setupMenu() {
 		navDrawer = true;
 		navWidth = -nav.offset().left;
 
-		drawerIcon = $('#menu span').offset().left;
+		drawerIcon = $('#menu').find('span').offset().left;
 
 		// Update nav height on scroll
 		var topOffset = $('#header').outerHeight() + 1;
@@ -224,17 +221,26 @@ function setupMenu() {
 			nav.getNiceScroll().resize();
 		});
 
-		$('#menutoggle').on('touchstart', function(e) {
+        nav.on('selectstart', function(e) {
+            return false;
+        });
+
+        var menutoggle = $('#menutoggle');
+		menutoggle.on('touchstart', function(e) {
 			$(this).addClass('active');
 			e.stopPropagation();
 		});
-
-		$('#menutoggle').on('touchend', function(e) {
-			$(this).removeClass('active');
-		});
-		$('#menutoggle, #navigation').on('selectstart', function(e) {
-			return false;
-		});
+        menutoggle.on('selectstart', function(e) {
+            return false;
+        });
+        menutoggle.on('touchend', function() {
+            $(this).removeClass('active');
+            if (drawerOpen()) {
+                closeDrawer(slideDuration);
+            } else {
+                openDrawer(slideDuration);
+            }
+        });
 
 		var swipeState = {
 			started: false,
@@ -244,7 +250,8 @@ function setupMenu() {
 			startY: 0
 		};
 
-		$('html').on('touchstart', function(e) {
+        var html = $('html');
+		html.on('touchstart', function(e) {
 
 			// Check if vertical or horizontal
 			var t1 = e.originalEvent.changedTouches[0];
@@ -264,7 +271,7 @@ function setupMenu() {
 
 		});
 
-		$('html').on('touchmove', function(e) {
+		html.on('touchmove', function(e) {
 
 			if (swipeState.started !== false) {
 
@@ -291,7 +298,7 @@ function setupMenu() {
 
 		});
 
-		$('html').on('touchend', function(e) {
+		html.on('touchend', function(e) {
 
 			if (swipeState.started !== false) {
 
@@ -315,14 +322,6 @@ function setupMenu() {
 
 			}
 
-		});
-
-		$('#menutoggle').on('touchend', function() {
-			if (drawerOpen()) {
-				closeDrawer(slideDuration);
-			} else {
-				openDrawer(slideDuration);
-			}
 		});
 
 	}
@@ -349,7 +348,7 @@ function slideDrawer(pixels) {
 	var opacity = .6 * percent;
 
 	showOverlay(opacity);
-	$('#menu span').css({ 'left': icon + 'px' });
+	$('#menu').find('span').css({ 'left': icon + 'px' });
 	$('#navigation').css({ 'left': drawer + 'px' });
 
 }
@@ -359,7 +358,7 @@ function openDrawer(duration) {
 	if (!navDrawer) return;
 
 	showOverlay(0.6, duration);
-	$('#menu span').animate({ 'left': (drawerIcon - 4) + 'px' }, duration);
+	$('#menu').find('span').animate({ 'left': (drawerIcon - 4) + 'px' }, duration);
 	$('#navigation').animate({ 'left': '0px' }, duration);
 
 	// Close menu on page click
@@ -383,7 +382,7 @@ function closeDrawer(duration, callback) {
 	}
 
 	hideOverlay(duration);
-	$('#menu span').animate({ 'left': drawerIcon + 'px' }, duration);
+	$('#menu').find('span').animate({ 'left': drawerIcon + 'px' }, duration);
 	$('#navigation').animate({ 'left': '-' + navWidth + 'px' }, duration, function() {
 		// Reset drawer menu to top
 		$('#navigation').scrollTop(0);
