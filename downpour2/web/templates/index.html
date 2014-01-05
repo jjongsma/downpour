@@ -6,7 +6,25 @@
 </div>
 {% endif %}
 
+<div class="box columnContent mobile">
+    <div class="clearfix">
+        <div class="hostMetric download">
+            <div class="title">Downloads</div>
+            <div class="value">2.3 MB/s</div>
+        </div>
+        <div class="hostMetric upload">
+            <div class="title">Uploads</div>
+            <div class="value">25.6 KB/s</div>
+        </div>
+        <div class="hostMetric connections">
+            <div class="title">Connections</div>
+            <div class="value">198</div>
+        </div>
+    </div>
+</div>
+
 <div class="column main">
+
 	<div class="columnContent">
 		<a href="/transfers/downloads">View All</a>
 		<div class="section">Downloading</div>
@@ -99,6 +117,7 @@
 			</div>
 		</div>
 	</div>
+
     <div class="columnContent">
         <a href="/transfers/uploads">View All</a>
         <div class="section">Seeding</div>
@@ -128,56 +147,8 @@
             </div>
         </div>
     </div>
-    {{ pluginblock('homecolumn') }}
-	<div class="columnContent">
-		<a href="/library/importing">View All</a>
-		<div class="section">Importing</div>
-		<div class="boxContent">
-			<div class="transferSummary">
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health unknown"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter yellow animate"><span style="width: 22.7%"></span><div>22.7%</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health average"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter blue animate"><span style="width: 80%"></span><div>80%</div></div>
-					</div>
-				</div>
-				<div class="queued">
-					<a href="/transfers/">and 2 more...</a>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div class="columnContent">
-		<a href="/transfers/history">View All</a>
-		<div class="section">Recently Imported</div>
-		<div class="boxContent">
-			<div class="transferSummary">
-				<div class="transfer clearfix">
-					<div class="date">12/1</div>
-					<div class="imported"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.mp4</a> <span class="mediaType">(TV Series, 183 MB)</span></div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="date">12/2</div>
-					<div class="imported"><a href="/transfers/1">Haven.S04E13.HDTV.x264-EXCELLENCE.[VTV].mp4</a> <span class="mediaType">(243 MB)</span></div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="date">12/10</div>
-					<div class="imported"><a href="/transfers/1">Thor 2 (2013).mp4</a> <span class="mediaType">(Movie, 793 MB)</span></div>
-				</div>
-			</div>
-		</div>
-	</div>
+
+    {{ pluginblock('homecolumn', request) }}
 
 </div>
 
@@ -244,7 +215,7 @@
 	</div>
 </div>
 
-{{ pluginblock('homeblock') }}
+{{ pluginblock('homeblock', request) }}
 
 <div class="column side desktop">
 	<div class="box columnContent">

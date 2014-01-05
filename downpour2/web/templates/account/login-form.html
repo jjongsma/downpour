@@ -1,0 +1,20 @@
+{% if error %}
+    <div class="errorSmall">{{ error }}</div>
+{% endif %}
+<form action="/account/login" method="post">
+    <input type="hidden" name="redirect" value="{{ redirect }}"/>
+    <table width="300" cellspacing="0" cellpadding="3" border="0">
+        <tr>
+            <td>Username</td>
+            <td><input id="focusonload" type="text" name="username" size="15" value="{{ username }}"/></td>
+        </tr>
+        <tr>
+            <td>Password</td>
+            <td><input type="password" name="password" size="15"/></td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td><input type="submit" value="Login"/></td>
+        </tr>
+    </table>
+</form>

@@ -22,7 +22,7 @@ class Application(object):
         self.config = config.Config(options)
         self.state = []
         self.settings = []
-        self.paused = false
+        self.paused = False
 
         # Logging configuration
         logging.basicConfig(
@@ -52,7 +52,6 @@ class Application(object):
                 try:
                     if isinstance(p, plugin.Plugin):
                         self.plugins[pn] = p
-                        p.setup(self.config.get(pn, {}))
                     else:
                         self.log.error('Not a Plugin subclass: %s' % pn)
                 except Exception as e:
@@ -61,6 +60,9 @@ class Application(object):
             except Exception as e:
                 self.log.debug('Could not load plugin %s: %s' % (pn, e))
                 traceback.print_exc()
+
+        for n, p in self.plugins.iteritems():
+            p.setup(self.config.get(n, {}))
 
     def plugin(self, name):
         if name in self.plugins:

@@ -43,7 +43,7 @@ class Add(common.AuthenticatedResource):
             'title': 'Add Remote Share',
             'share': { }
         }
-        return self.render_template('shares/form.html', request, context)
+        return self.render_template('shares/login-form.html', request, context)
 
 class Detail(common.AuthenticatedResource):
 
@@ -88,7 +88,7 @@ class Edit(common.AuthenticatedResource):
             'title': 'Edit Remote Share',
             'share': self.share
         }
-        return self.render_template('shares/form.html', request, context)
+        return self.render_template('shares/login-form.html', request, context)
 
 class Save(common.AuthenticatedResource):
 

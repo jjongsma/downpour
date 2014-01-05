@@ -57,10 +57,7 @@
 			<ul>
 				<li title="Downpour"{% if section == 'overview' %} class="active"{% endif %}><a href="/">Overview</a></li>
 				<li{% if section == 'transfers' %} class="active"{% endif %}><a href="/transfers/">Transfers</a></li>
-                <li{% if section == 'files' %} class="active"{% endif %}><a href="/files/">Files</a></li>
-                <li{% if section == 'library' %} class="active"{% endif %}><a href="/library/">Media Library</a></li>
-                {{ pluginblock('sidelink') }}
-				<li{% if section == 'search' %} class="active"{% endif %}><a href="/search/">Search</a></li>
+                {{ pluginblock('sidelink', request) }}
 				<li{% if section == 'notifications' %} class="active"{% endif %}>
 					<span class="fa-stack fa-lg unread">
 						<span class="fa fa-lg fa-stack-1x fa-square"></span>
@@ -68,30 +65,16 @@
 					</span>
 					<a href="/notifications/">Notifications</a>
 				</li>
-				<li{% if section == 'status' %} class="active"{% endif %}><a href="/status/">System Status</a></li>
 			</ul>
-            {{ pluginblock('sidesection') }}
-			{% if shares %}
-				<h4>Remote Shares</h4>
-				<ul>
-					<li><a href="/share/1">Jeremy</a></li>
-					{% for s in shares %}
-						<li{% if section == ['share', s.id]|join('_') %} class="active"{% endif %}><a href="/shares/{{ s.id }}/browse/">{{ s.name }}</a></li>
-					{% endfor %}
-				</ul>
-			{% endif %}
+            {{ pluginblock('sidesection', request) }}
 			<h4>Settings</h4>
 			<ul>
-                {{ pluginblock('settinglink') }}
-				<li{% if section == 'media-types' %} class="active"{% endif %}><a href="/media-types/">Media Types</a></li>
-				<li{% if section == 'shares' %} class="active"{% endif %}><a href="/shares/">Remote Shares</a></li>
-				<li{% if section == 'media-center' %} class="active"{% endif %}><a href="/media-center/">Media Center Sync</a></li>
-				<li{% if section == 'advanced' %} class="active"{% endif %}><a href="/advanced/">Advanced</a></li>
+                {{ pluginblock('settinglink', request) }}
 			</ul>
 			{% if user.admin %}
 			<h4>Administration</h4>
 			<ul>
-                {{ pluginblock('adminlink') }}
+                {{ pluginblock('adminlink', request) }}
 				<li{% if section == 'work' %} class="active"{% endif %}><a href="/work/">Download Cache</a></li>
 				<li{% if section == 'users' %} class="active"{% endif %}><a href="/users/">Users</a></li>
 				<li{% if section == 'settings' %} class="active"{% endif %}><a href="/settings/">Settings</a></li>

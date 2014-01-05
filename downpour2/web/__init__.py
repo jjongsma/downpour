@@ -60,16 +60,24 @@ class WebInterface(plugin.Plugin):
         self.blocks[block].append(fn)
 
     def link_renderer(self, path, name):
-        return lambda: self.environment.get_template('core/blocks/navlink.html').render({
+        return lambda req: self.environment.get_template('core/blocks/navlink.html').render({
             'path': path,
             'name': name
         })
 
-    def render_block(self, block):
+    def section_renderer(self, name, links, path=None):
+        return lambda req: self.environment.get_template('core/blocks/navsection.html').render({
+            'sectionname': name,
+            'sectionlink': path,
+            'links': links
+        })
+
+    def render_block(self, block, request=None):
+        out = ''
         if block in self.blocks:
             for fn in self.blocks[block]:
-                return fn()
-        return ''
+                out += fn(request)
+        return out
 
     def make_environment(self, path, loader):
         return self.environment.overlay(loader=PrefixLoader({

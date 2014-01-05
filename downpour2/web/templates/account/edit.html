@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+{% set section = "account" %}
+{% block body %}
+	{% if error %}
+		<div class="error">
+			<b>Please correct the following errors:</b><br />
+			<ul>
+			{{ error }}
+			</ul>
+		</div>
+	{% endif %}
+	<form action="save" method="post" autocomplete="off">
+		<table width="300" cellspacing="0" cellpadding="3" border="0">
+			<tr>
+				<td>Username</td>
+				<td>{{ user.username }}</td>
+			</tr>
+			<tr>
+				<td>New Password</td>
+				<td><input type="password" name="new_password" size="15"/></td>
+			</tr>
+			<tr>
+				<td>Confirm Password</td>
+				<td><input type="password" name="confirm_password" size="15"/></td>
+			</tr>
+			<tr>
+				<td>Sharing Password</td>
+				<td><input type="text" name="share_password" size="15" value="{{ user.share_password|d('', true) }}"/></td>
+			</tr>
+			<tr>
+				<td>&nbsp;</td>
+				<td><input type="submit" value="Change Password"/></td>
+			</tr>
+		</table>
+	</form>
+{% endblock %}

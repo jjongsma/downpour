@@ -1,10 +1,8 @@
 import hashlib
 import traceback
 from twisted.web import resource, server
-from storm import expr
 from downpour2.core import VERSION, store
 from downpour2.web import auth
-from downpour2.sharing.store import RemoteShare
 
 
 class Resource(resource.Resource, object):
@@ -76,17 +74,13 @@ class Resource(resource.Resource, object):
 
         user = self.get_user(request)
 
-        shares = self.application.store.find(
-            RemoteShare, RemoteShare.user == user).order_by(
-                expr.Asc(RemoteShare.name))
-
         defaults = {
             'version': VERSION,
             'unsupported': unsupported,
+            'request': request,
             'user': user,
-            'shares': shares,
             'paused': self.application.paused,
-            'notifications': self.application.alerts.unread(),
+            'notifications': list(self.application.alerts.unread(user)),
             'standalone': request.requestHeaders.hasHeader('X-Standalone-Content')
         }
 
@@ -97,7 +91,7 @@ class Resource(resource.Resource, object):
 
         try:
             t = self.environment.get_template(template)
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
             return self.render_error(request, defaults, 'Template Not Found',
                                      'Could not load page template: %s' % template)
@@ -189,5 +183,6 @@ class ErrorResource(Resource):
 class NotFoundResource(ErrorResource):
 
     def __init__(self, *args, **kwargs):
-        super(NotFoundResource, self).__init__('404 Not Found', 'Not Found',
-                               'That page does not exist', *args, **kwargs)
+        super(NotFoundResource, self).__init__(
+            '404 Not Found', 'Not Found',
+            'That page does not exist', *args, **kwargs)

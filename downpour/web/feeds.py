@@ -52,7 +52,7 @@ class Add(common.AuthenticatedResource):
             'feed': feed,
             'mediatypes': organizer.get_media_types()
         }
-        return self.render_template('feeds/form.html', request, context)
+        return self.render_template('feeds/login-form.html', request, context)
 
 class Detail(common.AuthenticatedResource):
 
@@ -99,7 +99,7 @@ class Edit(common.AuthenticatedResource):
             'feed': self.feed,
             'mediatypes': organizer.get_media_types()
         }
-        return self.render_template('feeds/form.html', request, context)
+        return self.render_template('feeds/login-form.html', request, context)
 
 class Save(common.AuthenticatedResource):
 

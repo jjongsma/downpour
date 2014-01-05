@@ -249,7 +249,7 @@ pre, pre code {
 	#navigation ul li a { padding: 10px 40px 10px 15px; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); }
 	#navigation h4 { font-size: 13px; }
 
-	#content { margin-top: 49px; padding: 0; margin-left: 0; }
+	#content { margin-top: 48px; padding: 0; margin-left: 0; }
 	.column, .column.main, .column.side, .column.full { width: 100%; }
 	.column .columnContent { margin: 10px 0; font-size: 16px; }
 	.column.main .columnContent { margin: 10px 0 20px; }

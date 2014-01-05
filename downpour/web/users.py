@@ -38,7 +38,7 @@ class Add(common.AdminResource):
             'edituser': {},
             'userdir': manager.get_user_directory()
         }
-        return self.render_template('users/form.html', request, context)
+        return self.render_template('users/login-form.html', request, context)
 
 class Detail(common.AdminResource):
 
@@ -83,7 +83,7 @@ class Edit(common.AdminResource):
             'edituser': self.user,
             'userdir': manager.get_user_directory()
         }
-        return self.render_template('users/form.html', request, context)
+        return self.render_template('users/login-form.html', request, context)
 
 class Save(common.AdminResource):
 

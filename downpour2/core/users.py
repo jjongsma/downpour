@@ -1,5 +1,6 @@
 from downpour2.core import store
 
+
 class UserManager:
 
     def __init__(self, store):
@@ -8,7 +9,8 @@ class UserManager:
 
     def login(self, username, password):
 
-        user = self.store.find(store.User,
+        user = self.store.find(
+            store.User,
             store.User.username == username,
             store.User.password == password).one()
 
@@ -19,10 +21,12 @@ class UserManager:
         user = None
 
         if username is not None:
-            user = self.store.find(store.User,
+            user = self.store.find(
+                store.User,
                 store.User.username == username).one()
         elif id is not None:
-            user = self.store.find(store.User,
+            user = self.store.find(
+                store.User,
                 store.User.id == id).one()
 
         return user
@@ -32,4 +36,4 @@ class UserManager:
 
     def save(self, user):
         self.store.add(user)
-        selt.store.commit()
+        self.store.commit()

@@ -1,6 +1,10 @@
+{% if sectionlink %}
+<h4><a href="{{ sectionlink }}">{{ sectionname }}</a></h4>
+{% else %}
 <h4>{{ sectionname }}</h4>
+{% endif %}
 <ul>
     {% for path, name in links.iteritems() %}
-        {% include "blocks/navlink.html" %}
+        {% include "core/blocks/navlink.html" %}
     {% endfor %}
 </ul>
