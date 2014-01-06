@@ -25,7 +25,32 @@
 
 <div class="column main">
 
-	<div class="columnContent">
+	<div class="columnContent desktop">
+        <div class="addDownload clearfix">
+            <div class="label green-bg"><div>Add</div></div>
+            <div class="addDownloadMethods">
+                <div class="addDownloadMethod">
+                    <form action="/transfers/add/url" method="post">
+                        <a class="submit green-bg" href="#">Fetch URL</a>
+                        <div class="addInput">
+                            <input type="text" name="url" value="" placeholder="URL to download" />
+                        </div>
+                    </form>
+                </div>
+                <div class="addDownloadMethod uploadMetadata">
+                    <form action="/transfers/add/torrent" enctype="multipart/form-data" method="post">
+                        <a class="submit green-bg" href="#">Upload</a>
+                        <div class="addInput">
+                            <input type="file" id="metadata-upload" name="metadata" placeholder="Upload torrent file" />
+                            <input type="text" id="metadata-proxy" readonly="1" placeholder="Select torrent file" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="columnContent">
 		<a href="/transfers/downloads">View All</a>
 		<div class="section">Downloading</div>
 		<div class="boxContent">

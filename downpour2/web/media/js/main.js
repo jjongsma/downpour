@@ -17,7 +17,6 @@ $(function() {
 	contentHandler(standardBehaviors);
 
     // Hide notification if no unread messages
-    console.log($('.unread-count').html());
     if ($('.unread-count').html() == '0')
         $('.unread').hide();
 
@@ -192,6 +191,19 @@ function standardBehaviors(content) {
 		var p = $(this).parent();
 		p.fadeOut(400, function() { p.remove(); });
 	});
+
+    $('.focusonload').focus();
+
+    var md = $('.uploadMetadata');
+
+    var mdProxy = md.find('#metadata-proxy');
+    mdProxy.click(function(e) { mdUpload.click(); });
+
+    var mdUpload = md.find('#metadata-upload');
+    mdUpload.change(function(e) {
+        var file = mdUpload.val().split(/[\\\/]/).pop()
+        mdProxy.val(file);
+    });
 
 }
 

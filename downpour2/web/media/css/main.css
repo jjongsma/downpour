@@ -68,6 +68,10 @@ pre, pre code {
 	font-family: monospace;
 }
 
+input[type=text], input[type=password], select, textarea {
+    border: 1px solid #999;
+}
+
 .clearfix:after { content: ' '; display: block; clear: both; visibility: hidden; }
 #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; }
 .fade { background-color: #999; opacity: 0; }
@@ -75,8 +79,10 @@ pre, pre code {
 .spinbox { width: 150px; height: 150px; margin: 200px auto; border-radius: 10px; background-color: rgba(180,180,180,.5); }
 
 .unsupported { position: relative; margin-left: 200px; background-color: #FFC; padding: 5px 10px; border-right: 1px solid #CC9; border-bottom: 1px solid #CC9; }
-.notice { position: relative; background-color: #FFC; padding: 5px 10px; border: 1px solid #CC9; border-radius: 3px; }
+.notice { position: relative; background-color: #FFC; margin-bottom: 10px; padding: 5px 10px; border: 1px solid #CC9; border-radius: 3px; }
 .notice a { text-decoration: underline; }
+.error { position: relative; background-color: #FCC; margin-bottom: 10px; padding: 5px 10px; border: 1px solid #C99; border-radius: 3px; }
+.error a { text-decoration: underline; }
 .remove { position: absolute; top: 5px; right: 5px; color: #666; }
 .remove:hover { color: #444; }
 
@@ -226,6 +232,42 @@ pre, pre code {
 .transferSummary .date { font-size: 11px; padding: 3px 0 0; float: left; width: 50px; }
 .transferSummary .imported { margin-left: 50px; }
 
+.addDownload { width: 100%; }
+.addDownload input[type=file] { display: none; }
+.addDownload .label { position: relative; width: 25px; height: 51px; vertical-align: top; float: left; overflow: hidden; border-radius: 6px 0 0 6px; }
+.addDownload .label div {
+    position: absolute;
+    width: 51px;
+    height: 51px;
+    padding: 0 5px;
+    font-size: 11px;
+    line-height: 15px;
+    text-transform: uppercase;
+    text-align: center;
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+}
+.addDownload .addDownloadMethods { margin-left: 25px; }
+.addDownload .addDownloadMethod { height: 26px; width: 100%; }
+.addDownload .addDownloadMethod .addInput { height: 23px; border-bottom: 2px solid #3CAC3C; margin-right: 20%; }
+.addDownload .addDownloadMethod:first-child .addInput { border-top: 2px solid #3CAC3C; border-bottom: 1px solid #999; }
+.addDownload .addDownloadMethod input[type=text] { height: 19px; width: 98%; display: block; border: 0; margin: 0; padding: 2px 4px; }
+.addDownload .addDownloadMethod a {
+    display: block;
+    float: right;
+    width: 20%;
+    font-size: 13px;
+    padding: 2px 0;
+    line-height: 21px;
+    border-radius: 0 0 6px 0;
+    text-align: center;
+}
+.addDownload .addDownloadMethod a:hover { color: #fff; }
+.addDownload .addDownloadMethod:first-child a { border-radius: 0 6px 0 0; border-bottom: 1px solid #060; }
+
 #footer { margin: 0 auto; text-align: center; color: #999; }
 
 /* Mobile phones */
@@ -252,7 +294,7 @@ pre, pre code {
 	#content { margin-top: 48px; padding: 0; margin-left: 0; }
 	.column, .column.main, .column.side, .column.full { width: 100%; }
 	.column .columnContent { margin: 10px 0; font-size: 16px; }
-	.column.main .columnContent { margin: 10px 0 20px; }
+	.column.main .columnContent { margin: 10px 5px 20px; }
 	.column .columnContent h3 { border-bottom: 1px solid #999; border-top: 1px solid #999; }
 	.column .columnContent h4 { border-bottom: 1px solid #999; border-top: 1px solid #999; }
 	.box { border: none; border-radius: 0; }
