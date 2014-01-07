@@ -63,32 +63,36 @@ function usePushState() {
 
 function loadContent(url, title) {
 
-    if (inCurrentDomain(url)) {
+    if (url != document.location) {
 
-        $('html').animate({ 'scrollTop': '0px' }, 100);
+        if (inCurrentDomain(url)) {
 
-        // Only display loading indicator if request takes awhile
-        var loadTimer = setTimeout(function() {
-            var overlay = showOverlay(1, 0, 'loading', $('#content'));
-            var box = $('<div class="spinbox"></div>');
-            overlay.append(box);
-            spin(box[0]);
-        }, 100);
+            $('html').animate({ 'scrollTop': '0px' }, 100);
 
-        // Save latest HTML before replacing
-        history.replaceState({ 'content': $('#content').html() }, document.title, document.location.href);
-        $.get(url, function(content) {
-            clearTimeout(loadTimer);
-            var state = { 'content': content };
-            history.pushState(state, title ? title : document.title, url);
-            restoreState(state);
-        }).always(function() {
-            hideOverlay();
-        });
+            // Only display loading indicator if request takes awhile
+            var loadTimer = setTimeout(function() {
+                var overlay = showOverlay(1, 0, 'loading', $('#content'));
+                var box = $('<div class="spinbox"></div>');
+                overlay.append(box);
+                spin(box[0]);
+            }, 100);
 
-    } else {
+            // Save latest HTML before replacing
+            history.replaceState({ 'content': $('#content').html() }, document.title, document.location.href);
+            $.get(url, function(content) {
+                clearTimeout(loadTimer);
+                var state = { 'content': content };
+                history.pushState(state, title ? title : document.title, url);
+                restoreState(state);
+            }).always(function() {
+                hideOverlay();
+            });
 
-        window.location.href = url;
+        } else {
+
+            window.location.href = url;
+
+        }
 
     }
 

@@ -1,0 +1,42 @@
+{
+  "summary": {
+    "host": "{{ status.host }}",
+    "version": "{{ status.version }}",
+    "downloads": {{ status.downloads|d(0, true) }},
+    "active_downloads": {{ status.active_downloads|d(0, true) }},
+    "downloadrate": "{{ status.downloadrate|filesizeformat|replace("Bytes","b") }}/s",
+    "uploadrate": "{{ status.uploadrate|filesizeformat|replace("Bytes","b") }}/s",
+    "totalrate": "{{ (status.uploadrate + status.downloadrate)|filesizeformat|replace("Bytes","b") }}/s",
+    "progress": {{ status.progress|d(0, true) }},
+    "diskfree": "{{ status.diskfree|filesizeformat|replace("Bytes","b") }}",
+    "diskfreepct": {{ status.diskfreepct|d(0, true) }},
+    "userdiskfree": "{{ status.userdiskfree|filesizeformat|replace("Bytes","b") }}",
+    "userdiskfreepct": {{ status.userdiskfreepct|d(0, true) }},
+    "connections": "{{ status.connections }}",
+    "paused": "{{ status.paused|lower }}"
+  },
+  "downloads": [
+  {%- if downloads -%}
+    {%- for dl in downloads -%}
+    {%- set client = clientFactory(dl.id) %}
+    {
+      "id": {{ dl.id }},
+      "health": {{ dl.health|d(0, true) }},
+      "description": "{{ dl.description|e }}",
+      "size": "{% if dl.size %}{{ dl.size|filesizeformat|replace("Bytes","b") }}{% else %}Unknown{% endif %}",
+      "status": "{{ statusdesc[dl.status] }}",
+      "status_message": "{{ dl.status_message|d("", true)|replace("\"", "\\\"") }}",
+      "progress": {{ dl.progress|d(0, true) }},
+      "seed_progress": {{ dl.seed_progress|d(0, true) }},
+      "downloadrate": "{{ dl.downloadrate|filesizeformat|replace("Bytes","b") }}/s",
+      "uploadrate": "{{ dl.uploadrate|filesizeformat|replace("Bytes","b") }}/s",
+      "timeleft": "{{ dl.timeleft|intervalformat }}",
+      "running": {{ (client and client.is_running() and true)|lower }},
+      "startable": {{ (client and client.is_startable() and true)|lower }},
+      "stoppable": {{ (client and client.is_stoppable() and true)|lower }},
+      "finished": {{ (client and client.is_finished() and true)|lower }}
+    }{% if not loop.last %},{% endif %}
+    {%- endfor -%}
+  {%- endif %}
+  ]
+}
