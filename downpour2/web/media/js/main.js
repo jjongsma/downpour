@@ -49,11 +49,6 @@ function usePushState() {
 		restoreState(e.originalEvent.state);
 	});
 
-	$('html').on('click', 'a', function(e) {
-		e.preventDefault();
-		loadContent(this.href, this.title);
-	});
-	
 	$('#navigation').on('click', 'a', function(e) {
 		e.preventDefault();
 		$('#navigation').find('li').removeClass('active');
@@ -68,38 +63,34 @@ function usePushState() {
 
 function loadContent(url, title) {
 
-	if (url != document.location) {
+    if (inCurrentDomain(url)) {
 
-		if (inCurrentDomain(url)) {
+        $('html').animate({ 'scrollTop': '0px' }, 100);
 
-			$('html').animate({ 'scrollTop': '0px' }, 100);
+        // Only display loading indicator if request takes awhile
+        var loadTimer = setTimeout(function() {
+            var overlay = showOverlay(1, 0, 'loading', $('#content'));
+            var box = $('<div class="spinbox"></div>');
+            overlay.append(box);
+            spin(box[0]);
+        }, 100);
 
-			// Only display loading indicator if request takes awhile
-			var loadTimer = setTimeout(function() {
-				var overlay = showOverlay(1, 0, 'loading', $('#content'));
-				var box = $('<div class="spinbox"></div>');
-				overlay.append(box);
-				spin(box[0]);
-			}, 100);
+        // Save latest HTML before replacing
+        history.replaceState({ 'content': $('#content').html() }, document.title, document.location.href);
+        $.get(url, function(content) {
+            clearTimeout(loadTimer);
+            var state = { 'content': content };
+            history.pushState(state, title ? title : document.title, url);
+            restoreState(state);
+        }).always(function() {
+            hideOverlay();
+        });
 
-			// Save latest HTML before replacing
-			history.replaceState({ 'content': $('#content').html() }, document.title, document.location.href);
-			$.get(url, function(content) {
-				clearTimeout(loadTimer);
-				var state = { 'content': content };
-				history.pushState(state, title ? title : document.title, url);
-				restoreState(state);
-			}).always(function() {
-				hideOverlay();
-			});
+    } else {
 
-		} else {
+        window.location.href = url;
 
-			window.location.href = url;
-
-		}
-
-	}
+    }
 
 }
 
@@ -110,6 +101,11 @@ function restoreState(state) {
 		content.html(state['content']);
 		contentChanged(content);
 	}
+
+    $('html').on('click', 'a', function(e) {
+        e.preventDefault();
+        loadContent(this.href, this.title);
+    });
 
 	$('#navigation').find('a').each(function(idx) {
 		if (document.location.href.substring(0, this.href.length) == this.href) {
@@ -205,6 +201,53 @@ function standardBehaviors(content) {
         mdProxy.val(file);
     });
 
+    var af = $('.ajaxForm');
+    af.ajaxForm();
+    af.find('a.submit').click(function(e) {
+
+        $(this).parents('form').ajaxSubmit({
+            success: ajaxFormHandler(),
+            uploadProgress: ajaxUploadProgress
+        });
+        return false;
+    });
+    af.find('input').keypress(function(e) {
+        if (e.keyCode == 13) {
+            $(this.form).ajaxSubmit({
+                success: ajaxFormHandler(),
+                uploadProgress: ajaxUploadProgress
+            });
+        }
+    });
+
+}
+
+function ajaxFormHandler() {
+
+    // Only display loading indicator if request takes awhile
+    var loadTimer = setTimeout(function() {
+        var overlay = showOverlay(1, 0, 'loading', $('#content'));
+        var box = $('<div class="spinbox"></div>');
+        overlay.append(box);
+        spin(box[0]);
+    }, 100);
+
+    return function(content, status, xhr, form) {
+        clearTimeout(loadTimer);
+        // Save current state
+        history.replaceState({ 'content': $('#content').html() }, document.title, document.location.href);
+        var state = { 'content': content };
+        var path = xhr.getResponseHeader('X-Request-Path') || document.location.href;
+        var title = xhr.getResponseHeader('X-Page-Title') || document.title;
+        history.pushState(state, title, path);
+        restoreState(state);
+        hideOverlay();
+    }
+
+}
+
+function ajaxUploadProgress(e, position, total, percent) {
+    // TODO show file upload progress overlay
 }
 
 /*

@@ -30,18 +30,18 @@
             <div class="label green-bg"><div>Add</div></div>
             <div class="addDownloadMethods">
                 <div class="addDownloadMethod">
-                    <form action="/transfers/add/url" method="post">
+                    <form class="ajaxForm" action="/transfers/add/url" method="post">
                         <a class="submit green-bg" href="#">Fetch URL</a>
                         <div class="addInput">
-                            <input type="text" name="url" value="" placeholder="URL to download" />
+                            <input type="text" name="url" value="" placeholder="URL to download (magnet or http)" />
                         </div>
                     </form>
                 </div>
                 <div class="addDownloadMethod uploadMetadata">
-                    <form action="/transfers/add/torrent" enctype="multipart/form-data" method="post">
+                    <form class="ajaxForm" action="/transfers/add/torrent" enctype="multipart/form-data" method="post">
                         <a class="submit green-bg" href="#">Upload</a>
                         <div class="addInput">
-                            <input type="file" id="metadata-upload" name="metadata" placeholder="Upload torrent file" />
+                            <input type="file" id="metadata-upload" name="metadata" />
                             <input type="text" id="metadata-proxy" readonly="1" placeholder="Select torrent file" />
                         </div>
                     </form>
@@ -199,12 +199,6 @@
 		</div>
 		<div class="hostDisk clearfix">
 			<div class="title">Media Volume</div>
-			<div class="free">
-				<div class="meter yellow nostripes">
-					<span style="width: 85%;"></span><div>15% Free (150 GB)</div>
-				</div>
-			</div>
-			<div class="title">System Volume</div>
 			<div class="free">
 				<div class="meter nostripes">
 					<span style="width: 40%;"></span><div>60% Free (600 GB)</div>

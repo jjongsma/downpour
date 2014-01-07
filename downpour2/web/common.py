@@ -89,6 +89,9 @@ class Resource(resource.Resource, object):
         # Hack for jinja2 <= 2.7.1 - PrefixLoader doesn't propagate globals
         defaults.update(self.environment.globals)
 
+        if 'title' in defaults:
+            request.setHeader('X-Page-Title', defaults['title'])
+
         try:
             t = self.environment.get_template(template)
         except Exception:

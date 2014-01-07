@@ -1,6 +1,6 @@
 import pkg_resources
 from twisted.web import static
-from downpour2.web import common, account
+from downpour2.web import common, account, transfers
 
 
 class SiteRoot(common.Resource):
@@ -12,6 +12,7 @@ class SiteRoot(common.Resource):
         self.putChild('', self)
         self.putChild('media', MediaPath(pkg_resources.resource_filename("downpour2.web", "/media")))
         self.putChild('account', account.Root(application, environment))
+        self.putChild('transfers', transfers.Root(application, environment))
 
     def add_child(self, path, resource):
         if path in self.children:
