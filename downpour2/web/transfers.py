@@ -1,5 +1,6 @@
-from twisted.web import server
+import json
 import libtorrent as lt
+from twisted.web import server
 from downpour2.core import store
 from downpour2.web import common
 
@@ -10,6 +11,7 @@ class Root(common.AuthenticatedResource):
         common.AuthenticatedResource.__init__(self, application, environment)
         self.putChild('', self)
         self.putChild('add', Add(application, environment))
+        self.putChild('status', Status(application, environment))
 
     def getChild(self, path, request):
         if path in self.children:
@@ -22,6 +24,21 @@ class Root(common.AuthenticatedResource):
         context = {'title': 'Transfers'}
         request.setHeader('X-Request-Path', '/transfers/')
         return self.render_template('core/transfers/index.html', request, context)
+
+
+class Status(common.AuthenticatedResource):
+
+    def __init__(self, application, environment):
+        super(Status, self).__init__(application, environment)
+        self.putChild('', self)
+        self.putChild('demo', DemoStatus(application, environment))
+
+    def render_GET(self, request):
+        agent = self.application.transfer_manager.user(self.get_user(request).id)
+        return json.dumps({
+            'status': agent.status,
+            'transfers': agent.transfers
+        }, cls=ObjectEncoder, indent=4)
 
 
 class Add(common.AuthenticatedResource):
@@ -80,6 +97,24 @@ class AddURL(common.AuthenticatedResource):
                 'title': 'No URL Found',
                 'message': 'URL was not specified'
             })
+
+
+class DemoStatus(common.AuthenticatedResource):
+
+    def __init__(self, application, environment):
+        super(DemoStatus, self).__init__(application, environment)
+        self.putChild('', self)
+
+    def render_GET(self, request):
+        return json.dumps({
+            'status':  self.application.transfer_manager.status,
+            'transfers': self.application.transfer_manager.transfers
+        }, cls=ObjectEncoder, indent=4)
+
+
+class ObjectEncoder(json.JSONEncoder):
+    def default(self, o):
+        return o.__dict__
 
 
 def numcmp(zero_null=False, reverse=False):

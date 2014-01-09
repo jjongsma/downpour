@@ -1,9 +1,8 @@
 import os
 import logging
-import socket
 import time
 from twisted.internet import defer
-from downpour2.core import VERSION, plugin, event, net
+from downpour2.core import VERSION, plugin, event
 from downpour2.core.transfers import state, agent, store
 from downpour2.core.net.throttling import ThrottledBucketFilter
 from downpour2.agents.local.http import HTTPDownloadClientFactory
@@ -24,8 +23,9 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         self.config = {}
         self.working_directory = None
         self.paused = False
+
         self.transports = []
-        self.clients = []
+        self.user_agents = {}
 
         self.agent_status = agent.AgentStatus()
         self.agent_status.version = VERSION
@@ -68,19 +68,23 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
         transfers = list(self.application.store.find(
             store.Transfer, store.Transfer.removed == False).order_by(
-            store.Transfer.added))
+                store.Transfer.added))
 
         return defer.DeferredList(
             [self.provision(t) for t in transfers],
             consumeErrors=True).addCallback(self.resume)
 
     def _remove(self, client):
-        if client in self.clients:
-            self.clients.remove(client)
+        agt = self.agent(client.transfer.user_id)
+        if agt is not None and client in agt.clients:
+            agt.clients.remove(client)
+            if len(agt.clients) == 0:
+                del self.user_agents[client.transfer.user_id]
 
     def reload(self):
         # The only real config-dependent stuff is in auto-queue
-        self.auto_queue()
+        for (u, a) in self.user_agents.iteritems():
+            a.auto_queue()
 
     def stop(self):
         return self.pause()
@@ -95,13 +99,14 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
                 r[1].transfer.state = state.QUEUED
 
         return defer.DeferredList(
-            [t.stop() for t in self.clients if t.transfer.state.transferring],
+            [c.stop() for (u, a) in self.user_agents.iteritems() for c in a.clients if c.transfer.state.transferring],
             consumeErrors=True).addCallback(requeue)
 
     def resume(self):
         self.agent_status.paused = False
         self.log.info('Resuming previous transfers')
-        self.auto_queue()
+        for (u, a) in self.user_agents.iteritems():
+            a.auto_queue()
         return defer.succeed(True)
 
     def accepts(self, transfer):
@@ -112,9 +117,11 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
     def client(self, transfer):
 
-        for c in self.clients:
-            if c.transfer == transfer:
-                return c
+        a = self.agent(transfer.user_id)
+        if a is not None:
+            for c in a.clients:
+                if c.transfer == transfer:
+                    return c
 
         t = self.accepts(transfer)
         if t is not None:
@@ -125,9 +132,12 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
     def provision(self, transfer):
 
         client = self.client(transfer)
-        if client not in self.clients:
-            self.clients.append(client)
-            self.auto_queue()
+        a = self.agent(transfer.user_id, True)
+
+        if client not in a.clients:
+            a.clients.append(client)
+            a.auto_queue()
+
         return client
 
     def reprovision(self, existing):
@@ -144,11 +154,12 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
             existing.transfer.downloaded = 0
             existing.transfer.progress = 0
 
+            a = self.agent(existing.transfer.user_id, True)
             try:
-                idx = self.clients.index(self)
-                self.clients[idx] = client
+                idx = a.clients.index(self)
+                a.clients[idx] = client
             except ValueError:
-                self.clients.append(client)
+                a.clients.append(client)
 
             if running:
                 client.start()
@@ -157,9 +168,14 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
         return None
 
+    def agent(self, user_id, create=False):
+        if not user_id in self.user_agents and create:
+            self.user_agents[user_id] = LocalUserAgent(self)
+        return self.user_agents[user_id] if user_id in self.user_agents else None
+
     @property
     def transfers(self):
-        return self.clients
+        return (t for (u, a) in self.user_agents.iteritems() for t in a.transfers)
 
     def transfer(self, tid):
         for t in self.transfers:
@@ -229,24 +245,120 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         diskfree = s.f_bfree * s.f_bsize
         diskfreepct = (float(s.f_bfree) / s.f_blocks) * 100
 
-        try:
-            interface = net.get_interface(self.application.config.value(
-                ('downpour', 'interface'), '0.0.0.0'))
-            if interface == '0.0.0.0':
-                # Load IPs for local host
-                ips = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
-                ips = filter(lambda ip: ip[:4] != '127.' and ip[:2] != '::', ips)
-                interface = ', '.join(dict(map(lambda j: (j, 1), ips)).keys())
-        except IOError:
-            interface = 'disconnected'
-
-        hostname = '%s (%s)' % (socket.gethostname(), interface)
-
-        status.host = hostname
+        status.host = self.application.transfer_manager.hostname
+        status.interface = self.application.transfer_manager.interface
+        status.address = self.application.transfer_manager.address
         status.diskfree = diskfree
         status.diskfreepct = diskfreepct
 
         status.local_updated = time.time()
+
+    def upload_filter(self):
+        max_ulrate = int(self.application.get_setting('agent.local.upload_rate', 0)) * 1024
+        if not self.upload_rate_filter:
+            self.upload_rate_filter = ThrottledBucketFilter(max_ulrate)
+        else:
+            self.upload_rate_filter.rate = max_ulrate
+        return self.upload_rate_filter
+
+    def download_filter(self):
+        max_dlrate = int(self.application.get_setting('agent.local.download_rate', 0)) * 1024
+        if not self.download_rate_filter:
+            self.download_rate_filter = ThrottledBucketFilter(max_dlrate)
+        else:
+            self.download_rate_filter.rate = max_dlrate
+        return self.download_rate_filter
+
+
+class LocalUserAgent(agent.UserAgent):
+
+    def __init__(self, local_agent):
+
+        super(LocalUserAgent, self).__init__()
+
+        self.log = logging.getLogger(__name__)
+        self.agent = local_agent
+        self.clients = []
+
+        self.agent_status = agent.AgentStatus()
+        self.agent_status.version = VERSION
+        self.agent_status.host = local_agent.status.hostname
+        self.agent_status.interface = local_agent.status.interface
+        self.agent_status.address = local_agent.status.address
+        self.agent_status.diskfree = local_agent.status.diskfree
+        self.agent_status.diskfreepct = local_agent.status.diskfreepct
+
+    @property
+    def transfers(self):
+        return self.clients
+
+    def transfer(self, tid):
+        for t in self.transfers:
+            if t.id == tid:
+                return t
+        return None
+
+    @property
+    def status(self):
+
+        now = time.time()
+
+        if now - self.agent.agent_status.local_updated >= 10:
+            self.agent.update_local_status(self.agent.agent_status)
+
+            self.agent_status.host = self.agent.agent_status.hostname
+            self.agent_status.interface = self.agent.agent_status.interface
+            self.agent_status.address = self.agent.agent_status.address
+            self.agent_status.diskfree = self.agent.agent_status.diskfree
+            self.agent_status.diskfreepct = self.agent.agent_status.diskfreepct
+
+        if now - self.agent_status.transfers_updated >= 1:
+            self.update_transfer_status(self.agent_status)
+
+        return self.agent_status
+
+    def update_transfer_status(self, status):
+
+        queuedsize = 0
+        queueddone = 0
+        active_downloads = 0
+        queued_downloads = 0
+        active_uploads = 0
+        download_rate = 0
+        upload_rate = 0
+        connections = 0
+
+        for client in self.transfers:
+
+            if client.transfer.size:
+                queuedsize += client.transfer.size
+                queueddone += client.transfer.downloaded
+
+            if client.transfer.state == state.DOWNLOADING:
+                active_downloads += 1
+            elif client.transfer.state == state.SEEDING:
+                active_uploads += 1
+            elif client.transfer.state == state.QUEUED:
+                queued_downloads += 1
+
+            download_rate += client.transfer.downloadrate
+            upload_rate += client.transfer.uploadrate
+            connections += client.transfer.connections
+
+        if queuedsize:
+            progress = round((float(queueddone) / queuedsize) * 100, 2)
+        else:
+            progress = 0
+
+        status.active_downloads = active_downloads
+        status.queued_downloads = queued_downloads
+        status.active_uploads = active_uploads
+        status.progress = progress
+        status.downloadrate = download_rate
+        status.uploadrate = upload_rate
+        status.connections = connections
+
+        status.transfers_updated = time.time()
 
     def auto_queue(self):
         """
@@ -260,20 +372,19 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
             active = self.status.active_downloads
 
-            max_active = int(self.application.get_setting('agent.local.max_active', 0))
-            max_ulrate = int(self.application.get_setting('agent.local.upload_rate', 0)) * 1024
-            max_dlrate = int(self.application.get_setting('agent.local.download_rate', 0)) * 1024
-            max_conn = int(self.application.get_setting('agent.local.connection_limit', 0))
+            max_active = int(self.agent.application.get_setting('agent.local.max_active', 0))
+            max_ulrate = int(self.agent.application.get_setting('agent.local.upload_rate', 0)) * 1024
+            max_dlrate = int(self.agent.application.get_setting('agent.local.download_rate', 0)) * 1024
+            max_conn = int(self.agent.application.get_setting('agent.local.connection_limit', 0))
 
             transfers = sorted(self.transfers, key=lambda x: -x.priority)
 
-            # TODO: make this fairly distributed among users
             for t in filter(lambda x: x.status == state.QUEUED, transfers):
                 if not max_active or active < max_active:
                     t.start()
                     active += 1
 
-            self.application.store.commit()
+            self.agent.application.store.commit()
 
             # Auto stop downloads if we're over config limits
             if max_active and active > max_active:
@@ -313,22 +424,12 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
                         t.update()
 
     def upload_filter(self):
-        max_ulrate = int(self.application.get_setting('agent.local.upload_rate', 0)) * 1024
-        if not self.upload_rate_filter:
-            self.upload_rate_filter = ThrottledBucketFilter(max_ulrate)
-        else:
-            self.upload_rate_filter.rate = max_ulrate
-        return self.upload_rate_filter
+        return self.agent.upload_filter()
 
     def download_filter(self):
-        max_dlrate = int(self.application.get_setting('agent.local.download_rate', 0)) * 1024
-        if not self.download_rate_filter:
-            self.download_rate_filter = ThrottledBucketFilter(max_dlrate)
-        else:
-            self.download_rate_filter.rate = max_dlrate
-        return self.download_rate_filter
+        return self.agent.download_filter()
 
     @staticmethod
-    def update_state(transfer, new_state, message=None):
-        transfer.transfer.state = new_state
-        transfer.transfer.status = message
+    def update_state(client, new_state, message=None):
+        client.transfer.state = new_state
+        client.transfer.status = message

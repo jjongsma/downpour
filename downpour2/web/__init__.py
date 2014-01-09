@@ -106,7 +106,7 @@ class WebInterface(plugin.Plugin):
         handler = server.Site(self.site_root)
         handler.sessionFactory = lambda *args, **kwargs: Session(*args, **kwargs)
 
-        self.try_listen(port, handler, net.get_interface(iface))
+        self.try_listen(port, handler, net.get_interface_ip(iface))
 
     def try_listen(self, port, handler, iface):
 

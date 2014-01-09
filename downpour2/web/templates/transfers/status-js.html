@@ -1,40 +1,55 @@
 {
-  "summary": {
+  "status": {
     "host": "{{ status.host }}",
     "version": "{{ status.version }}",
-    "downloads": {{ status.downloads|d(0, true) }},
     "active_downloads": {{ status.active_downloads|d(0, true) }},
+    "queued_downloads": {{ status.queued_downloads|d(0, true) }},
+    "progress": {{ status.progress|d(0, true) }},
     "downloadrate": "{{ status.downloadrate|filesizeformat|replace("Bytes","b") }}/s",
     "uploadrate": "{{ status.uploadrate|filesizeformat|replace("Bytes","b") }}/s",
-    "totalrate": "{{ (status.uploadrate + status.downloadrate)|filesizeformat|replace("Bytes","b") }}/s",
-    "progress": {{ status.progress|d(0, true) }},
     "diskfree": "{{ status.diskfree|filesizeformat|replace("Bytes","b") }}",
     "diskfreepct": {{ status.diskfreepct|d(0, true) }},
-    "userdiskfree": "{{ status.userdiskfree|filesizeformat|replace("Bytes","b") }}",
-    "userdiskfreepct": {{ status.userdiskfreepct|d(0, true) }},
     "connections": "{{ status.connections }}",
     "paused": "{{ status.paused|lower }}"
   },
-  "downloads": [
-  {%- if downloads -%}
-    {%- for dl in downloads -%}
-    {%- set client = clientFactory(dl.id) %}
+  "transfers": [
+  {%- if transfers -%}
+    {%- for client in transfers -%}
     {
-      "id": {{ dl.id }},
-      "health": {{ dl.health|d(0, true) }},
-      "description": "{{ dl.description|e }}",
-      "size": "{% if dl.size %}{{ dl.size|filesizeformat|replace("Bytes","b") }}{% else %}Unknown{% endif %}",
-      "status": "{{ statusdesc[dl.status] }}",
-      "status_message": "{{ dl.status_message|d("", true)|replace("\"", "\\\"") }}",
-      "progress": {{ dl.progress|d(0, true) }},
-      "seed_progress": {{ dl.seed_progress|d(0, true) }},
-      "downloadrate": "{{ dl.downloadrate|filesizeformat|replace("Bytes","b") }}/s",
-      "uploadrate": "{{ dl.uploadrate|filesizeformat|replace("Bytes","b") }}/s",
-      "timeleft": "{{ dl.timeleft|intervalformat }}",
-      "running": {{ (client and client.is_running() and true)|lower }},
-      "startable": {{ (client and client.is_startable() and true)|lower }},
-      "stoppable": {{ (client and client.is_stoppable() and true)|lower }},
-      "finished": {{ (client and client.is_finished() and true)|lower }}
+      "id": {{ client.transfer.id }},
+      "health": {{ client.transfer.health|d(0, true) }},
+      "description": "{{ client.transfer.description|e }}",
+      "size": "{% if client.transfer.size %}{{ client.transfer.size|filesizeformat|replace("Bytes","b") }}{% else %}Unknown{% endif %}",
+      "state": "{{ statusdesc[client.transfer.state] }}",
+      "status": "{{ client.transfer.status|d("", true)|replace("\"", "\\\"") }}",
+      "progress": {{ client.transfer.progress|d(0, true) }},
+      "seed_progress": {{ client.transfer.seed_progress|d(0, true) }},
+      "downloadrate": "{{ client.transfer.downloadrate|filesizeformat|replace("Bytes","b") }}/s",
+      "uploadrate": "{{ client.transfer.uploadrate|filesizeformat|replace("Bytes","b") }}/s",
+      "timeleft": "{{ client.transfer.timeleft|intervalformat }}",
+      "startable": {{ (client.can('start') and true)|lower }},
+      "stoppable": {{ (client.can('stop') and true)|lower }},
+      "removable": {{ (client.can('remove') and true)|lower }}
+      "url": "{{ client.transfer.url }}",
+      "filename": "{{ client.transfer.filename }}",
+      "media_type": "{{ client.transfer.media_type }}",
+      "mime_type": "{{ client.transfer.mime_type }}",
+      "priority": "{{ client.transfer.priority }}",
+      "bandwidth": "{{ client.transfer.bandwidth }}",
+      "seed_ratio": "{{ client.transfer.seed_ratio }}",
+      "seed_until": "{{ client.transfer.seed_until }}",
+      "state": "{{ client.transfer.state }}",
+      "status": "{{ client.transfer.status }}",
+      "progress": "{{ client.transfer.progress }}",
+      "downloaded": "{{ client.transfer.downloaded }}",
+      "uploaded": "{{ client.transfer.uploaded }}",
+      "added": "{{ client.transfer.added }}",
+      "started": "{{ client.transfer.started }}",
+      "completed": "{{ client.transfer.completed }}",
+      "removed": "{{ client.transfer.removed }}",
+      "connections": "{{ client.transfer.connections }}",
+      "connection_limit": "{{ client.transfer.connection_limit }}",
+      "elapsed": "{{ client.transfer.elapsed|intervalformat }}"
     }{% if not loop.last %},{% endif %}
     {%- endfor -%}
   {%- endif %}

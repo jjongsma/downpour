@@ -10,25 +10,21 @@ from downpour2.core.transfers import agent, state
 
 
 class TransferManager(object):
-
     def __init__(self, app):
 
         self.log = logging.getLogger(__name__)
         self.application = app
         self.agents = []
 
-        try:
-            interface = net.get_interface(self.application.config.value(
-                ('downpour', 'interface'), '0.0.0.0'))
-            if interface == '0.0.0.0':
-                # Load IPs for local host
-                ips = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
-                ips = filter(lambda ip: ip[:4] != '127.' and ip[:2] != '::', ips)
-                interface = ', '.join(dict(map(lambda j: (j, 1), ips)).keys())
-        except IOError:
-            interface = 'disconnected'
+        self.hostname = socket.gethostname()
+        self.interface = app.config.value(('downpour', 'interface'), '0.0.0.0')
+        self.address = net.get_interface_ip(self.interface)
 
-        self.hostname = '%s (%s)' % (socket.gethostname(), interface)
+        if self.address == self.interface:
+            self.interface = None
+
+        if self.address is None:
+            self.address = 'disconnected'
 
         # Recently completed downloads
         self.recent = list(self.application.store.find(
@@ -93,22 +89,27 @@ class TransferManager(object):
                 return agt.provision(transfer)
         raise NotImplementedError('No agents could handle this download')
 
+    def user(self, user_id):
+        return UserTransferManager(user_id, self)
+
     @property
     def status(self):
 
-        statuses = [a.status() for a in self.agents]
+        statuses = [a.status for a in self.agents]
 
         ssum = lambda sl, f: sum([getattr(s, f) for s in sl])
         savg = lambda sl, f: ssum(sl, f) / len(sl)
 
         status = agent.AgentStatus()
         status.host = self.hostname
+        status.interface = self.interface
+        status.address = self.address
         status.version = VERSION
         status.active_downloads = ssum(statuses, 'active_downloads')
         status.queued_downloads = ssum(statuses, 'queued_downloads')
         status.active_uploads = ssum(statuses, 'active_uploads')
-        status.downloadrate = savg(statuses, 'downloadrate')
-        status.uploadrate = savg(statuses, 'uploadrate')
+        status.downloadrate = savg(statuses, 'downloadrate') if len(statuses) else 0
+        status.uploadrate = savg(statuses, 'uploadrate') if len(statuses) else 0
         status.connections = ssum(statuses, 'connections')
 
         return status
@@ -122,6 +123,48 @@ class TransferManager(object):
         for a in self.agents:
             t = a.transfer(tid)
             if t is not None:
+                return t
+
+        return None
+
+
+class UserTransferManager(object):
+
+    def __init__(self, user_id, manager):
+        self.user_id = user_id
+        self.manager = manager
+
+    @property
+    def status(self):
+
+        statuses = [a.agent(self.user_id).status for a in self.manager.agents if a.agent(self.user_id) is not None]
+
+        ssum = lambda sl, f: sum([getattr(s, f) for s in sl])
+        savg = lambda sl, f: ssum(sl, f) / len(sl)
+
+        status = agent.AgentStatus()
+        status.host = self.manager.hostname
+        status.interface = self.manager.interface
+        status.address = self.manager.address
+        status.version = VERSION
+        status.active_downloads = ssum(statuses, 'active_downloads')
+        status.queued_downloads = ssum(statuses, 'queued_downloads')
+        status.active_uploads = ssum(statuses, 'active_uploads')
+        status.downloadrate = savg(statuses, 'downloadrate') if len(statuses) else 0
+        status.uploadrate = savg(statuses, 'uploadrate') if len(statuses) else 0
+        status.connections = ssum(statuses, 'connections')
+
+        return status
+
+    @property
+    def transfers(self):
+        return [t for a in self.manager.agents if a.agent(self.user_id) is not None
+                for t in a.agent(self.user_id).transfers]
+
+    def transfer(self, tid):
+
+        for t in self.transfers:
+            if t.id == tid:
                 return t
 
         return None

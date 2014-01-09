@@ -2,7 +2,30 @@ import abc
 from downpour2.core.net.throttling import ThrottledBucketFilter
 
 
-class TransferAgent(object):
+class UserAgent(object):
+
+    @abc.abstractmethod
+    def transfers(self):
+        return NotImplemented
+
+    def transfer(self, tid):
+        for t in self.transfers:
+            if t.id == tid:
+                return t
+        return None
+
+    @abc.abstractproperty
+    def status(self):
+        return NotImplemented
+
+    def upload_filter(self):
+        return ThrottledBucketFilter()
+
+    def download_filter(self):
+        return ThrottledBucketFilter()
+
+
+class TransferAgent(UserAgent):
 
     __metaclass__ = abc.ABCMeta
 
@@ -61,30 +84,25 @@ class TransferAgent(object):
 
         return NotImplemented
 
-    @abc.abstractproperty
-    def transfers(self):
+    @abc.abstractmethod
+    def agent(self, user_id, create=False):
+        """
+        Get a user-specific agent for retrieving downloads and statistics for a single user.
+
+        @param user_id: The user ID
+        @param create: Whether to create a new agent for this user if one does not exist
+        @return: The user-specific transfer agent
+        @rtype: downpour2.core.transfers.agent.UserAgent
+        """
+
         return NotImplemented
-
-    def transfer(self, tid):
-        for t in self.transfers:
-            if t.id == tid:
-                return t
-        return None
-
-    @abc.abstractproperty
-    def status(self):
-        return NotImplemented
-
-    def upload_filter(self):
-        return ThrottledBucketFilter()
-
-    def download_filter(self):
-        return ThrottledBucketFilter()
 
 
 class AgentStatus(object):
 
     host = None
+    interface = None
+    address = None
     version = None
     active_downloads = 0
     queued_downloads = 0
