@@ -25,15 +25,15 @@ class DemoStatus(common.AuthenticatedResource):
         status.connections = 197
         status.diskfree = 684 * 1024 * 1024 * 1024
         status.diskfreepct = 68.4
-        status.downloadrate = 2.3 * 1024 * 1024
-        status.uploadrate = 92.6 * 1024
+        status.downloadrate = random.randint(200 * 1024, 2300 * 1024)
+        status.uploadrate = random.randint(10 * 1024, 500 * 1024)
 
         transfers = [
             # Downloads
-            [u'Elementary.S02E13.HDTV.x264-LOL.mp4', u'video/tv', state.DOWNLOADING, 78.0],
+            [u'Elementary.S02E13.HDTV.x264-LOL.mp4', u'video/tv', state.DOWNLOADING, 98.2],
             [u'Community.S05E03.HDTV.x264-LOL.mp4', u'video/tv', state.DOWNLOADING, 35.4],
-            [u'The.Colbert.Report.2014.01.08.Ishmael.Beah.HDTV.x264-LMAO.[VTV].mp4', u'video/tv', state.DOWNLOADING,
-             98.2],
+            [u'The.Colbert.Report.2014.01.08.Ishmael.Beah.HDTV.x264-LMAO.[VTV].mp4', u'video/tv', state.STOPPED,
+             73.7],
             [u'The.Colbert.Report.2014.01.07.John.Seigenthaler.HDTV.x264-LMAO.mp4', u'video/tv', state.DOWNLOADING,
              12.4],
             [u'Marvels.Agents.of.S.H.I.E.L.D.S01E11.REPACK.HDTV.x264-KILLERS.[VTV].mp4', u'video/tv', state.STARTING,
@@ -63,7 +63,7 @@ def transfer(name, media_type, st, progress):
     }
 
     if t['state'] == state.DOWNLOADING:
-        t['downloadrate'] = random.randint(200 * 1024, 2000 * 1024)
+        t['downloadrate'] = random.randint(20 * 1024, 2000 * 1024)
         t['uploadrate'] = random.randint(10 * 1024, 150 * 1024)
     elif t['state'] == state.SEEDING:
         t['downloadrate'] = 0
