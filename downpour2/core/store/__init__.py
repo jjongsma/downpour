@@ -211,7 +211,7 @@ class Transfer(object):
     bandwidth = Float()
     seed_ratio = Float()
     seed_until = Int()
-    state = Int()
+    state = Unicode()
     status = Unicode()
     progress = Float()
     size = Int()

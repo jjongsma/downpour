@@ -3,6 +3,7 @@ import libtorrent as lt
 from twisted.web import server
 from downpour2.core import store
 from downpour2.web import common
+from downpour2.web.demo import DemoStatus
 
 
 class Root(common.AuthenticatedResource):
@@ -99,20 +100,8 @@ class AddURL(common.AuthenticatedResource):
             })
 
 
-class DemoStatus(common.AuthenticatedResource):
-
-    def __init__(self, application, environment):
-        super(DemoStatus, self).__init__(application, environment)
-        self.putChild('', self)
-
-    def render_GET(self, request):
-        return json.dumps({
-            'status':  self.application.transfer_manager.status,
-            'transfers': self.application.transfer_manager.transfers
-        }, cls=ObjectEncoder, indent=4)
-
-
 class ObjectEncoder(json.JSONEncoder):
+
     def default(self, o):
         return o.__dict__
 

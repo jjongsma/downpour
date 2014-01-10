@@ -1,51 +1,52 @@
-import logging, traceback
+import logging
+import traceback
 
 # Standard events
-DOWNPOUR_STARTED = 'downpour_started'
-DOWNPOUR_SHUTDOWN = 'downpour_shutdown'
-DOWNPOUR_PAUSED = 'downpour_paused'
-DOWNPOUR_RESUMED = 'downpour_resumed'
+DOWNPOUR_STARTED = u'downpour_started'
+DOWNPOUR_SHUTDOWN = u'downpour_shutdown'
+DOWNPOUR_PAUSED = u'downpour_paused'
+DOWNPOUR_RESUMED = u'downpour_resumed'
 
 # Upload / download
-ADDED = 'transfer_added'
-ENQUEUE = 'transfer_enqueue'
-START = 'transfer_start'
-INITIALIZED = 'transfer_initialized'
-STARTED = 'transfer_started'
-UPDATED = 'transfer_updated'
-COMPLETE = 'transfer_complete'
-STOP = 'transfer_stop'
-STOPPED = 'transfer_stopped'
-FAILED = 'transfer_failed'
-REMOVE = 'transfer_remove'
-REMOVED = 'transfer_removed'
+ADDED = u'transfer_added'
+ENQUEUE = u'transfer_enqueue'
+START = u'transfer_start'
+INITIALIZED = u'transfer_initialized'
+STARTED = u'transfer_started'
+UPDATED = u'transfer_updated'
+COMPLETE = u'transfer_complete'
+STOP = u'transfer_stop'
+STOPPED = u'transfer_stopped'
+FAILED = u'transfer_failed'
+REMOVE = u'transfer_remove'
+REMOVED = u'transfer_removed'
 
 # Download only
-FETCHED = 'transfer_fetched'
-FETCH_FAILED = 'transfer_fetch_failed'
+FETCHED = u'transfer_fetched'
+FETCH_FAILED = u'transfer_fetch_failed'
 
 # TODO Refactor to plugins
-LIBRARY_FILE_ADDED = 'library_file_added'
-LIBRARY_FILE_UPDATED = 'library_file_updated'
-LIBRARY_FILE_REMOVED = 'library_file_removed'
-LIBRARY_FILE_TRANSCODED = 'library_file_transcoded'
+LIBRARY_FILE_ADDED = u'library_file_added'
+LIBRARY_FILE_UPDATED = u'library_file_updated'
+LIBRARY_FILE_REMOVED = u'library_file_removed'
+LIBRARY_FILE_TRANSCODED = u'library_file_transcoded'
 
-SERIES_ADDED = 'series_added'
-SERIES_UPDATED = 'series_updated'
-SERIES_REMOVED = 'series_removed'
-SERIES_PRUNED = 'series_pruned'
+SERIES_ADDED = u'series_added'
+SERIES_UPDATED = u'series_updated'
+SERIES_REMOVED = u'series_removed'
+SERIES_PRUNED = u'series_pruned'
 
-FEED_ADDED = 'feed_added'
-FEED_UPDATED = 'feed_updated'
-FEED_REMOVED = 'feed_removed'
-FEED_ITEM_ADDED = 'feed_item_added'
+FEED_ADDED = u'feed_added'
+FEED_UPDATED = u'feed_updated'
+FEED_REMOVED = u'feed_removed'
+FEED_ITEM_ADDED = u'feed_item_added'
 
 
-class EventBus:
+class EventBus(object):
 
     def __init__(self):
         self.listeners = {}
-        self.log = logging.getLogger(__name__);
+        self.log = logging.getLogger(__name__)
 
     def subscribe(self, event, listener, *args):
         if event not in self.listeners:
@@ -66,5 +67,5 @@ class EventBus:
                     traceback.print_exc()
 
     def callback(self, result, event, *args):
-        self.fire_event(event, *args)
+        self.fire(event, *args)
         return result
