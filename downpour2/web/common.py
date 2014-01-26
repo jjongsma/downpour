@@ -1,4 +1,5 @@
 import hashlib
+import json
 import traceback
 from twisted.web import resource, server
 from downpour2.core import VERSION, store
@@ -120,14 +121,32 @@ class Resource(resource.Resource, object):
             return '<h1>%s</h1><p>%s</p><p>%s</p>' % (
                 title, message, 'Additionally, the error page template could not be found.')
 
+    def render_json(self, data):
+        return json.dumps(data, cls=ObjectEncoder, indent=4)
+
+    def render_json_error(self, request, status, message):
+        request.setResponseCode(status, message)
+        return json.dumps({
+            'error': message
+        }, cls=ObjectEncoder, indent=4)
+
+
+class RoutedResource(Resource):
+
+    def __init__(self, application, environment):
+        super(RoutedResource, self).__init__(application, environment)
+
+    def render_GET(self, request):
+        return self.render_template('core/app.html', request, {
+            'title': 'Downpour'
+        })
+
 
 class AuthenticatedResource(Resource):
 
     def render(self, request):
         if not self.is_logged_in(request):
-            request.redirect('/account/login')
-            request.finish()
-            return server.NOT_DONE_YET
+            return self.render_json_error(request, 403, 'Not authenticated')
         return Resource.render(self, request)
 
 
@@ -158,25 +177,48 @@ class ModuleRoot(Resource):
     """
 
     def __init__(self, plugin, namespace, loader):
+
         super(ModuleRoot, self).__init__(
             plugin.application, plugin.make_environment(namespace, loader))
-        self.namespace = namespace
 
-    def blocks(self):
-        return {}
+        self.namespace = namespace
+        self.stylesheets = []
+        self.scripts = []
+        self.blocks = {}
+
+    def render_GET(self, request):
+
+        """
+        Renders the main app interface to allow deep linking and delegating URL routing to Angular.
+        """
+
+        return self.render_template('core/app.html', request, {
+            'title': 'Downpour'
+        })
+
+
+class JsonErrorResource(Resource):
+
+    def __init__(self, status, message, *args, **kwargs):
+        super(JsonErrorResource, self).__init__(*args, **kwargs)
+        self.status = status
+        self.message = message
+
+    def render(self, request):
+        return self.render_json_error(request, self.status, self.message)
 
 
 class ErrorResource(Resource):
 
-    def __init__(self, status, title, message, *args, **kwargs):
+    def __init__(self, code, status, title, message, *args, **kwargs):
         super(ErrorResource, self).__init__(*args, **kwargs)
+        self.code = code
         self.status = status
         self.title = title
         self.message = message
 
     def render(self, request):
-        if self.status:
-            request.setHeader('Status', self.status)
+        request.setResponseCode(self.code, self.status)
         return self.render_template('core/errors/error.html', request, {
             'title': self.title,
             'message': self.message
@@ -187,5 +229,10 @@ class NotFoundResource(ErrorResource):
 
     def __init__(self, *args, **kwargs):
         super(NotFoundResource, self).__init__(
-            '404 Not Found', 'Not Found',
+            404, 'Not Found', 'Not Found',
             'That page does not exist', *args, **kwargs)
+
+
+class ObjectEncoder(json.JSONEncoder):
+    def default(self, o):
+        return o.__dict__

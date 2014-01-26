@@ -1,4 +1,3 @@
-import logging
 from downpour2.core import plugin
 from downpour2.library import store
 from downpour2.library.web.root import LibraryModule

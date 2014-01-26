@@ -25,10 +25,10 @@ class Janitor(object):
         if len(self.jobs[period]) > 0:
             logging.debug('Running jobs for %s' % period)
             for job in self.jobs[period]:
-                job.fn(*job.args, **job.kwargs)
+                job['fn'](*job.args, **job.kwargs)
 
     def add_job(self, period, fn, *args, **kwargs):
-        job = { 'fn': fn, 'args': args, 'kwargs': kwargs }
+        job = {'fn': fn, 'args': args, 'kwargs': kwargs}
         self.jobs[period].append(job)
         return job
 

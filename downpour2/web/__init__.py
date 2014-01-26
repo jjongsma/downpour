@@ -18,6 +18,10 @@ class WebInterface(plugin.Plugin):
 
         self.log = logging.getLogger(__name__)
         self.template_loader = PackageLoader('downpour2.web', 'templates')
+
+        self.modules = {}
+        self.stylesheets = []
+        self.scripts = []
         self.blocks = {}
 
         # Template loader
@@ -34,20 +38,25 @@ class WebInterface(plugin.Plugin):
 
         # Block renderer for plugin content injection
         self.environment.globals.update({
+            'stylesheets': self.stylesheets,
+            'scripts': self.scripts,
             'pluginblock': self.render_block
         })
 
-        self.site_root = site.SiteRoot(app, self.environment)
+        self.site_root = site.SiteRoot(self)
 
     def register_module(self, module):
         """
-        @param module:
+        @param module: The module to register
         @ptype module: downpour2.web.common.ModuleRoot
         """
 
+        self.modules[module.namespace] = module
         self.site_root.add_child(module.namespace, module)
+        self.stylesheets.extend(module.stylesheets)
+        self.scripts.extend(module.scripts)
 
-        for block, fnlist in module.blocks().iteritems():
+        for block, fnlist in module.blocks.iteritems():
             if is_sequence(fnlist):
                 for fn in fnlist:
                     self.register_block(block, fn)
@@ -58,19 +67,6 @@ class WebInterface(plugin.Plugin):
         if block not in self.blocks:
             self.blocks[block] = []
         self.blocks[block].append(fn)
-
-    def link_renderer(self, path, name):
-        return lambda req: self.environment.get_template('core/blocks/navlink.html').render({
-            'path': path,
-            'name': name
-        })
-
-    def section_renderer(self, name, links, path=None):
-        return lambda req: self.environment.get_template('core/blocks/navsection.html').render({
-            'sectionname': name,
-            'sectionlink': path,
-            'links': links
-        })
 
     def render_block(self, block, request=None):
         out = ''

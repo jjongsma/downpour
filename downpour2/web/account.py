@@ -11,58 +11,30 @@ class Root(common.AuthenticatedResource):
         self.putChild('', self)
         self.putChild('login', Login(self.application, self.environment))
         self.putChild('logout', Logout(self.application, self.environment))
-        self.putChild('edit', Edit(self.application, self.environment))
         self.putChild('save', Save(self.application, self.environment))
-        self.putChild('saved', Saved(self.application, self.environment))
 
     def render_GET(self, request):
-        context = {'title': 'My Account'}
-        return self.render_template('core/account/index.html', request, context)
+        return self.render_json(self.get_user(request))
 
 
 class Login(common.Resource):
 
-    def render_GET(self, request):
-        referrer = request.getHeader('Referer')
-        if referrer is not None and referrer.find('//') > -1:
-            start = referrer.find('/', referrer.find('//') + 2)
-            referrer = referrer[start:]
-        context = {'title': 'Login', 'redirect': referrer}
-        return self.render_template('core/account/login.html', request, context)
-
     def render_POST(self, request):
-        username = unicode(request.args['username'][0]);
-        password = unicode(request.args['password'][0]);
+        username = unicode(request.args['username'][0])
+        password = unicode(request.args['password'][0])
         user = self.application.users.login(username, password)
         if user:
             self.set_user(user, request)
-            redirect = '/'
-            """
-            if 'redirect' in request.args and not request.args['redirect'][0].startswith('/account'):
-                redirect = request.args['redirect'][0]
-            """
-            request.redirect(redirect)
-            request.finish()
-            return server.NOT_DONE_YET
+            return self.render_json(user)
         else:
-            context = {'title': 'Login', 'error': 'Invalid username or password'}
-            return self.render_template('core/account/login.html', request, context)
+            return self.render_json_error(request, 401, 'Invalid username or password')
 
 
 class Logout(common.Resource):
 
     def render_GET(self, request):
-        self.set_user(None, request);
-        request.redirect('/')
-        request.finish()
-        return server.NOT_DONE_YET
-
-
-class Edit(common.AuthenticatedResource):
-
-    def render_GET(self, request):
-        context = {'title': 'Update My Account'}
-        return self.render_template('core/account/edit.html', request, context)
+        self.set_user(None, request)
+        return self.render_json({'success': True})
 
 
 class Save(common.AuthenticatedResource):
@@ -74,12 +46,12 @@ class Save(common.AuthenticatedResource):
         errors = ''
         if newpass is not None and newpass != '':
             if newpass2 is None or newpass2 == '':
-                errors = ''.join((errors, '<li>Confirm password is empty</li>'))
+                errors = ''.join((errors, 'Confirm password is empty'))
             if newpass != newpass2:
-                errors = ''.join((errors, '<li>Passwords do not match</li>'))
+                errors = ''.join((errors, 'Passwords do not match'))
         if len(errors) > 0:
-            context = {'title': 'Update My Account', 'error': errors}
-            return self.render_template('core/account/edit.html', request, context)
+            request.setResponseCode(400, 'Could not save account')
+            return self.render_json({'errors': errors})
         else:
             account = request.getSession(auth.IAccount)
             if newpass is not None and newpass != '':
@@ -89,13 +61,4 @@ class Save(common.AuthenticatedResource):
             manager = self.get_manager(request)
             # Save to database
             manager.store.commit()
-            request.redirect('/account/saved')
-            request.finish()
-            return server.NOT_DONE_YET
-
-
-class Saved(common.AuthenticatedResource):
-
-    def render_GET(self, request):
-        context = {'title': 'Account Saved'}
-        return self.render_template('core/account/saved.html', request, context)
+            return self.render_json(account.user)

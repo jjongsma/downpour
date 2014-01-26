@@ -8,11 +8,6 @@ class SharingModule(ModuleRoot):
 
         super(SharingModule, self).__init__(web, 'sharing', PackageLoader('downpour2.sharing.web', 'templates'))
 
-        self._blocks = {
-            'sidesection': web.section_renderer('Remote Shares', {'/sharing/remote/1': 'Jeremy\'s Media'}),
-            'settinglink': web.link_renderer('/sharing/settings', 'Remote Shares')
-        }
-
         self.putChild('', self)
 
     def blocks(self):

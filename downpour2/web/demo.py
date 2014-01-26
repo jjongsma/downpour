@@ -2,9 +2,11 @@ import json
 import random
 from downpour2.core.transfers import state, agent
 from downpour2.web import common
+from downpour2.web.common import ObjectEncoder
 
 
 class DemoStatus(common.AuthenticatedResource):
+
     def __init__(self, application, environment):
         super(DemoStatus, self).__init__(application, environment)
         self.putChild('', self)
@@ -73,8 +75,3 @@ def transfer(name, media_type, st, progress):
         t['uploadrate'] = 0
 
     return t
-
-
-class ObjectEncoder(json.JSONEncoder):
-    def default(self, o):
-        return o.__dict__

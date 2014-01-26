@@ -1,10 +1,6 @@
-{% extends "core/base.html" %}
-{% block body %}
-{% if paused %}
-<div class="paused notice">
+<div ng-show="paused" class="paused notice">
 	All transfers are currently paused. <a href="/status/resume">Click to resume transfers</a>
 </div>
-{% endif %}
 
 <div class="box columnContent mobile">
     <div class="clearfix">

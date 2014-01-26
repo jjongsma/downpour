@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+{% raw %}<html ng-app="downpour" drawer-slide="#navigation">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Downpour</title>
+        <meta name="description" content="Downpour web-based BitTorrent manager">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet"/>
+        <link rel="stylesheet" href="/media/css/normalize.css"/>
+        <link rel="stylesheet" href="/media/css/meters.css"/>
+        <link rel="stylesheet" href="/media/css/main.css"/>
+        {% endraw %}{% for stylesheet in stylesheets %}
+        <link rel="stylesheet" href="{{ stylesheet }}"/>
+        {% endfor %}{% raw %}
+        <!--
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular-route.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular-animate.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular-touch.min.js"></script>
+        -->
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular-route.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular-animate.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.8/angular-touch.js"></script>
+        <script src="/media/js/vendor/jquery.nicescroll.min.js"></script>
+        <script src="/media/js/vendor/spin.min.js"></script>
+        <script src="/app/angular-downpour.js"></script>
+        <script src="/media/js/core.js"></script>
+        {% endraw %}{% for script in scripts %}
+        <script src="{{ script }}"></script>
+        {% endfor %}{% raw %}
+    </head>
+    <body ng-controller="dpPage" ng-swipe-right="menu.open = true" ng-swipe-left="menu.open = false">
+
+        <div id="header" class="clearfix">
+            <div class="mobile" ng-show="notifications.length">
+                <a href="/notifications/">
+                    <span class="fa-stack fa-lg unread">
+                        <span class="fa fa-lg fa-stack-1x fa-square"></span>
+                        <span class="fa-stack-1x unread-count">{{ notifications.length }}</span>
+                    </span>
+                </a>
+            </div>
+            <div id="menutoggle" class="mobile clearfix" ng-click="menu.open = !menu.open">
+                <div id="menu">
+                    <span id="menuicon" class="fa fa-bars"></span>
+                    <img src="/media/images/downpour-icon-white.png" />
+                </div>
+                <h1>{{ title }}</h1>
+            </div>
+            <div class="desktop">
+                <a href="/"><div id="logo"><img src="/media/images/downpour-logo.png"/></div></a>
+                <div id="account">
+                    <div ng-show="user.username">
+                        Logged in as {{ user.username }}
+                        - <a href="/account/edit">My Account</a>
+                        - <a href="/account/logout">Logout</a>
+                    </div>
+                    <div ng-hide="user.username">
+                        Not logged in
+                        - <a href="/account/login">Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="navigation" ng-class="{ open: menu.open }">
+            <ul>
+                <li title="Downpour" ng-class="{ active: section == 'overview' }"><a ng-click="setSection('overview')" href="/">Overview</a></li>
+                <li ng-class="{ active: section == 'transfers' }"><a ng-click="setSection('transfers')" href="/transfers/">Transfers</a></li>
+                <li ng-repeat="l in menu.navLinks" ng-class="{ active: section == l.section }"><a ng-click="setSection(l.section)" ng-href="{{ l.url }}">{{ l.name }}</a></li>
+                <li ng-class="{ active: section == 'notifications' }">
+                    <span ng-show="notifications.length" class="fa-stack fa-lg unread">
+                        <span class="fa fa-lg fa-stack-1x fa-square"></span>
+                        <span class="fa-stack-1x unread-count">{{ notifications.length }}</span>
+                    </span>
+                    <a ng-click="setSection('notifications')" href="/notifications/">Notifications</a>
+                </li>
+            </ul>
+            <div ng-repeat="g in menu.navGroups">
+                <h4>{{ g.name }}</h4>
+                <ul>
+                    <li ng-repeat="l in g.links" ng-class="{ active: section == l.section }"><a ng-click="setSection(l.section)" ng-href="{{ l.url }}">{{ l.name }}</a></li>
+                </ul>
+            </div>
+            <h4>Settings</h4>
+            <ul>
+                <li ng-repeat="l in menu.settingLinks" ng-class="{ active: section == l.section }"><a ng-click="setSection(l.section)" ng-href="{{ l.url }}">{{ l.name }}</a></li>
+            </ul>
+            <div ng-show="user.admin">
+                <h4>Administration</h4>
+                <ul>
+                    <li ng-repeat="l in menu.adminLinks" ng-class="{ active: section == l.section }"><a ng-click="setSection(l.section)" ng-href="{{ l.url }}">{{ l.name }}</a></li>
+                    <li ng-class="{ active: section == 'work' }"><a ng-click="setSection('work')" href="/work/">Download Cache</a></li>
+                    <li ng-class="{ active: section == 'users' }"><a ng-click="setSection('users')" href="/users/">Users</a></li>
+                    <li ng-class="{ active: section == 'config' }"><a ng-click="setSection('config')" href="/config/">Configuration</a></li>
+                </ul>
+            </div>
+            <div class="mobile">
+                <h4>Account</h4>
+                <ul ng-show="user">
+                    <li ng-class="{ active: section == 'account' }"><a ng-click="setSection('account')" href="/account/edit">My Account</a></li>
+                    <li><a href="/account/logout">Logout</a></li>
+                </ul>
+                <ul ng-hide="user">
+                    <li class="active"><a href="/account/login">Login</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="content" class="clearfix">
+            <div ng-view></div>
+        </div>
+
+        <div id="footer">
+            Downpour v{{ version }}
+        </div>
+
+        <div id="overlay" class="fade" ng-class="{ active: menu.open }"></div>
+
+    </body>
+</html>{% endraw %}

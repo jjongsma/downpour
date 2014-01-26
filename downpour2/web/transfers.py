@@ -3,13 +3,14 @@ import libtorrent as lt
 from twisted.web import server
 from downpour2.core import store
 from downpour2.web import common
+from downpour2.web.common import ObjectEncoder, JsonErrorResource
 from downpour2.web.demo import DemoStatus
 
 
-class Root(common.AuthenticatedResource):
+class Root(common.RoutedResource):
 
     def __init__(self, application, environment):
-        common.AuthenticatedResource.__init__(self, application, environment)
+        super(Root, self).__init__(application, environment)
         self.putChild('', self)
         self.putChild('add', Add(application, environment))
         self.putChild('status', Status(application, environment))
@@ -18,13 +19,8 @@ class Root(common.AuthenticatedResource):
         if path in self.children:
             return self.children[path]
         elif path.isdigit():
-            # Transfer detail
-            return common.NotFoundResource()
-
-    def render_GET(self, request):
-        context = {'title': 'Transfers'}
-        request.setHeader('X-Request-Path', '/transfers/')
-        return self.render_template('core/transfers/index.html', request, context)
+            # TODO Transfer detail
+            return JsonErrorResource(404, 'Transfer not found', self.application, self.environment)
 
 
 class Status(common.AuthenticatedResource):
@@ -36,10 +32,10 @@ class Status(common.AuthenticatedResource):
 
     def render_GET(self, request):
         agent = self.application.transfer_manager.user(self.get_user(request).id)
-        return json.dumps({
+        return self.render_json({
             'status': agent.status,
             'transfers': agent.transfers
-        }, cls=ObjectEncoder, indent=4)
+        })
 
 
 class Add(common.AuthenticatedResource):
@@ -51,7 +47,7 @@ class Add(common.AuthenticatedResource):
         self.putChild('torrent', AddTorrent(application, environment))
 
     def render_GET(self, request):
-        return 'Not implemented'
+        return self.render_json_error(request, 405, 'Not implemented')
 
 
 class AddTorrent(common.AuthenticatedResource):
@@ -69,14 +65,11 @@ class AddTorrent(common.AuthenticatedResource):
             t.description = unicode(ti.name())
             t.size = int(ti.total_size())
             #self.get_manager(request).add_download(t)
-            request.redirect('/transfers/')
+            request.redirect('/transfers/status')
             request.finish()
             return server.NOT_DONE_YET
         else:
-            return self.render_template('core/errors/error.html', request, {
-                'title': 'No Torrent Found',
-                'message': 'Torrent was not uploaded'
-            })
+            return self.render_json_error(request, 400, 'No valid torrent was found')
 
 
 class AddURL(common.AuthenticatedResource):
@@ -90,20 +83,11 @@ class AddURL(common.AuthenticatedResource):
             t = store.Transfer()
             t.url = unicode(request.args['url'][0])
             # self.get_manager(request).add_download(t)
-            request.redirect('/transfers/')
+            request.redirect('/transfers/status')
             request.finish()
             return server.NOT_DONE_YET
         else:
-            return self.render_template('core/errors/error.html', request, {
-                'title': 'No URL Found',
-                'message': 'URL was not specified'
-            })
-
-
-class ObjectEncoder(json.JSONEncoder):
-
-    def default(self, o):
-        return o.__dict__
+            return self.render_json_error(request, 400, 'URL was not specified')
 
 
 def numcmp(zero_null=False, reverse=False):

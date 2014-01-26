@@ -8,8 +8,6 @@ class FeedModule(ModuleRoot):
 
         super(FeedModule, self).__init__(web, 'feeds', PackageLoader('downpour2.feeds.web', 'templates'))
 
-        self._blocks = {'sidelink': web.link_renderer('/feeds/', 'Feeds')}
-
         self.putChild('', self)
 
     def blocks(self):

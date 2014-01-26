@@ -60,7 +60,7 @@ class Edit(common.AuthenticatedResource):
 
     def render_GET(self, request):
         context = {'title': 'Update My Account'}
-        return self.render_template('account/edit.html', request, context)
+        return self.render_template('account/edit-form.html', request, context)
 
 class Save(common.AuthenticatedResource):
 
@@ -76,7 +76,7 @@ class Save(common.AuthenticatedResource):
                 errors = ''.join((errors, '<li>Passwords do not match</li>'))
         if len(errors) > 0:
             context = {'title': 'Update My Account', 'error': errors}
-            return self.render_template('account/edit.html', request, context)
+            return self.render_template('account/edit-form.html', request, context)
         else:
             account = request.getSession(auth.IAccount)
             if newpass is not None and newpass != '':
