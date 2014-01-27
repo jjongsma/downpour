@@ -1,5 +1,5 @@
+from downpour2.core import util
 from downpour2.web import common, auth
-from twisted.web import server
 
 
 class Root(common.AuthenticatedResource):
@@ -9,6 +9,7 @@ class Root(common.AuthenticatedResource):
         super(Root, self).__init__(application, environment)
 
         self.putChild('', self)
+        self.putChild('detail', Detail(self.application, self.environment))
         self.putChild('login', Login(self.application, self.environment))
         self.putChild('logout', Logout(self.application, self.environment))
         self.putChild('save', Save(self.application, self.environment))
@@ -17,7 +18,17 @@ class Root(common.AuthenticatedResource):
         return self.render_json(self.get_user(request))
 
 
-class Login(common.Resource):
+class Detail(common.RoutedResource):
+
+    def render_GET(self, request):
+        user = self.get_user(request)
+        if user is not None:
+            return self.render_json(user, util.StormModelEncoder)
+        else:
+            return self.render_json_error(request, 403, 'Not authenticated')
+
+
+class Login(common.RoutedResource):
 
     def render_POST(self, request):
         username = unicode(request.args['username'][0])
@@ -25,7 +36,7 @@ class Login(common.Resource):
         user = self.application.users.login(username, password)
         if user:
             self.set_user(user, request)
-            return self.render_json(user)
+            return self.render_json(user, util.StormModelEncoder)
         else:
             return self.render_json_error(request, 401, 'Invalid username or password')
 
@@ -61,4 +72,4 @@ class Save(common.AuthenticatedResource):
             manager = self.get_manager(request)
             # Save to database
             manager.store.commit()
-            return self.render_json(account.user)
+            return self.render_json(account.user, util.StormModelEncoder)

@@ -1,8 +1,8 @@
 /*
  * Core app module
  */
-var downpour = angular.module('downpour', ['ngRoute', 'dpProviders', 'dpDirectives', 'dpControllers',
-    'transfers', 'library'
+var downpour = angular.module('downpour', ['ngRoute', 'dpServices', 'dpDirectives', 'dpControllers',
+    'account', 'transfers', 'library'
     //{% if modules|count %}, '{{ modules|join('\', \'', attribute='namespace') }}'{% endif %}
 ]);
 
@@ -18,9 +18,18 @@ downpour.config(['$routeProvider', '$locationProvider',
         $routeProvider.when('/transfers', {
             templateUrl: '/resources/templates/transfers/index.html',
             controller: 'TransferList'
+        }).when('/transfers/:id', {
+            templateUrl: '/resources/templates/transfers/detail.html',
+            controller: 'TransferDetail'
+        }).when('/account/login', {
+            templateUrl: '/resources/templates/account/login.html',
+            controller: 'AccountLogin'
+        }).when('/', {
+            templateUrl: '/resources/templates/index.html',
+            controller: 'dpOverview'
         }).otherwise({
-                redirectTo: '/'
-            });
+            redirectTo: '/'
+        });
 
     }
 ]);
@@ -28,13 +37,13 @@ downpour.config(['$routeProvider', '$locationProvider',
 /*
  * Core service providers.
  */
-var dpProviders = angular.module('dpProviders', []);
+var dpServices = angular.module('dpServices', []);
 
 /*
  * Content injector service provider which allows modules to add hooks
  * into shared UI sections during config()
  */
-dpProviders.provider('contentInjector',
+dpServices.provider('contentInjector',
     function() {
 
         this.DEFAULT = {};
@@ -108,6 +117,130 @@ dpProviders.provider('contentInjector',
     }
 );
 
+dpServices.service('state', ['$rootScope', '$http', '$q',
+    function($rootScope, $http, $q) {
+
+        var update = function() {
+            return $http.get('/app/state').success(function(data) {
+                angular.extend($rootScope.state, data);
+            }).then(
+                function(response) {
+                    return response.data;
+                },
+                function(response) {
+                    return $q.reject("Could not refresh state");
+                }
+            );
+        };
+
+        $rootScope.state = {
+            'update': update
+        };
+
+        update();
+
+        return {
+            'update': update,
+            'state': $rootScope.state
+        };
+
+    }
+]);
+
+dpServices.service('authenticator', ['$rootScope', '$http', '$location', '$q',
+    function($rootScope, $http, $location, $q) {
+
+        var set = function(user) {
+            $rootScope.user = user;
+            $rootScope.$broadcast('$userChanged', user);
+            return user;
+        }
+
+        /*
+         * Login as the specified user.
+         */
+        var login = function(username, password) {
+
+            return $http({
+                method: 'POST',
+                url: '/account/login',
+                data: $.param({
+                    'username': username,
+                    'password': password
+                }),
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            }).then(
+                function(response) {
+                    return set(response.data);
+                },
+                function(response) {
+                    set(null);
+                    return $q.reject("Login failed");
+                }
+            );
+
+        };
+
+        /*
+         * Log the current user out.
+         */
+        var logout = function() {
+            set(null);
+        };
+
+        /*
+         * Check if the user is authenticated.
+         */
+        var authenticated = function() {
+
+            if ('user' in $rootScope) {
+                if (!!$rootScope.user)
+                    return $q.when($rootScope.user);
+                else {
+                    $location.path("/account/login");
+                    return $q.reject("Not authenticated");
+                }
+            } else {
+                return $http.get('/account/detail').then(
+                    function(response) {
+                        return set(response.data);
+                    },
+                    function(response) {
+                        set(null);
+                        return $q.reject("Not authenticated")
+                    }
+                );
+            }
+
+        };
+
+        /*
+         * Require that the user be logged in, or redirect to login page.
+         */
+        var require = function() {
+
+            return authenticated().then(
+                function(user) {
+                    return user;
+                },
+                function(error) {
+                    $location.path("/account/login");
+                    return $q.reject(error);
+                }
+            );
+
+        };
+
+        return {
+            'login': login,
+            'logout': logout,
+            'authenticated': authenticated,
+            'require': require
+        };
+
+    }
+]);
+
 /*
  * Core directives.
  */
@@ -167,9 +300,11 @@ var dpControllers = angular.module('dpControllers', []);
 /*
  * Main controller for header/footer/menu.
  */
-dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootScope', 'contentInjector',
-    function($scope, $routeParams, $http, $rootScope, contentInjector) {
+dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootScope', '$interval',
+    'state', 'contentInjector',
+    function($scope, $routeParams, $http, $rootScope, $interval, state, contentInjector) {
 
+        // Menu / etc
         $scope.title = 'Downpour';
         $scope.menu = contentInjector.menu;
         $rootScope.section = 'overview';
@@ -177,10 +312,37 @@ dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootSco
             $rootScope.section = s;
         }
 
-        // Load core app settings on init
-        $http.get('/app/config').success(function(data) {
-            angular.extend($scope, data);
-        });
+        // Host/bandwidth status
+        var update = function() {
+            $http.get('/app/host').success(function(data) {
+                angular.extend($scope.host, data);
+            });
+        };
+
+        $scope.host = {
+            'update': update
+        };
+
+        update();
+
+        $scope.interval = $interval(update, 5000)
+
+        $scope.$on('$destroy', function() {
+            $interval.cancel($scope.interval);
+        })
 
     }
 ]);
+
+dpControllers.controller('dpOverview', ['$scope', '$http', 'authenticator',
+    function($scope, $http, authenticator) {
+
+        authenticator.require().then(
+            function(user) {
+                // Setup page here
+            }
+        )
+
+    }
+])
+

@@ -1,8 +1,8 @@
 import json
 import random
+from downpour2.core.util import ObjectEncoder
 from downpour2.core.transfers import state, agent
 from downpour2.web import common
-from downpour2.web.common import ObjectEncoder
 
 
 class DemoStatus(common.AuthenticatedResource):

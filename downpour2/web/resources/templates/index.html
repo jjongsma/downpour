@@ -1,22 +1,9 @@
-<div ng-show="paused" class="paused notice">
+<div ng-show="state.paused" class="paused notice">
 	All transfers are currently paused. <a href="/status/resume">Click to resume transfers</a>
 </div>
 
 <div class="box columnContent mobile">
-    <div class="clearfix">
-        <div class="hostMetric download">
-            <div class="title">Downloads</div>
-            <div class="value">2.3 MB/s</div>
-        </div>
-        <div class="hostMetric upload">
-            <div class="title">Uploads</div>
-            <div class="value">25.6 KB/s</div>
-        </div>
-        <div class="hostMetric connections">
-            <div class="title">Connections</div>
-            <div class="value">198</div>
-        </div>
-    </div>
+    <ng-include src="'/resources/templates/common/host-stats-bandwidth.html'"></ng-include>
 </div>
 
 <div class="column main">
@@ -175,32 +162,7 @@
 
 <div class="column side desktop">
 	<div class="box columnContent">
-		<h4 class="hostHeader lightgray-bg clearfix">
-			<span class="host">media-center</span>
-			<span class="ip">IP: 46.246.38.178</span>
-		</h4>
-		<div class="clearfix">
-			<div class="hostMetric download">
-				<div class="title">Downloads</div>
-				<div class="value">2.3 MB/s</div>
-			</div>
-			<div class="hostMetric upload">
-				<div class="title">Uploads</div>
-				<div class="value">25.6 KB/s</div>
-			</div>
-			<div class="hostMetric connections">
-				<div class="title">Connections</div>
-				<div class="value">198</div>
-			</div>
-		</div>
-		<div class="hostDisk clearfix">
-			<div class="title">Media Volume</div>
-			<div class="free">
-				<div class="meter nostripes">
-					<span style="width: 40%;"></span><div>60% Free (600 GB)</div>
-				</div>
-			</div>
-		</div>
+        <ng-include src="'/resources/templates/common/host-stats.html'"></ng-include>
 	</div>
 </div>
 
@@ -287,5 +249,3 @@
 		</div>
 	</div>
 </div>
-
-{% endblock %}

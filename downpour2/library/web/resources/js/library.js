@@ -2,7 +2,7 @@
 // 'settinglink': web.link_renderer('/library/types', 'Media Types'),
 // 'homecolumn': lambda req: self.render_template('library/home-blocks.html', req, {})
 
-var library = angular.module('library', ['ngRoute', 'dpProviders']);
+var library = angular.module('library', ['ngRoute', 'dpServices']);
 
 library.config(['$routeProvider', '$locationProvider', 'contentInjectorProvider',
     function($routeProvider, $locationProvider, contentInjectorProvider) {

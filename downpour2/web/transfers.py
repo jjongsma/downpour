@@ -1,9 +1,8 @@
-import json
 import libtorrent as lt
 from twisted.web import server
 from downpour2.core import store
 from downpour2.web import common
-from downpour2.web.common import ObjectEncoder, JsonErrorResource
+from downpour2.web.common import JsonErrorResource
 from downpour2.web.demo import DemoStatus
 
 
@@ -14,16 +13,35 @@ class Root(common.RoutedResource):
         self.putChild('', self)
         self.putChild('add', Add(application, environment))
         self.putChild('status', Status(application, environment))
+        self.putChild('detail', Detail(application, environment))
+
+
+class Detail(common.Resource):
+
+    def __init__(self, application, environment):
+        super(Detail, self).__init__(application, environment)
 
     def getChild(self, path, request):
-        if path in self.children:
-            return self.children[path]
-        elif path.isdigit():
-            # TODO Transfer detail
-            return JsonErrorResource(404, 'Transfer not found', self.application, self.environment)
+        if path.isdigit():
+            return Transfer(path, self.application, self.environment)
+        return common.NotFoundResource(self.application, self.environment)
 
 
-class Status(common.AuthenticatedResource):
+class Transfer(common.AuthenticatedResource):
+
+    def __init__(self, id, application, environment):
+        super(Transfer, self).__init__(application, environment)
+        self.id = id
+
+    def render_GET(self, request):
+        agent = self.application.transfer_manager.user(self.get_user(request).id)
+        transfer = agent.transfer(self.id)
+        if transfer is not None:
+            return self.render_json(transfer)
+        return self.render_json_error(request, 404, 'Transfer not found')
+
+
+class Status(common.Resource):
 
     def __init__(self, application, environment):
         super(Status, self).__init__(application, environment)
@@ -31,11 +49,11 @@ class Status(common.AuthenticatedResource):
         self.putChild('demo', DemoStatus(application, environment))
 
     def render_GET(self, request):
-        agent = self.application.transfer_manager.user(self.get_user(request).id)
-        return self.render_json({
-            'status': agent.status,
-            'transfers': agent.transfers
-        })
+        user = self.get_user(request);
+        if user is None:
+            return self.render_json([])
+        else:
+            return self.render_json(self.application.transfer_manager.user(self.get_user(request).id).status)
 
 
 class Add(common.AuthenticatedResource):

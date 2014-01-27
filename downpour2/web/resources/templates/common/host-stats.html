@@ -1,21 +1,8 @@
 <h4 class="hostHeader lightgray-bg clearfix">
-    <span class="host">media-center</span>
-    <span class="ip">IP: 46.246.38.178</span>
+    <span class="host">{{ host.host }}</span>
+    <span class="ip">IP: {{ host.address }}</span>
 </h4>
-<div class="clearfix">
-    <div class="hostMetric download">
-        <div class="title">Downloads</div>
-        <div class="value">2.3 MB/s</div>
-    </div>
-    <div class="hostMetric upload">
-        <div class="title">Uploads</div>
-        <div class="value">25.6 KB/s</div>
-    </div>
-    <div class="hostMetric connections">
-        <div class="title">Connections</div>
-        <div class="value">198</div>
-    </div>
-</div>
+<ng-include src="'/resources/templates/common/host-stats-bandwidth.html'"></ng-include>
 <div class="hostDisk clearfix">
     <div class="title">Media Volume</div>
     <div class="free">

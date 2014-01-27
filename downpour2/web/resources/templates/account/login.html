@@ -1,0 +1,38 @@
+<div ng-show="state.paused" class="notice">
+	All transfers are currently paused. <a href="/status/resume">Click to resume transfers</a>
+</div>
+
+<div class="box columnContent mobile">
+    <ng-include src="'/resources/templates/common/host-stats-bandwidth.html'"></ng-include>
+</div>
+
+<div class="column main">
+    <div class="columnContent">
+        <div class="section">Please login to Downpour</div>
+        <div class="boxContent">
+            <div ng-show="error" class="error">{{ error }}</div>
+            <form>
+                <table width="300" cellspacing="0" cellpadding="3" border="0">
+                    <tr>
+                        <td>Username</td>
+                        <td><input class="focusonload" type="text" name="username" size="15" autofocus ng-model="username"/></td>
+                    </tr>
+                    <tr>
+                        <td>Password</td>
+                        <td><input type="password" name="password" size="15" ng-model="password"/></td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td><button ng-click="submit()">Login</button></td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="column side desktop">
+	<div class="box columnContent">
+        <ng-include src="'/resources/templates/common/host-stats.html'"></ng-include>
+	</div>
+</div>

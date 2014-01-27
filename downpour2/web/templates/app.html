@@ -116,10 +116,10 @@
         </div>
 
         <div id="footer">
-            Downpour v{{ version }}
+            Downpour v{{ state.version }}
         </div>
 
-        <div id="overlay" class="fade" ng-class="{ active: menu.open }"></div>
+        <div id="overlay" class="fade" ng-show="menu.open" ng-class="{ active: menu.open }"></div>
 
     </body>
 </html>{% endraw %}

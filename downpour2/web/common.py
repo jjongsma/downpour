@@ -1,8 +1,10 @@
 import hashlib
 import json
 import traceback
+
 from twisted.web import resource, server
-from downpour2.core import VERSION, store
+
+from downpour2.core import VERSION, store, util
 from downpour2.web import auth
 
 
@@ -121,14 +123,14 @@ class Resource(resource.Resource, object):
             return '<h1>%s</h1><p>%s</p><p>%s</p>' % (
                 title, message, 'Additionally, the error page template could not be found.')
 
-    def render_json(self, data):
-        return json.dumps(data, cls=ObjectEncoder, indent=4)
+    def render_json(self, data, encoder=util.ObjectEncoder):
+        return json.dumps(data, cls=encoder, indent=4)
 
-    def render_json_error(self, request, status, message):
+    def render_json_error(self, request, status, message, encoder=util.ObjectEncoder):
         request.setResponseCode(status, message)
         return json.dumps({
             'error': message
-        }, cls=ObjectEncoder, indent=4)
+        }, cls=encoder, indent=4)
 
 
 class RoutedResource(Resource):
@@ -231,8 +233,3 @@ class NotFoundResource(ErrorResource):
         super(NotFoundResource, self).__init__(
             404, 'Not Found', 'Not Found',
             'That page does not exist', *args, **kwargs)
-
-
-class ObjectEncoder(json.JSONEncoder):
-    def default(self, o):
-        return o.__dict__

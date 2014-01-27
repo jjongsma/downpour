@@ -2,8 +2,8 @@ import json
 import pkg_resources
 from twisted.web import static
 from downpour2.core import VERSION
-from downpour2.web import common, transfers
-from downpour2.web.common import ObjectEncoder
+from downpour2.core.util import ObjectEncoder
+from downpour2.web import common, transfers, account
 
 
 class SiteRoot(common.Resource):
@@ -17,7 +17,7 @@ class SiteRoot(common.Resource):
         self.putChild('media', MediaPath(pkg_resources.resource_filename("downpour2.web", "/media")))
         self.putChild('resources', MediaPath(pkg_resources.resource_filename("downpour2.web", "/resources")))
         self.putChild('transfers', transfers.Root(plugin.application, plugin.environment))
-        # self.putChild('account', account.Root(application, environment))
+        self.putChild('account', account.Root(plugin.application, plugin.environment))
 
     def add_child(self, path, resource):
 
@@ -42,23 +42,19 @@ class AppServices(common.Resource):
 
         super(AppServices, self).__init__(application, environment)
 
-        self.putChild('', self)
-        self.putChild('config', ConfigJS(application, environment))
+        self.putChild('state', State(application, environment))
+        self.putChild('host', Host(application, environment))
         self.putChild('angular-downpour.js', InitJS(application, environment, plugin))
 
-    def render_GET(self, request):
 
-        return "{}"
-
-
-class ConfigJS(common.Resource):
+class State(common.Resource):
     """
     Angular module initialization and application bootstrapping.
     """
 
     def __init__(self, application, environment):
 
-        super(ConfigJS, self).__init__(application, environment)
+        super(State, self).__init__(application, environment)
 
         self.putChild('', self)
 
@@ -66,10 +62,22 @@ class ConfigJS(common.Resource):
 
         return json.dumps({
             'version': VERSION,
-            'paused': self.application.paused,
-            'user': self.get_user(request),
-            'notifications': ['Test']
+            'paused': self.application.paused
         }, cls=ObjectEncoder, indent=4)
+
+
+class Host(common.Resource):
+
+    def __init__(self, application, environment):
+        super(Host, self).__init__(application, environment)
+        self.putChild('', self)
+
+    def render_GET(self, request):
+        user = self.get_user(request);
+        if user is None:
+            return self.render_json(self.application.transfer_manager.status)
+        else:
+            return self.render_json(self.application.transfer_manager.user(self.get_user(request).id).status)
 
 
 class InitJS(common.Resource):
