@@ -6,7 +6,7 @@
     <ng-include src="'/resources/templates/common/host-stats-bandwidth.html'"></ng-include>
 </div>
 
-<div class="column main">
+<div class="column main" ng-controller="TransferList">
 
 	<div class="columnContent desktop">
         <div class="addDownload clearfix">
@@ -38,90 +38,10 @@
 		<div class="section">Downloading</div>
 		<div class="boxContent">
 			<div class="transferSummary">
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health good"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Grimm.S03E08.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter animate"><span style="width: 100%"></span><div>Importing</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health unknown"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter animate"><span style="width: 22.7%"></span><div>22.7%</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health dead"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Haven.S04E13.HDTV.x264-EXCELLENCE.[VTV].mp</a></div>
-					<div class="progress">
-						<div class="meter red"><span style="width: 78.0%"></span><div>78.0%</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health average"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter blue animate"><span style="width: 100%"></span><div>Seeding</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health bad"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Grimm.S03E08.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter"><span style="width: 72.9%"></span><div>72.9%</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health poor"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter animate"><span style="width: 22.7%"></span><div>22.7%</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health good"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Haven.S04E13.HDTV.x264-EXCELLENCE.[VTV].mp</a></div>
-					<div class="progress">
-						<div class="meter red"><span style="width: 78.0%"></span><div>78.0%</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health bad"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter blue animate"><span style="width: 100%"></span><div>Seeding</div></div>
-					</div>
-				</div>
-				<div class="transfer clearfix">
-					<div class="healthmeter">
-						<div class="health excellent"></div>
-					</div>
-					<div class="label"><a href="/transfers/1">Grimm.S03E08.HDTV.x264-LOL.[VTV].mp4</a></div>
-					<div class="progress">
-						<div class="meter animate"><span style="width: 72.9%"></span><div>72.9%</div></div>
-					</div>
-				</div>
-				<div class="queued">
-					<a href="/transfers/">and 9 more queued...</a>
-				</div>
+				<div ng-repeat="transfer in downloads" ng-include="'/resources/templates/transfers/transfer-progress-small.html'"></div>
+                <div ng-show="queued.length" class="queued">
+                    <a href="/transfers/downloads">and {{ queued.length }} more queued...</a>
+                </div>
 			</div>
 		</div>
 	</div>
@@ -131,32 +51,15 @@
         <div class="section">Seeding</div>
         <div class="boxContent">
             <div class="transferSummary">
-                <div class="transfer clearfix">
-                    <div class="healthmeter">
-                        <div class="health unknown"></div>
-                    </div>
-                    <div class="label"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4</a></div>
-                    <div class="progress">
-                        <div class="meter animate"><span style="width: 22.7%"></span><div>22.7%</div></div>
-                    </div>
-                </div>
-                <div class="transfer clearfix">
-                    <div class="healthmeter">
-                        <div class="health average"></div>
-                    </div>
-                    <div class="label"><a href="/transfers/1">Hawaii.Five-0.2010.S04E10.HDTV.x264-LOL.[VTV].mp4</a></div>
-                    <div class="progress">
-                        <div class="meter blue animate"><span style="width: 100%"></span><div>Seeding</div></div>
-                    </div>
-                </div>
-                <div class="queued">
-                    <a href="/transfers/">and 2 more...</a>
+                <div ng-repeat="transfer in uploads" ng-include="'/resources/templates/transfers/transfer-progress-small.html'"></div>
+                <div ng-show="alluploads.length > uploads.length" class="queued">
+                    <a href="/transfers/uploads">and {{ alluploads.length - uploads.length }} more...</a>
                 </div>
             </div>
         </div>
     </div>
 
-    {{ pluginblock('homecolumn', request) }}
+    <div ng-repeat="block in mainblocks" ng-include="block.template" ng-controller="{{ block.controller }}"></div>
 
 </div>
 
@@ -170,29 +73,26 @@
 	<div class="box columnContent">
 		<h4>Notifications</h4>
 		<div class="boxContent">
-			<div class="notification">
-				<span class="fa fa-fw fa-lg fa-check-circle"></span>
-				<span><a href="#">Something happend</a></span>
+			<div ng-repeat="n in notifications.slice(0,3)" class="notification">
+				<span class="fa fa-fw fa-lg fa-check-circle" ng-class="{
+				    'fa-check-circle': n.level == 'info',
+				    'fa-exclamation-circle': n.level == 'warn',
+				    'fa-exclamation-triangle': n.level == 'error'
+				}"></span>
+				<span><a href="{{ n.url }}">{{ n.title }}</a></span>
 				<span class="fa fa-times remove"></span>
 			</div>
-			<div class="notification">
-				<span class="fa fa-fw fa-lg fa-exclamation-circle"></span>
-				<span><a href="#">Your attention is required</a></span>
-				<span class="fa fa-times remove"></span>
-			</div>
-			<div class="notification">
-				<span class="fa fa-fw fa-lg fa-exclamation-triangle"></span>
-				<span><a href="#">Shit done got busted</a></span>
-				<span class="fa fa-times remove"></span>
-			</div>
-            <div class="queued">
-                <a href="/transfers/">and 6 more...</a>
+            <div ng-show="notifications.length > 3" class="queued">
+                <a href="/transfers/">and {{ notifications.length - 3 }} more...</a>
+            </div>
+            <div ng-show="!notifications.length">
+                <i>No notifications</i>
             </div>
 		</div>
 	</div>
 </div>
 
-{{ pluginblock('homeblock', request) }}
+<div ng-repeat="block in sideblocks" ng-include="block.template" ng-controller="{{ block.controller }}"></div>
 
 <div class="column side desktop">
 	<div class="box columnContent">

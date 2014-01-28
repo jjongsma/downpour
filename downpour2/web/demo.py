@@ -5,13 +5,14 @@ from downpour2.core.transfers import state, agent
 from downpour2.web import common
 
 
-class DemoStatus(common.AuthenticatedResource):
+class DemoHost(common.Resource):
 
     def __init__(self, application, environment):
-        super(DemoStatus, self).__init__(application, environment)
+        super(DemoHost, self).__init__(application, environment)
         self.putChild('', self)
 
     def render_GET(self, request):
+
         local_status = self.application.transfer_manager.status
 
         status = agent.AgentStatus()
@@ -29,6 +30,54 @@ class DemoStatus(common.AuthenticatedResource):
         status.diskfreepct = 68.4
         status.downloadrate = random.randint(200 * 1024, 2300 * 1024)
         status.uploadrate = random.randint(10 * 1024, 500 * 1024)
+
+        return self.render_json(status)
+
+
+class DemoNotifications(common.Resource):
+
+    def __init__(self, application, environment):
+        super(DemoNotifications, self).__init__(application, environment)
+        self.putChild('', self)
+
+    def render_GET(self, request):
+
+        return self.render_json([
+            {
+                'id': 1,
+                'timestamp': 0,
+                'title': 'Something happened',
+                'level': 'info',
+                'description': 'Something happened',
+                'url': '/xxx',
+                'viewed': False
+            }, {
+                'id': 2,
+                'timestamp': 0,
+                'title': 'Your attention is required',
+                'level': 'warn',
+                'description': 'Your at tention is required',
+                'url': '/xxx',
+                'viewed': False
+            }, {
+                'id': 3,
+                'timestamp': 0,
+                'title': 'Shit done got busted',
+                'level': 'error',
+                'description': 'Shit done got busted',
+                'url': '/xxx',
+                'viewed': False
+            }
+        ])
+
+
+class DemoStatus(common.AuthenticatedResource):
+
+    def __init__(self, application, environment):
+        super(DemoStatus, self).__init__(application, environment)
+        self.putChild('', self)
+
+    def render_GET(self, request):
 
         transfers = [
             # Downloads
@@ -50,17 +99,15 @@ class DemoStatus(common.AuthenticatedResource):
             [u'Community.S05E02.HDTV.x264-LOL.mp4', u'video/tv', state.SEEDING, 100.0]
         ]
 
-        return json.dumps({
-            'status': status,
-            'transfers': [transfer(*t) for t in transfers]
-        }, cls=ObjectEncoder, indent=4)
+        return json.dumps([transfer(*t) for t in transfers], cls=ObjectEncoder, indent=4)
 
 
 def transfer(name, media_type, st, progress):
     t = {
         'description': name,
         'media_type': media_type,
-        'state': st,
+        'state': state.describe(st),
+        'health': 'good',
         'progress': progress
     }
 

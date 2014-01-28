@@ -1,7 +1,8 @@
 /*
  * Core app module
  */
-var downpour = angular.module('downpour', ['ngRoute', 'dpServices', 'dpDirectives', 'dpControllers',
+var downpour = angular.module('downpour', ['ngRoute',
+    'dpServices', 'dpDirectives', 'dpFilters', 'dpControllers',
     'account', 'transfers', 'library'
     //{% if modules|count %}, '{{ modules|join('\', \'', attribute='namespace') }}'{% endif %}
 ]);
@@ -147,8 +148,8 @@ dpServices.service('state', ['$rootScope', '$http', '$q',
     }
 ]);
 
-dpServices.service('authenticator', ['$rootScope', '$http', '$location', '$q',
-    function($rootScope, $http, $location, $q) {
+dpServices.service('authenticator', ['$rootScope', '$http', '$location', '$q', '$route',
+    function($rootScope, $http, $location, $q, $route) {
 
         var set = function(user) {
             $rootScope.user = user;
@@ -185,11 +186,49 @@ dpServices.service('authenticator', ['$rootScope', '$http', '$location', '$q',
          * Log the current user out.
          */
         var logout = function() {
-            set(null);
+
+            return $http.post('/account/logout').then(
+                function(response) {
+                    set(null);
+                    $route.reload();
+                    return true;
+                },
+                function(response) {
+                    set(null);
+                    // Refresh to verify whether it actually succeeded despite error
+                    return refresh().then(
+                        function() {
+                            return $q.reject("Logout failed");
+                        },
+                        function () {
+                            $route.reload();
+                            return true;
+                        }
+                    );
+                }
+            );
+
         };
 
         /*
-         * Check if the user is authenticated.
+         * Refresh credentials from the server.
+         */
+        var refresh = function() {
+
+            return $http.get('/account/detail').then(
+                function(response) {
+                    return set(response.data);
+                },
+                function(response) {
+                    set(null);
+                    return $q.reject("Not authenticated")
+                }
+            );
+
+        }
+
+        /*
+         * Check if the user is authenticated, checking local cache then falling back to refresh().
          */
         var authenticated = function() {
 
@@ -201,15 +240,7 @@ dpServices.service('authenticator', ['$rootScope', '$http', '$location', '$q',
                     return $q.reject("Not authenticated");
                 }
             } else {
-                return $http.get('/account/detail').then(
-                    function(response) {
-                        return set(response.data);
-                    },
-                    function(response) {
-                        set(null);
-                        return $q.reject("Not authenticated")
-                    }
-                );
+                return refresh();
             }
 
         };
@@ -234,6 +265,7 @@ dpServices.service('authenticator', ['$rootScope', '$http', '$location', '$q',
         return {
             'login': login,
             'logout': logout,
+            'refresh': refresh,
             'authenticated': authenticated,
             'require': require
         };
@@ -269,16 +301,16 @@ dpDirectives.directive('drawerSlide', ['$swipe',
 
             $swipe.bind(element, {
                 'start': function(point) {
-                    console.log('start');
+                    // console.log('start');
                 },
                 'move': function(point) {
-                    console.log(point);
+                    // console.log(point);
                 },
                 'end': function(point) {
-                    console.log('end');
+                    // console.log('end');
                 },
                 'cancel': function() {
-                    console.log('cancel');
+                    // console.log('cancel');
                 }
             })
 
@@ -291,6 +323,20 @@ dpDirectives.directive('drawerSlide', ['$swipe',
     }
 ]);
 
+/*
+ * Core filters.
+ */
+var dpFilters = angular.module('dpFilters', []);
+
+dpFilters.filter('bytes', function() {
+    return function(bytes, precision) {
+		if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-';
+		if (typeof precision === 'undefined') precision = 1;
+		var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'],
+			number = Math.floor(Math.log(bytes) / Math.log(1024));
+		return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) +  ' ' + units[number];
+	}
+});
 
 /*
  * Core controllers.
@@ -301,8 +347,8 @@ var dpControllers = angular.module('dpControllers', []);
  * Main controller for header/footer/menu.
  */
 dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootScope', '$interval',
-    'state', 'contentInjector',
-    function($scope, $routeParams, $http, $rootScope, $interval, state, contentInjector) {
+    'state', 'contentInjector', 'authenticator',
+    function($scope, $routeParams, $http, $rootScope, $interval, state, contentInjector, authenticator) {
 
         // Menu / etc
         $scope.title = 'Downpour';
@@ -312,21 +358,25 @@ dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootSco
             $rootScope.section = s;
         }
 
+        // Authentication state
+        $scope.logout = authenticator.logout;
+
+        $scope.host = {};
+        $scope.notifications = [];
+
         // Host/bandwidth status
         var update = function() {
-            $http.get('/app/host').success(function(data) {
+            $http.get('/app/host/demo').success(function(data) {
                 angular.extend($scope.host, data);
             });
-        };
-
-        $scope.host = {
-            'update': update
+            $http.get('/app/notifications/demo').success(function(data) {
+                $scope.notifications = data;
+            });
         };
 
         update();
 
         $scope.interval = $interval(update, 5000)
-
         $scope.$on('$destroy', function() {
             $interval.cancel($scope.interval);
         })
@@ -334,8 +384,11 @@ dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootSco
     }
 ]);
 
-dpControllers.controller('dpOverview', ['$scope', '$http', 'authenticator',
-    function($scope, $http, authenticator) {
+dpControllers.controller('dpOverview', ['$scope', '$http', 'authenticator', 'contentInjector',
+    function($scope, $http, authenticator, contentInjector) {
+
+        $scope.mainblocks = contentInjector.block('homecolumn');
+        $scope.sideblocks = contentInjector.block('homeblock');
 
         authenticator.require().then(
             function(user) {

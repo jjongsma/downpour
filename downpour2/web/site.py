@@ -2,8 +2,9 @@ import json
 import pkg_resources
 from twisted.web import static
 from downpour2.core import VERSION
-from downpour2.core.util import ObjectEncoder
+from downpour2.core import util
 from downpour2.web import common, transfers, account
+from downpour2.web import demo
 
 
 class SiteRoot(common.Resource):
@@ -44,6 +45,7 @@ class AppServices(common.Resource):
 
         self.putChild('state', State(application, environment))
         self.putChild('host', Host(application, environment))
+        self.putChild('notifications', Notifications(application, environment))
         self.putChild('angular-downpour.js', InitJS(application, environment, plugin))
 
 
@@ -63,7 +65,7 @@ class State(common.Resource):
         return json.dumps({
             'version': VERSION,
             'paused': self.application.paused
-        }, cls=ObjectEncoder, indent=4)
+        }, cls=util.ObjectEncoder, indent=4)
 
 
 class Host(common.Resource):
@@ -71,13 +73,27 @@ class Host(common.Resource):
     def __init__(self, application, environment):
         super(Host, self).__init__(application, environment)
         self.putChild('', self)
+        self.putChild('demo', demo.DemoHost(application, environment))
 
     def render_GET(self, request):
-        user = self.get_user(request);
+        user = self.get_user(request)
         if user is None:
             return self.render_json(self.application.transfer_manager.status)
-        else:
-            return self.render_json(self.application.transfer_manager.user(self.get_user(request).id).status)
+        return self.render_json(self.application.transfer_manager.user(self.get_user(request).id).status)
+
+
+class Notifications(common.Resource):
+
+    def __init__(self, application, environment):
+        super(Notifications, self).__init__(application, environment)
+        self.putChild('', self)
+        self.putChild('demo', demo.DemoNotifications(application, environment))
+
+    def render_GET(self, request):
+        user = self.get_user(request)
+        if user is None:
+            return []
+        return self.render_json(list(self.application.alerts.unread(user)), util.StormModelEncoder)
 
 
 class InitJS(common.Resource):

@@ -1,7 +1,27 @@
 var transfers = angular.module('transfers', []);
 
-transfers.controller('TransferList', ['$scope', '$routeParams',
-    function($scope, $routeParams) {
+transfers.controller('TransferList', ['$scope', '$http', 'authenticator',
+    function($scope, $http, authenticator) {
+
+        $scope.downloads = [];
+        $scope.queued = [];
+        $scope.uploads = [];
+        $scope.alluploads = [];
+
+        $http.get('/transfers/status/demo').then(
+            function(response) {
+                angular.forEach(response.data, function(transfer) {
+                    if (transfer.state.state == 'seeding') {
+                        if ($scope.uploads.length <= 3)
+                            $scope.uploads.push(transfer);
+                        $scope.alluploads.push(transfer);
+                    } else if (transfer.state.state == 'queued')
+                        $scope.queued.push(transfer);
+                    else
+                        $scope.downloads.push(transfer);
+                });
+            }
+        );
 
     }
 ]);
@@ -14,8 +34,8 @@ transfers.controller('TransferDetail', ['$scope', '$routeParams',
 
 var account = angular.module('account', []);
 
-account.controller('AccountLogin', ['$scope', '$routeParams', '$location', 'authenticator',
-    function($scope, $routeParams, $location, authenticator) {
+account.controller('AccountLogin', ['$scope', '$location', 'authenticator',
+    function($scope, $location, authenticator) {
 
         $scope.submit = function() {
             authenticator.login(

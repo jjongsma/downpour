@@ -43,7 +43,7 @@ class Login(common.RoutedResource):
 
 class Logout(common.Resource):
 
-    def render_GET(self, request):
+    def render_POST(self, request):
         self.set_user(None, request)
         return self.render_json({'success': True})
 

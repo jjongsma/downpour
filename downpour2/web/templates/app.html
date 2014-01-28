@@ -57,7 +57,7 @@
                     <div ng-show="user.username">
                         Logged in as {{ user.username }}
                         - <a href="/account/edit">My Account</a>
-                        - <a href="/account/logout">Logout</a>
+                        - <a ng-click="logout()" href="">Logout</a>
                     </div>
                     <div ng-hide="user.username">
                         Not logged in
@@ -73,7 +73,7 @@
                 <li ng-class="{ active: section == 'transfers' }"><a ng-click="setSection('transfers')" href="/transfers/">Transfers</a></li>
                 <li ng-repeat="l in menu.navLinks" ng-class="{ active: section == l.section }"><a ng-click="setSection(l.section)" ng-href="{{ l.url }}">{{ l.name }}</a></li>
                 <li ng-class="{ active: section == 'notifications' }">
-                    <span ng-show="notifications.length" class="fa-stack fa-lg unread">
+                    <span class="fa-stack fa-lg unread" ng-class="{ invisible: !notifications.length }">
                         <span class="fa fa-lg fa-stack-1x fa-square"></span>
                         <span class="fa-stack-1x unread-count">{{ notifications.length }}</span>
                     </span>
@@ -103,7 +103,7 @@
                 <h4>Account</h4>
                 <ul ng-show="user">
                     <li ng-class="{ active: section == 'account' }"><a ng-click="setSection('account')" href="/account/edit">My Account</a></li>
-                    <li><a href="/account/logout">Logout</a></li>
+                    <li><a ng-click="logout()" href="">Logout</a></li>
                 </ul>
                 <ul ng-hide="user">
                     <li class="active"><a href="/account/login">Login</a></li>

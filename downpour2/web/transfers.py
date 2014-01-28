@@ -1,9 +1,7 @@
 import libtorrent as lt
 from twisted.web import server
 from downpour2.core import store
-from downpour2.web import common
-from downpour2.web.common import JsonErrorResource
-from downpour2.web.demo import DemoStatus
+from downpour2.web import common, demo
 
 
 class Root(common.RoutedResource):
@@ -46,14 +44,14 @@ class Status(common.Resource):
     def __init__(self, application, environment):
         super(Status, self).__init__(application, environment)
         self.putChild('', self)
-        self.putChild('demo', DemoStatus(application, environment))
+        self.putChild('demo', demo.DemoStatus(application, environment))
 
     def render_GET(self, request):
-        user = self.get_user(request);
+        user = self.get_user(request)
         if user is None:
             return self.render_json([])
         else:
-            return self.render_json(self.application.transfer_manager.user(self.get_user(request).id).status)
+            return self.render_json(self.application.transfer_manager.user(self.get_user(request).id).transfers)
 
 
 class Add(common.AuthenticatedResource):

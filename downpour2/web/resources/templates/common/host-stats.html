@@ -6,8 +6,8 @@
 <div class="hostDisk clearfix">
     <div class="title">Media Volume</div>
     <div class="free">
-        <div class="meter nostripes">
-            <span style="width: 40%;"></span><div>60% Free (600 GB)</div>
+        <div class="meter nostripes" ng-class="{ yellow: host.diskfreepct > 70, red: host.diskfreepct > 90 }">
+            <span style="width: {{ host.diskfreepct }}%;"></span><div>{{ host.diskfreepct }}% Free ({{ host.diskfree|bytes }})</div>
         </div>
     </div>
 </div>

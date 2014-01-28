@@ -1,11 +1,11 @@
 <div class="clearfix">
     <div class="hostMetric download">
         <div class="title">Downloads</div>
-        <div class="value">{{ host.downloadrate }}</div>
+        <div class="value">{{ host.downloadrate|bytes }}</div>
     </div>
     <div class="hostMetric upload">
         <div class="title">Uploads</div>
-        <div class="value">{{ host.uploadrate }}</div>
+        <div class="value">{{ host.uploadrate|bytes }}</div>
     </div>
     <div class="hostMetric connections">
         <div class="title">Connections</div>

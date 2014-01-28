@@ -134,6 +134,7 @@ input[type=text], input[type=password], select, textarea {
 #navigation ul li a { padding: 10px 40px 10px 10px; display: block; color: #444; }
 #navigation h4 { color: #EEE; font-size: 11px; text-transform: uppercase; padding: 5px; margin: 0; background-color: #475F77; }
 .unread { float: right; padding-top: 2px; color: #D74B4B; }
+.invisible { opacity: 0; transition: opacity 1s linear 1s; -webkit-transition: opacity 1s linear 1s; }
 .unread-count { color: white; font-size: 13px; font-weight: bold; }
 #navigation ul li.active .unread { color: white; }
 #navigation ul li.active .unread-count { color: #D74B4B; }
@@ -144,7 +145,7 @@ input[type=text], input[type=password], select, textarea {
 #content { position: relative; padding: 10px; margin-left: 200px; }
 .column { float: left; width: 50%; margin: 0; padding: 0; }
 .column.main { float: left; width: 60%; margin: 0; padding: 0; }
-.column.side { float: left; width: 40%; margin: 0; padding: 0; }
+.column.side { float: right; clear: right; width: 40%; margin: 0; padding: 0; }
 .column.full { width: 100%; }
 .column .columnContent { margin: 10px; }
 .column.main .columnContent { margin: 10px; }
