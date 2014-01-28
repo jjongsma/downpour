@@ -70,7 +70,7 @@
         <div id="navigation" ng-class="{ open: menu.open }">
             <ul>
                 <li title="Downpour" ng-class="{ active: section == 'overview' }"><a ng-click="setSection('overview')" href="/">Overview</a></li>
-                <li ng-class="{ active: section == 'transfers' }"><a ng-click="setSection('transfers')" href="/transfers/">Transfers</a></li>
+                <li ng-class="{ active: section == 'transfers' }"><a ng-click="setSection('transfers')" href="/transfers">Transfers</a></li>
                 <li ng-repeat="l in menu.navLinks" ng-class="{ active: section == l.section }"><a ng-click="setSection(l.section)" ng-href="{{ l.url }}">{{ l.name }}</a></li>
                 <li ng-class="{ active: section == 'notifications' }">
                     <span class="fa-stack fa-lg unread" ng-class="{ invisible: !notifications.length }">
@@ -94,9 +94,9 @@
                 <h4>Administration</h4>
                 <ul>
                     <li ng-repeat="l in menu.adminLinks" ng-class="{ active: section == l.section }"><a ng-click="setSection(l.section)" ng-href="{{ l.url }}">{{ l.name }}</a></li>
-                    <li ng-class="{ active: section == 'work' }"><a ng-click="setSection('work')" href="/work/">Download Cache</a></li>
-                    <li ng-class="{ active: section == 'users' }"><a ng-click="setSection('users')" href="/users/">Users</a></li>
-                    <li ng-class="{ active: section == 'config' }"><a ng-click="setSection('config')" href="/config/">Configuration</a></li>
+                    <li ng-class="{ active: section == 'work' }"><a ng-click="setSection('work')" href="/work">Download Cache</a></li>
+                    <li ng-class="{ active: section == 'users' }"><a ng-click="setSection('users')" href="/users">Users</a></li>
+                    <li ng-class="{ active: section == 'config' }"><a ng-click="setSection('config')" href="/config">Configuration</a></li>
                 </ul>
             </div>
             <div class="mobile">

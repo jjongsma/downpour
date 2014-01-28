@@ -285,10 +285,6 @@ dpDirectives.directive('drawerSlide', ['$swipe',
 
             var drawer = $(attrs['drawerSlide']);
 
-            // Update nav height on scroll
-            var topOffset = drawer.position().top;
-            drawer.height($(window).height() - topOffset);
-
             drawer.niceScroll({ hidecursordelay: 100 });
             $(window).on('scroll', function(e) {
                 drawer.height($(window).height() - topOffset);
@@ -355,8 +351,19 @@ dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootSco
         $scope.menu = contentInjector.menu;
         $rootScope.section = 'overview';
         $rootScope.setSection = function(s) {
+            $scope.menu.open = false;
             $rootScope.section = s;
         }
+
+        $scope.$watch('menu.open', function() {
+            if ($scope.menu.open) {
+                // Update nav height on open
+                var drawer = $('#navigation');
+                var topOffset = drawer.position().top;
+                drawer.scrollTop(0);
+                drawer.height($(window).height() - topOffset);
+            }
+        });
 
         // Authentication state
         $scope.logout = authenticator.logout;
