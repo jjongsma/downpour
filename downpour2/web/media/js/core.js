@@ -6,16 +6,13 @@ transfers.controller('TransferList', ['$scope', '$http', 'authenticator',
         $scope.downloads = [];
         $scope.queued = [];
         $scope.uploads = [];
-        $scope.alluploads = [];
 
         $http.get('/transfers/status/demo').then(
             function(response) {
                 angular.forEach(response.data, function(transfer) {
-                    if (transfer.state.state == 'seeding') {
-                        if ($scope.uploads.length <= 3)
-                            $scope.uploads.push(transfer);
-                        $scope.alluploads.push(transfer);
-                    } else if (transfer.state.state == 'queued')
+                    if (transfer.state.state == 'seeding')
+                        $scope.uploads.push(transfer);
+                    else if (transfer.state.state == 'queued')
                         $scope.queued.push(transfer);
                     else
                         $scope.downloads.push(transfer);

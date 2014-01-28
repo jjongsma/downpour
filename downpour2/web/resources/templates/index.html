@@ -51,9 +51,9 @@
         <div class="section">Seeding</div>
         <div class="boxContent">
             <div class="transferSummary">
-                <div ng-repeat="transfer in uploads" ng-include="'/resources/templates/transfers/transfer-progress-small.html'"></div>
-                <div ng-show="alluploads.length > uploads.length" class="queued">
-                    <a href="/transfers/uploads">and {{ alluploads.length - uploads.length }} more...</a>
+                <div ng-repeat="transfer in uploads.slice(0,3)" ng-include="'/resources/templates/transfers/transfer-progress-small.html'"></div>
+                <div ng-show="uploads.length > 3" class="queued">
+                    <a href="/transfers/uploads">and {{ uploads.length - 3 }} more...</a>
                 </div>
             </div>
         </div>
@@ -69,7 +69,7 @@
 	</div>
 </div>
 
-<div class="column side desktop">
+<div class="column side desktop" ng-show="notifications.length">
 	<div class="box columnContent">
 		<h4>Notifications</h4>
 		<div class="boxContent">
@@ -84,9 +84,6 @@
 			</div>
             <div ng-show="notifications.length > 3" class="queued">
                 <a href="/transfers/">and {{ notifications.length - 3 }} more...</a>
-            </div>
-            <div ng-show="!notifications.length">
-                <i>No notifications</i>
             </div>
 		</div>
 	</div>

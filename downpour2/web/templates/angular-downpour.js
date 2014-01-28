@@ -364,7 +364,7 @@ dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootSco
         $scope.host = {};
         $scope.notifications = [];
 
-        // Host/bandwidth status
+        // Host/bandwidth stats and notifications
         var update = function() {
             $http.get('/app/host/demo').success(function(data) {
                 angular.extend($scope.host, data);
