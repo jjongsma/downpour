@@ -5,11 +5,11 @@ from downpour2.core.net.throttling import ThrottledBucketFilter
 class UserAgent(object):
 
     @abc.abstractmethod
-    def transfers(self):
+    def clients(self):
         return NotImplemented
 
-    def transfer(self, tid):
-        for t in self.transfers:
+    def find(self, tid):
+        for t in self.clients:
             if t.id == tid:
                 return t
         return None

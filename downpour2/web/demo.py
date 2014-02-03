@@ -96,7 +96,13 @@ class DemoStatus(common.AuthenticatedResource):
             [u'MythBusters.S13E01.Star.Wars.Revenge.Of.The.Myth.PROPER.HDTV.x264-YesTV[rarbg]', u'video/tv',
              state.SEEDING, 23.5],
             [u'Grimm.S03E09.HDTV.x264-LOL[rarbg]', u'video/tv', state.SEEDING, 100.0],
-            [u'Community.S05E02.HDTV.x264-LOL.mp4', u'video/tv', state.SEEDING, 100.0]
+            [u'Community.S05E02.HDTV.x264-LOL.mp4', u'video/tv', state.SEEDING, 100.0],
+            # Completed
+            [u'The.Colbert.Report.2014.01.28.Justin.Tuck.HDTV.x264-SWOLLED.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
+            [u'Justified.S05E04.HDTV.x264-EXCELLENCE.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
+            [u'MythBusters.S13E04.720p.HDTV.x264-KILLERS[rarbg]', u'video/tv', state.COMPLETED, 100.0],
+            [u'The.Colbert.Report.2014.01.27.Nate.Silver.HDTV.x264-SWOLLED.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
+            [u'How.I.Met.Your.Mother.S09E16.HDTV.x264-KILLERS.mp4', u'video/tv', state.COMPLETED, 100.0]
         ]
 
         return json.dumps([transfer(*t) for t in transfers], cls=ObjectEncoder, indent=4)

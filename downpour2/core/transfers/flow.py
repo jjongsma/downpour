@@ -15,11 +15,11 @@ class Flow(object):
 
     def __init__(self, cfg):
 
-        self._apply(cfg)
+        self.current = None
         self._final = None
         self._map = {}
 
-        self.current = None
+        self._apply(cfg)
 
     def can(self, event):
         return event in self._map and ((self.current in self._map[event]) or WILDCARD in self._map[event])
@@ -102,14 +102,14 @@ class Flow(object):
                 self.current = current
                 dfr.errback(f)
 
-            def _after():
+            def _after(result=None):
                 defer.maybeDeferred(self._after_event, e).addCallbacks(
-                    lambda x: dfr.callback(True), dfr.errback)
+                    lambda y: dfr.callback(True), dfr.errback)
 
-            def _enter():
+            def _enter(result=None):
                 defer.maybeDeferred(self._enter_state, e).addCallbacks(_after, dfr.errback)
 
-            def _change():
+            def _change(result=None):
                 self.current = dst
                 defer.maybeDeferred(self._change_state, e).addCallbacks(_enter, dfr.errback)
 
@@ -135,6 +135,7 @@ class Flow(object):
         fnname = 'onbefore' + e.event
         if hasattr(self, fnname):
             return getattr(self, fnname)(e)
+        return True
 
     def _after_event(self, e):
         for fnname in ['onafter' + e.event, 'on' + e.event]:

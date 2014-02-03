@@ -42,6 +42,7 @@ class TransferManager(object):
 
         transfer.added = time()
         transfer.removed = False
+        transfer.priority = 0
         transfer.progress = 0
         transfer.status = state.QUEUED
         transfer.downloaded = 0
@@ -61,18 +62,18 @@ class TransferManager(object):
         self.log.info(u'Added new download ' + transfer.description)
         self.application.events.fire(event.ADDED, transfer)
 
-        def provision_failed(failure):
-            self.log.debug('Could not provision download: %s' % failure.getErrorMessage())
+        try:
+            return self.provision(transfer)
+        except Exception as e:
+            self.log.debug('Could not provision download: %s' % e)
             alert = store.Alert()
             alert.user_id = transfer.user_id
             alert.timestamp = time()
-            alert.title = 'No agents were found to handle download'
-            alert.description = 'The download %s was rejected by all registered agents.' % transfer.description
-            alert.level = 'warn'
+            alert.title = u'Transfer protocol unknown or not supported'
+            alert.description = u'The download %s was rejected by all registered agents.' % transfer.description
+            alert.level = u'warn'
             alert.viewed = False
             self.application.alerts.add(alert)
-
-        return self.provision(transfer).addErrback(provision_failed)
 
     def register_agent(self, agt):
         self.agents.append(agt)
@@ -116,12 +117,12 @@ class TransferManager(object):
 
     @property
     def transfers(self):
-        return [t for a in self.agents for t in a.transfers]
+        return [t for a in self.agents for t in a.clients]
 
     def transfer(self, tid):
 
         for a in self.agents:
-            t = a.transfer(tid)
+            t = a.client(tid)
             if t is not None:
                 return t
 
@@ -157,14 +158,14 @@ class UserTransferManager(object):
         return status
 
     @property
-    def transfers(self):
-        return [t for a in self.manager.agents if a.agent(self.user_id) is not None
-                for t in a.agent(self.user_id).transfers]
+    def clients(self):
+        return [c for a in self.manager.agents if a.agent(self.user_id) is not None
+                for c in a.agent(self.user_id).clients]
 
-    def transfer(self, tid):
+    def client(self, tid):
 
-        for t in self.transfers:
-            if t.id == tid:
-                return t
+        for c in self.clients:
+            if c.transfer.id == tid:
+                return c
 
         return None

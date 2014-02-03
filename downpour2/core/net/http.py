@@ -64,7 +64,7 @@ class HTTPManagedDownloader(HTTPDownloader, object):
         if self.status_handler:
             self.status_handler.onend(self)
             # And the hacks are piling up, Twisted is really not very flexible
-        if self.encoding[0] == 'gzip':
+        if self.encoding is not None and self.encoding[0] == 'gzip':
             self.file.close()
             g = gzip.open(self.fileName, 'rb')
             # This will blow up for large files

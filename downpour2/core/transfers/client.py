@@ -16,6 +16,10 @@ class TransferClientFactory(object):
     def client(self, transfer):
         return NotImplemented
 
+    @abc.abstractmethod
+    def accepts(self, transfer):
+        return NotImplemented
+
 
 class TransferClient(flow.Flow):
     """
@@ -33,11 +37,13 @@ class TransferClient(flow.Flow):
 
     def __init__(self, transfer, application, rules):
 
-        super(TransferClient, self).__init__(rules)
+        if transfer.state is None:
+            transfer.state = state.QUEUED
 
-        transfer.state = state.QUEUED
         self.transfer = transfer
         self.application = application
+
+        super(TransferClient, self).__init__(rules)
 
         self.download_rate = 0
         self.upload_rate = 0
@@ -50,6 +56,7 @@ class TransferClient(flow.Flow):
 
     def onchangestate(self, transition):
         self.transfer.state = transition.dst
+        self.application.store.commit()
         self.application.events.fire(transition.event, self)
 
     def state(self):
@@ -159,10 +166,10 @@ class SimpleDownloadClient(DownloadClient):
 
     def __init__(self, transfer, application):
         super(SimpleDownloadClient, self).__init__(transfer, application, {
-            'initial': state.QUEUED,
+            'initial': transfer.state,
             'events': [
                 # Start download
-                {'src': state.QUEUED, 'name': event.START, 'dst': state.STARTING},
+                {'src': [state.QUEUED, state.STOPPED, state.FAILED], 'name': event.START, 'dst': state.STARTING},
                 {'src': state.STARTING, 'name': event.STARTED, 'dst': state.DOWNLOADING},
                 # Progress updated
                 {'src': state.DOWNLOADING, 'name': event.UPDATED, 'dst': state.DOWNLOADING},
@@ -171,7 +178,6 @@ class SimpleDownloadClient(DownloadClient):
                 {'src': state.STOPPING, 'name': event.STOPPED, 'dst': state.STOPPED},
                 # Download resumed
                 {'src': state.STOPPED, 'name': event.ENQUEUE, 'dst': state.QUEUED},
-                {'src': [state.STOPPED, state.FAILED], 'name': event.START, 'dst': state.STARTING},
                 # Download completed/failed
                 {'src': '*', 'name': event.FAILED, 'dst': state.FAILED},
                 {'src': state.DOWNLOADING, 'name': event.COMPLETE, 'dst': state.COPYING},
@@ -186,8 +192,8 @@ class SimpleDownloadClient(DownloadClient):
                  'name': event.REMOVE, 'dst': state.REMOVING},
                 {'src': state.REMOVING, 'name': event.STOPPED, 'dst': state.REMOVED},
                 {'src': [state.QUEUED, state.FAILED, state.COMPLETED, state.PENDING_COPY],
-                 'name': event.REMOVE, 'dst': state.REMOVED},
-                ]
+                 'name': event.REMOVE, 'dst': state.REMOVED}
+            ]
         })
 
 
@@ -215,10 +221,10 @@ class PeerDownloadClient(DownloadClient):
 
     def __init__(self, transfer, application):
         super(PeerDownloadClient, self).__init__(transfer, application, {
-            'initial': state.QUEUED,
+            'initial': transfer.state,
             'events': [
                 # Start download
-                {'src': state.QUEUED, 'name': event.START, 'dst': state.INITIALIZING},
+                {'src': [state.QUEUED, state.STOPPED, state.FAILED], 'name': event.START, 'dst': state.STARTING},
                 {'src': state.INITIALIZING, 'name': event.INITIALIZED, 'dst': state.STARTING},
                 {'src': state.STARTING, 'name': event.STARTED, 'dst': state.DOWNLOADING},
                 # Progress updated
@@ -229,7 +235,6 @@ class PeerDownloadClient(DownloadClient):
                 {'src': state.STOPPING, 'name': event.STOPPED, 'dst': state.STOPPED},
                 # Download resumed
                 {'src': state.STOPPED, 'name': event.ENQUEUE, 'dst': state.QUEUED},
-                {'src': [state.STOPPED, state.FAILED], 'name': event.START, 'dst': state.INITIALIZING},
                 # Download completed/failed
                 {'src': '*', 'name': event.FAILED, 'dst': state.FAILED},
                 {'src': state.DOWNLOADING, 'name': event.COMPLETE, 'dst': state.COPYING},
@@ -245,8 +250,8 @@ class PeerDownloadClient(DownloadClient):
                 {'src': [state.DOWNLOADING, state.SEEDING], 'name': event.REMOVE, 'dst': state.REMOVING},
                 {'src': state.REMOVING, 'name': event.STOPPED, 'dst': state.REMOVED},
                 {'src': [state.QUEUED, state.FAILED, state.COMPLETED,
-                         state.PENDING_COPY], 'name': event.REMOVE, 'dst': state.REMOVED},
-                ]
+                         state.PENDING_COPY], 'name': event.REMOVE, 'dst': state.REMOVED}
+            ]
         })
 
 
@@ -269,7 +274,7 @@ class SimpleUploadClient(TransferClient):
 
     def __init__(self, transfer, application):
         super(SimpleUploadClient, self).__init__(transfer, application, {
-            'initial': state.QUEUED,
+            'initial': transfer.state,
             'events': [
                 # Start upload
                 {'src': state.QUEUED, 'name': event.START, 'dst': state.INITIALIZING},
@@ -287,6 +292,6 @@ class SimpleUploadClient(TransferClient):
                 # Remove from queue
                 {'src': state.SEEDING, 'name': event.REMOVE, 'dst': state.REMOVING},
                 {'src': state.REMOVING, 'name': event.STOPPED, 'dst': state.REMOVED},
-                {'src': [state.FAILED, state.COMPLETED], 'name': event.REMOVE, 'dst': state.REMOVED},
-                ]
+                {'src': [state.FAILED, state.COMPLETED], 'name': event.REMOVE, 'dst': state.REMOVED}
+            ]
         })

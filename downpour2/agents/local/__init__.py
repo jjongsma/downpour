@@ -22,14 +22,13 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         self.ready = False
         self.config = {}
         self.working_directory = None
-        self.paused = False
 
         self.transports = []
         self.user_agents = {}
 
         self.agent_status = agent.AgentStatus()
         self.agent_status.version = VERSION
-        self.agent_status.paused = False
+        self.agent_status.paused = True
 
         self.upload_rate_filter = None
         self.download_rate_filter = None
@@ -61,25 +60,26 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         if not self.ready:
             raise RuntimeError('Plugin configuration failed, not starting')
 
-        # Listen for core pause/resume events
+        # Listen for core pause/resume event
         self.application.events.subscribe(event.DOWNPOUR_PAUSED, self.pause)
         self.application.events.subscribe(event.DOWNPOUR_RESUMED, self.resume)
         self.application.events.subscribe(event.REMOVED, self._remove)
 
         transfers = list(self.application.store.find(
             store.Transfer, store.Transfer.removed == False).order_by(
-                store.Transfer.added))
+            store.Transfer.added))
 
-        return defer.DeferredList(
-            [self.provision(t) for t in transfers],
-            consumeErrors=True).addCallback(self.resume)
+        for t in transfers:
+            self.provision(t)
+
+        self.resume()
 
     def _remove(self, client):
-        agt = self.agent(client.transfer.user_id)
+        agt = self.agent(client.client.user_id)
         if agt is not None and client in agt.clients:
             agt.clients.remove(client)
             if len(agt.clients) == 0:
-                del self.user_agents[client.transfer.user_id]
+                del self.user_agents[client.client.user_id]
 
     def reload(self):
         # The only real config-dependent stuff is in auto-queue
@@ -96,10 +96,11 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
         def requeue(results):
             for r in results:
-                r[1].transfer.state = state.QUEUED
+                r[1].client.state = state.QUEUED
 
         return defer.DeferredList(
-            [c.stop() for (u, a) in self.user_agents.iteritems() for c in a.clients if c.transfer.state.transferring],
+            [c.stop() for (u, a) in self.user_agents.iteritems() for c in a.clients if
+             state.describe(c.transfer.state).transferring],
             consumeErrors=True).addCallback(requeue)
 
     def resume(self):
@@ -136,18 +137,19 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
         if client not in a.clients:
             a.clients.append(client)
-            a.auto_queue()
+            if not self.agent_status.paused:
+                a.auto_queue()
 
         return client
 
     def reprovision(self, existing):
 
         # Check if metadata requires a different handler
-        client = self.client(existing.transfer)
+        client = self.find(existing.transfer.id)
 
         if client != existing:
 
-            running = existing.transfer.state.transferring
+            running = state.describe(existing.transfer.state).transferring
 
             existing.transfer.state = state.QUEUED
             existing.transfer.uploaded = 0
@@ -174,13 +176,13 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         return self.user_agents[user_id] if user_id in self.user_agents else None
 
     @property
-    def transfers(self):
-        return (t for (u, a) in self.user_agents.iteritems() for t in a.transfers)
+    def clients(self):
+        return (c for (u, a) in self.user_agents.iteritems() for c in a.clients)
 
-    def transfer(self, tid):
-        for t in self.transfers:
-            if t.id == tid:
-                return t
+    def find(self, tid):
+        for c in self.clients:
+            if c.transfer.id == tid:
+                return c
         return None
 
     @property
@@ -207,11 +209,11 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         upload_rate = 0
         connections = 0
 
-        for client in self.transfers:
+        for client in self.clients:
 
             if client.transfer.size:
-                queuedsize += client.transfer.size
-                queueddone += client.transfer.downloaded
+                queuedsize += client.client.size
+                queueddone += client.client.downloaded
 
             if client.transfer.state == state.DOWNLOADING:
                 active_downloads += 1
@@ -271,31 +273,30 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
 
 
 class LocalUserAgent(agent.UserAgent):
-
     def __init__(self, local_agent):
 
         super(LocalUserAgent, self).__init__()
 
         self.log = logging.getLogger(__name__)
         self.agent = local_agent
-        self.clients = []
+        self.client_list = []
 
         self.agent_status = agent.AgentStatus()
         self.agent_status.version = VERSION
-        self.agent_status.host = local_agent.status.hostname
+        self.agent_status.host = local_agent.status.host
         self.agent_status.interface = local_agent.status.interface
         self.agent_status.address = local_agent.status.address
         self.agent_status.diskfree = local_agent.status.diskfree
         self.agent_status.diskfreepct = local_agent.status.diskfreepct
 
     @property
-    def transfers(self):
-        return self.clients
+    def clients(self):
+        return self.client_list
 
-    def transfer(self, tid):
-        for t in self.transfers:
-            if t.id == tid:
-                return t
+    def find(self, tid):
+        for c in self.clients:
+            if c.transfer.id == tid:
+                return c
         return None
 
     @property
@@ -306,7 +307,7 @@ class LocalUserAgent(agent.UserAgent):
         if now - self.agent.agent_status.local_updated >= 10:
             self.agent.update_local_status(self.agent.agent_status)
 
-            self.agent_status.host = self.agent.agent_status.hostname
+            self.agent_status.host = self.agent.agent_status.host
             self.agent_status.interface = self.agent.agent_status.interface
             self.agent_status.address = self.agent.agent_status.address
             self.agent_status.diskfree = self.agent.agent_status.diskfree
@@ -328,7 +329,7 @@ class LocalUserAgent(agent.UserAgent):
         upload_rate = 0
         connections = 0
 
-        for client in self.transfers:
+        for client in self.clients:
 
             if client.transfer.size:
                 queuedsize += client.transfer.size
@@ -368,7 +369,7 @@ class LocalUserAgent(agent.UserAgent):
 
         if not self.status.paused:
 
-            logging.debug(u'Running auto-queue')
+            self.log.debug(u'Running auto-queue')
 
             active = self.status.active_downloads
 
@@ -377,19 +378,19 @@ class LocalUserAgent(agent.UserAgent):
             max_dlrate = int(self.agent.application.get_setting('agent.local.download_rate', 0)) * 1024
             max_conn = int(self.agent.application.get_setting('agent.local.connection_limit', 0))
 
-            transfers = sorted(self.transfers, key=lambda x: -x.priority)
+            clients = sorted(self.clients, key=lambda x: -x.transfer.priority)
 
-            for t in filter(lambda x: x.status == state.QUEUED, transfers):
+            for c in filter(lambda x: x.transfer.state == state.QUEUED, clients):
                 if not max_active or active < max_active:
-                    t.start()
+                    c.fire(event.START)
                     active += 1
 
             self.agent.application.store.commit()
 
             # Auto stop downloads if we're over config limits
             if max_active and active > max_active:
-                transfers.reverse()
-                for t in filter(lambda x: x.state == state.DOWNLOADING, transfers):
+                clients.reverse()
+                for t in filter(lambda x: x.state == state.DOWNLOADING, clients):
                     if active > max_active:
                         sdfr = t.stop()
                         sdfr.addCallback(self.update_state, t, state.QUEUED)
@@ -405,23 +406,23 @@ class LocalUserAgent(agent.UserAgent):
                 client_conn = int(max_conn / active)
 
                 # Reset transfer limits
-                for t in transfers:
+                for c in clients:
 
                     changed = False
 
-                    if max_dlrate > 0 and t.state == state.DOWNLOADING and t.transfer.bandwidth != client_dlrate:
-                        t.transfer.bandwidth = client_dlrate
+                    if max_dlrate > 0 and c.transfer.state == state.DOWNLOADING and c.bandwidth != client_dlrate:
+                        c.bandwidth = client_dlrate
                         changed = True
-                    elif max_ulrate > 0 and t.state == state.SEEDING and t.transfer.bandwidth != client_ulrate:
-                        t.transfer.bandwidth = client_ulrate
+                    elif max_ulrate > 0 and c.transfer.state == state.SEEDING and c.bandwidth != client_ulrate:
+                        c.bandwidth = client_ulrate
                         changed = True
 
-                    if max_conn > 0 and t.transfer.connection_limit != client_conn:
-                        t.transfer.connection_limit = client_conn
+                    if max_conn > 0 and c.connection_limit != client_conn:
+                        c.connection_limit = client_conn
                         changed = True
 
                     if changed:
-                        t.update()
+                        c.update()
 
     def upload_filter(self):
         return self.agent.upload_filter()

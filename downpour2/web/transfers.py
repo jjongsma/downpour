@@ -1,11 +1,12 @@
 import libtorrent as lt
 from twisted.web import server
 from downpour2.core import store
+from downpour2.core.transfers import state
+from downpour2.core.util import StormModelEncoder
 from downpour2.web import common, demo
 
 
 class Root(common.RoutedResource):
-
     def __init__(self, application, environment):
         super(Root, self).__init__(application, environment)
         self.putChild('', self)
@@ -15,7 +16,6 @@ class Root(common.RoutedResource):
 
 
 class Detail(common.Resource):
-
     def __init__(self, application, environment):
         super(Detail, self).__init__(application, environment)
 
@@ -26,21 +26,19 @@ class Detail(common.Resource):
 
 
 class Transfer(common.AuthenticatedResource):
-
     def __init__(self, id, application, environment):
         super(Transfer, self).__init__(application, environment)
         self.id = id
 
     def render_GET(self, request):
         agent = self.application.transfer_manager.user(self.get_user(request).id)
-        transfer = agent.transfer(self.id)
+        transfer = agent.client(self.id)
         if transfer is not None:
             return self.render_json(transfer)
         return self.render_json_error(request, 404, 'Transfer not found')
 
 
 class Status(common.Resource):
-
     def __init__(self, application, environment):
         super(Status, self).__init__(application, environment)
         self.putChild('', self)
@@ -51,11 +49,29 @@ class Status(common.Resource):
         if user is None:
             return self.render_json([])
         else:
-            return self.render_json(self.application.transfer_manager.user(self.get_user(request).id).transfers)
+            clients = self.application.transfer_manager.user(self.get_user(request).id).clients
+            return self.render_json(
+                [self.format_transfer(c.transfer) for c in clients]
+            )
+
+    def format_transfer(self, transfer):
+        encoder = StormModelEncoder()
+        t = encoder.default(transfer)
+        t['state'] = state.describe(t['state'])
+
+        for f in ('health',
+                  'uploadrate',
+                  'downloadrate',
+                  'connections',
+                  'connection_limit',
+                  'elapsed',
+                  'timeleft'):
+            t[f] = getattr(transfer, f)
+
+        return t
 
 
 class Add(common.AuthenticatedResource):
-
     def __init__(self, application, environment):
         super(Add, self).__init__(application, environment)
         self.putChild('', self)
@@ -67,7 +83,6 @@ class Add(common.AuthenticatedResource):
 
 
 class AddTorrent(common.AuthenticatedResource):
-
     def __init__(self, application, environment):
         super(AddTorrent, self).__init__(application, environment)
         self.putChild('', self)
@@ -89,7 +104,6 @@ class AddTorrent(common.AuthenticatedResource):
 
 
 class AddURL(common.AuthenticatedResource):
-
     def __init__(self, application, environment):
         super(AddURL, self).__init__(application, environment)
         self.putChild('', self)
@@ -97,8 +111,11 @@ class AddURL(common.AuthenticatedResource):
     def render(self, request):
         if 'url' in request.args and len(request.args['url'][0]) > 0:
             t = store.Transfer()
+            t.user = self.get_user(request)
+            t.state = state.QUEUED
             t.url = unicode(request.args['url'][0])
-            # self.get_manager(request).add_download(t)
+            self.application.store.commit()
+            self.application.transfer_manager.add(t)
             request.redirect('/transfers/status')
             request.finish()
             return server.NOT_DONE_YET
@@ -120,4 +137,5 @@ def numcmp(zero_null=False, reverse=False):
             return cmp(y, x)
         else:
             return cmp(x, y)
+
     return cmpfn

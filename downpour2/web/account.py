@@ -25,7 +25,7 @@ class Detail(common.RoutedResource):
         if user is not None:
             return self.render_json(user, util.StormModelEncoder)
         else:
-            return self.render_json_error(request, 403, 'Not authenticated')
+            return self.render_json_error(request, 401, 'Unauthorized')
 
 
 class Login(common.RoutedResource):

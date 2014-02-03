@@ -12,12 +12,18 @@ from downpour2.core.transfers import state, client, event
 class HTTPDownloadClientFactory(client.TransferClientFactory):
 
     def __init__(self, application, agent, work_dir):
+
+        self.log = logging.getLogger(__name__)
         self.application = application
         self.agent = agent
         self.working_directory = work_dir
 
     def client(self, transfer):
+        self.log.debug('Created HTTP client for %s' % transfer.url)
         return HTTPDownloadClient(transfer, self.application, self.agent, self.working_directory)
+
+    def accepts(self, transfer):
+        return transfer.url[:4] == 'http'
 
 
 class HTTPDownloadClient(client.SimpleDownloadClient):
@@ -33,23 +39,32 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
         @type agent: downpour2.core.transfers.agent.TransferAgent
         """
 
+        self.log = logging.getLogger(__name__)
+
         super(HTTPDownloadClient, self).__init__(transfer, application)
 
-        self.log = logging.getLogger(__name__)
         self.agent = agent
         self.original_mimetype = None
         self.factory = None
         self.rate = 0
 
-        transfer_work_dir = os.path.sep.join((work_dir, self.transfer.id))
+        transfer_work_dir = os.path.sep.join((work_dir, str(self.transfer.id)))
 
         if not os.path.exists(transfer_work_dir):
             os.makedirs(transfer_work_dir)
 
         self.working_directory = transfer_work_dir
 
-    def onstarting(self):
+    def update(self):
+        self.log.debug('settings updated')
+        pass
 
+    def shutdown(self):
+        self.fire(event.STOP)
+
+    def onstarting(self, e):
+
+        self.log.debug('starting transfer for %s' % self.transfer.url)
         self.original_mimetype = self.transfer.mime_type
         self.transfer.state = state.STARTING
         self.transfer.status = None
@@ -72,34 +87,45 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
 
         return True
 
-    def oncopying(self):
+    def oncopying(self, e):
+        self.log.debug('copying transfer %s' % self.transfer.url)
         # Local agent doesn't need to copy anywhere
         self.fire(event.FETCHED)
 
-    def oncompleted(self):
+    def oncompleted(self, e):
+        self.log.debug('completed transfer %s' % self.transfer.url)
+        self.transfer.connections = 0
+        self.transfer.downloadrate = 0
         self.transfer.progress = 100
         self.transfer.completed = time.time()
         self.transfer.status = None
 
-    def onremoving(self):
+    def onremoving(self, e):
+        self.log.debug('removing transfer %s' % self.transfer.url)
         self.onstopping()
 
-    def onremoved(self):
+    def onremoved(self, e):
+        self.log.debug('removed transfer %s' % self.transfer.url)
         # Cleanup working directory
         self.transfer.removed = True
         if os.path.isdir(self.working_directory):
             shutil.rmtree(self.working_directory)
         self.application.events.fire(event.REMOVED, self)
 
-    def onstopping(self):
+    def onstopping(self, e):
+        self.log.debug('stopping transfer %s' % self.transfer.url)
         if self.factory.connector:
             self.factory.connector.disconnect()
         self.fire(event.STOPPED)
 
-    def onfailed(self):
-        self.transfer.health = 0
+    def onfailed(self, e):
+        self.log.debug('failed transfer %s' % self.transfer.url)
+        self.transfer.connections = 0
+        self.transfer.health = 'dead'
 
-    def onbeforetransfer_complete(self):
+    def onbeforetransfer_complete(self, e):
+
+        self.log.debug('before_complete transfer %s' % self.transfer.url)
 
         # Check if mimetype reported by server has changed from original
         if self.transfer.mime_type != self.original_mimetype:
@@ -127,6 +153,8 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
             except NotImplementedError:
                 pass
 
+        return True
+
     @property
     def download_rate(self):
         return self.rate
@@ -134,7 +162,8 @@ class HTTPDownloadClient(client.SimpleDownloadClient):
     @download_rate.setter
     def download_rate(self, rate):
         self.rate = rate
-        self.factory.setRateLimit(rate)
+        if hasattr(self, 'factory') and self.factory:
+            self.factory.setRateLimit(rate)
 
     def directory(self):
         return self.working_directory
@@ -169,17 +198,20 @@ class TransferStatus(DownloadStatus):
         self.rate_samples = []
 
     def onconnect(self, downloader):
-        self.client.started()
+        self.client.fire(event.STARTED)
 
     def onerror(self, downloader):
-        self.client.failed()
+        self.client.fire(event.FAILED)
 
     def onstop(self, downloader):
         if self.client.transfer.state != state.FAILED:
             if self.client.transfer.progress == 100:
                 self.client.fire(event.COMPLETE)
+            elif self.client.transfer.state == state.STOPPING:
+                self.client.fire(event.STOPPED)
             else:
-                self.client.fire(event.STOP)
+                self.client.fire(event.FAILED)
+        self.client.transfer.download_rate = 0
         self.client.transfer.elapsed += (time.time() - self.start_time)
 
     def onheaders(self, downloader, headers):
@@ -205,7 +237,8 @@ class TransferStatus(DownloadStatus):
     def onstart(self, downloader, partial_content):
         self.start_time = time.time()
         self.start_elapsed = self.client.transfer.elapsed
-        self.client.transfer.health = 100
+        self.client.transfer.connections = 1
+        self.client.transfer.health = 'excellent'
 
     def onpart(self, downloader, data):
 
@@ -241,5 +274,7 @@ class TransferStatus(DownloadStatus):
                 float(self.client.transfer.size - self.bytes_downloaded) / self.download_rate
 
     def onend(self, downloader):
-        self.download_rate = (self.bytes_downloaded - self.bytes_start) / (time.time() - self.start_time)
+        # self.download_rate = (self.bytes_downloaded - self.bytes_start) / (time.time() - self.start_time)
+        self.download_rate = 0
+        self.client.transfer.download_rate = 0
         self.client.fire(event.COMPLETE)

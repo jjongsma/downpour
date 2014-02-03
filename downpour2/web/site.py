@@ -19,6 +19,8 @@ class SiteRoot(common.Resource):
         self.putChild('resources', MediaPath(pkg_resources.resource_filename("downpour2.web", "/resources")))
         self.putChild('transfers', transfers.Root(plugin.application, plugin.environment))
         self.putChild('account', account.Root(plugin.application, plugin.environment))
+        self.putChild('demo', common.RoutedResource(plugin.application, plugin.environment))
+        self.putChild('live', common.RoutedResource(plugin.application, plugin.environment))
 
     def add_child(self, path, resource):
 

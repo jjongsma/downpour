@@ -225,7 +225,7 @@ class Transfer(object):
     user = Reference(user_id, User.id)
 
     # Non-persistent fields
-    health = 0
+    health = 'dead'
     uploadrate = 0
     downloadrate = 0
     connections = 0

@@ -1,7 +1,7 @@
 /*
  * Core app module
  */
-var downpour = angular.module('downpour', ['ngRoute',
+var downpour = angular.module('downpour', ['ngRoute', 'ngAnimate',
     'dpServices', 'dpDirectives', 'dpFilters', 'dpControllers',
     'account', 'transfers', 'library'
     //{% if modules|count %}, '{{ modules|join('\', \'', attribute='namespace') }}'{% endif %}
@@ -10,8 +10,8 @@ var downpour = angular.module('downpour', ['ngRoute',
 /*
  * Setup core routing rules
  */
-downpour.config(['$routeProvider', '$locationProvider',
-    function($routeProvider, $locationProvider) {
+downpour.config(['$routeProvider', '$locationProvider', '$httpProvider',
+    function($routeProvider, $locationProvider, $httpProvider) {
 
         $locationProvider.html5Mode(true);
 
@@ -28,6 +28,12 @@ downpour.config(['$routeProvider', '$locationProvider',
         }).when('/', {
             templateUrl: '/resources/templates/index.html',
             controller: 'dpOverview'
+        }).when('/live', {
+            templateUrl: '/resources/templates/index.html',
+            controller: 'dpLiveMode'
+        }).when('/demo', {
+            templateUrl: '/resources/templates/index.html',
+            controller: 'dpDemoMode'
         }).otherwise({
             redirectTo: '/'
         });
@@ -155,7 +161,7 @@ dpServices.service('authenticator', ['$rootScope', '$http', '$location', '$q', '
             $rootScope.user = user;
             $rootScope.$broadcast('$userChanged', user);
             return user;
-        }
+        };
 
         /*
          * Login as the specified user.
@@ -215,12 +221,19 @@ dpServices.service('authenticator', ['$rootScope', '$http', '$location', '$q', '
          */
         var refresh = function() {
 
+            var auth = 'user' in $rootScope && $rootScope.user;
+
             return $http.get('/account/detail').then(
                 function(response) {
-                    return set(response.data);
+                    set(response.data);
+                    if (!auth)
+                        $route.reload();
+                    return response.data;
                 },
                 function(response) {
                     set(null);
+                    if (auth)
+                        $route.reload();
                     return $q.reject("Not authenticated")
                 }
             );
@@ -328,8 +341,9 @@ dpFilters.filter('bytes', function() {
     return function(bytes, precision) {
 		if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-';
 		if (typeof precision === 'undefined') precision = 1;
-		var units = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'],
-			number = Math.floor(Math.log(bytes) / Math.log(1024));
+        if (!bytes) return '0b';
+		var units = ['b', 'kB', 'MB', 'GB', 'TB', 'PB'];
+        var number = Math.floor(Math.log(bytes) / Math.log(1024));
 		return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) +  ' ' + units[number];
 	}
 });
@@ -338,6 +352,22 @@ dpFilters.filter('bytes', function() {
  * Core controllers.
  */
 var dpControllers = angular.module('dpControllers', []);
+
+/*
+ * Demo mode
+ */
+dpControllers.controller('dpDemoMode', ['$rootScope', '$location',
+    function($rootScope, $location) {
+        $rootScope.demoMode = true;
+        $location.path('/');
+    }
+])
+dpControllers.controller('dpLiveMode', ['$rootScope', '$location',
+    function($rootScope, $location) {
+        $rootScope.demoMode = false;
+        $location.path('/');
+    }
+])
 
 /*
  * Main controller for header/footer/menu.
@@ -373,10 +403,10 @@ dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootSco
 
         // Host/bandwidth stats and notifications
         var update = function() {
-            $http.get('/app/host/demo').success(function(data) {
+            $http.get('/app/host' + ($scope.demoMode ? '/demo' : '')).success(function(data) {
                 angular.extend($scope.host, data);
             });
-            $http.get('/app/notifications/demo').success(function(data) {
+            $http.get('/app/notifications' + ($scope.demoMode ? '/demo' : '')).success(function(data) {
                 $scope.notifications = data;
             });
         };
@@ -401,7 +431,7 @@ dpControllers.controller('dpOverview', ['$scope', '$http', 'authenticator', 'con
             function(user) {
                 // Setup page here
             }
-        )
+        );
 
     }
 ])

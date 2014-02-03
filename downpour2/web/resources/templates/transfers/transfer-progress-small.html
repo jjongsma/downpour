@@ -12,7 +12,7 @@
              red: transfer.state.style == 'stopped'
          }">
             <span style="width: {{ transfer.progress }}%"></span>
-            <div ng-show="transfer.state.progress">{{ transfer.progress }}%</div>
+            <div ng-show="transfer.state.progress">{{ transfer.progress|number:1 }}%</div>
             <div ng-hide="transfer.state.progress">{{ transfer.state.name }}</div>
         </div>
     </div>

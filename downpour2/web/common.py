@@ -148,7 +148,7 @@ class AuthenticatedResource(Resource):
 
     def render(self, request):
         if not self.is_logged_in(request):
-            return self.render_json_error(request, 403, 'Not authenticated')
+            return self.render_json_error(request, 401, 'Unauthorized')
         return Resource.render(self, request)
 
 
