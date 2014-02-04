@@ -1,7 +1,7 @@
 import libtorrent as lt
 from twisted.web import server
 from downpour2.core import store
-from downpour2.core.transfers import state
+from downpour2.core.transfers import state, event
 from downpour2.core.util import StormModelEncoder
 from downpour2.web import common, demo
 
@@ -51,13 +51,16 @@ class Status(common.Resource):
         else:
             clients = self.application.transfer_manager.user(self.get_user(request).id).clients
             return self.render_json(
-                [self.format_transfer(c.transfer) for c in clients]
+                [self.format_transfer(c) for c in clients]
             )
 
-    def format_transfer(self, transfer):
+    def format_transfer(self, client):
         encoder = StormModelEncoder()
-        t = encoder.default(transfer)
+        t = encoder.default(client.transfer)
         t['state'] = state.describe(t['state'])
+        t['state'].start = client.can(event.START)
+        t['state'].stop = client.can(event.STOP)
+        t['state'].remove = client.can(event.REMOVE)
 
         for f in ('health',
                   'uploadrate',
@@ -66,7 +69,7 @@ class Status(common.Resource):
                   'connection_limit',
                   'elapsed',
                   'timeleft'):
-            t[f] = getattr(transfer, f)
+            t[f] = getattr(client.transfer, f)
 
         return t
 

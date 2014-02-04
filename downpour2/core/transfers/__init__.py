@@ -32,7 +32,7 @@ class TransferManager(object):
                 Desc(store.Transfer.completed))[:30])
 
         # Update recent download list on transfer complete
-        self.application.events.subscribe(event.COMPLETE, self.transfer_complete)
+        self.application.events.subscribe(event.REMOVED, self.transfer_complete)
 
     def transfer_complete(self, transfer):
         self.recent.insert(0, transfer)

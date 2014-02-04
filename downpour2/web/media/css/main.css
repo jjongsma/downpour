@@ -88,8 +88,6 @@ input[type=text], input[type=password], select, textarea {
 .notice a { text-decoration: underline; }
 .error { position: relative; background-color: #FCC; margin-bottom: 10px; padding: 5px 10px; border: 1px solid #C99; border-radius: 3px; }
 .error a { text-decoration: underline; }
-.remove { position: absolute; top: 5px; right: 5px; color: #666; }
-.remove:hover { color: #444; }
 
 .mobile { display: none; }
 
@@ -228,6 +226,8 @@ input[type=text], input[type=password], select, textarea {
 .notification .fa-check-circle { color: #1897f2; }
 .notification .fa-exclamation-circle { color: #ffb219; }
 .notification .fa-exclamation-triangle { color: #D74B4B; }
+.notification .remove { position: absolute; top: 5px; right: 5px; color: #666; }
+.notification .remove:hover { color: #444; }
 
 .transferSummary .transfer { margin: 7px 0; }
 .transferSummary .healthmeter { float: left; width: 3%; }
@@ -237,6 +237,24 @@ input[type=text], input[type=password], select, textarea {
 .transferSummary .mediaType { font-style: italic; }
 .transferSummary .date { font-size: 11px; padding: 3px 0 0; float: left; width: 50px; }
 .transferSummary .imported { margin-left: 50px; }
+
+.transferSummary.large .healthmeter { float: left; width: 15px; }
+.transferSummary.large .label { width: auto; float: none; }
+.transferSummary.large .size { float: right; padding: 0 10px; }
+.transferSummary.large .media-type { float: right; padding: 0 10px; text-align: center; }
+.transferSummary.large .progress { float: right; font-size: 11px; width: 120px; text-align: center; font-weight: bold; }
+.transferSummary.large .upload { float: right; padding: 0 5px; width: 85px; }
+.transferSummary.large .upload .fa-upload { color: #728dcb; margin: 0 5px; }
+.transferSummary.large .download { float: right; padding: 0 5px; width: 85px; }
+.transferSummary.large .download .fa-download { color: #3CAC3C; margin: 0 5px; }
+.transferSummary.large .actions { float: right; font-size: 13px; padding: 0 10px; text-align: center; font-weight: bold; }
+.transferSummary.large .actions span { vertical-align: middle; padding: 0 2px; }
+.transferSummary.large .actions .start { }
+.transferSummary.large .actions .stop { }
+.transferSummary.large .actions .remove { color: #D74B4B; }
+.transferSummary.large .actions .disabled { color: #DCDDD8; }
+.transferSummary.large .eta { float: right; padding: 0 5px; width: 100px; }
+.transferSummary.large .eta .fa-clock-o { margin: 0 5px; }
 
 .addDownload { width: 100%; }
 .addDownload input[type=file] { display: none; }

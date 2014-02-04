@@ -18,7 +18,7 @@ transfers.controller('TransferList', ['$scope', '$http', '$interval', 'authentic
                             uploads.push(transfer);
                         else if (transfer.state.state == 'queued')
                             queued.push(transfer);
-                        else if (transfer.state.state == 'completed')
+                        else if (transfer.removed)
                             completed.push(transfer);
                         else
                             downloads.push(transfer);

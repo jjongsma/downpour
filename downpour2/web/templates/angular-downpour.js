@@ -348,6 +348,40 @@ dpFilters.filter('bytes', function() {
 	}
 });
 
+dpFilters.filter('interval', function() {
+    return function(seconds) {
+
+        seconds = seconds || 0;
+
+        var pad = function(n) { n = Math.floor(n); if (n < 10) return '0' + n; return n; }
+
+        if (seconds == -1)
+            return 'Infinite';
+
+        var rem = seconds % 86400;
+        var days = (seconds - rem) / 86400;
+        seconds = rem;
+
+        rem = seconds % 3600;
+        var hours = (seconds - rem) / 3600;
+        seconds = rem;
+
+        rem = seconds % 60;
+        var minutes = (seconds - rem) / 60;
+        seconds = rem;
+
+        var daystr = ''
+        if (days > 0)
+            daystr = days + 'd ';
+
+        return daystr
+            + pad(hours) + ':'
+            + pad(minutes) + ':'
+            + pad(seconds);
+    }
+});
+
+
 /*
  * Core controllers.
  */

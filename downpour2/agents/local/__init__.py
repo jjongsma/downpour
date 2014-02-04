@@ -212,8 +212,8 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         for client in self.clients:
 
             if client.transfer.size:
-                queuedsize += client.client.size
-                queueddone += client.client.downloaded
+                queuedsize += client.transfer.size
+                queueddone += client.transfer.downloaded
 
             if client.transfer.state == state.DOWNLOADING:
                 active_downloads += 1
