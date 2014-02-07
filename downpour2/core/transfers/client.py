@@ -166,7 +166,7 @@ class SimpleDownloadClient(DownloadClient):
 
     def __init__(self, transfer, application):
         super(SimpleDownloadClient, self).__init__(transfer, application, {
-            'initial': transfer.state,
+            'initial': {'state': transfer.state, 'defer': True},
             'events': [
                 # Start download
                 {'src': [state.QUEUED, state.STOPPED, state.FAILED], 'name': event.START, 'dst': state.STARTING},
@@ -221,7 +221,7 @@ class PeerDownloadClient(DownloadClient):
 
     def __init__(self, transfer, application):
         super(PeerDownloadClient, self).__init__(transfer, application, {
-            'initial': transfer.state,
+            'initial': {'state': transfer.state, 'defer': True},
             'events': [
                 # Start download
                 {'src': [state.QUEUED, state.STOPPED, state.FAILED], 'name': event.START, 'dst': state.STARTING},
@@ -274,7 +274,7 @@ class SimpleUploadClient(TransferClient):
 
     def __init__(self, transfer, application):
         super(SimpleUploadClient, self).__init__(transfer, application, {
-            'initial': transfer.state,
+            'initial': {'state': transfer.state, 'defer': True},
             'events': [
                 # Start upload
                 {'src': state.QUEUED, 'name': event.START, 'dst': state.INITIALIZING},

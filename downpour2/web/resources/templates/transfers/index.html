@@ -1,4 +1,4 @@
-<div class="column full">
+<div class="column full" ng-controller="TransferList">
 
     <div class="columnContent desktop">
         <div class="addDownload clearfix">
@@ -29,8 +29,8 @@
         <div class="section">Downloading</div>
         <div class="boxContent">
             <div class="transferSummary large">
-                <div ng-repeat="transfer in downloads" ng-include="'/resources/templates/transfers/transfer-progress-large.html'"></div>
-                <div ng-repeat="transfer in queued" ng-include="'/resources/templates/transfers/transfer-progress-large.html'"></div>
+                <div class="transfer-line" ng-repeat="transfer in downloads" ng-include="'/resources/templates/transfers/transfer-progress-large.html'"></div>
+                <div class="transfer-line" ng-repeat="transfer in queued" ng-include="'/resources/templates/transfers/transfer-progress-large.html'"></div>
             </div>
         </div>
     </div>
@@ -39,7 +39,7 @@
         <div class="section">Seeding</div>
         <div class="boxContent">
             <div class="transferSummary large">
-                <div ng-repeat="transfer in uploads.slice(0,3)" ng-include="'/resources/templates/transfers/transfer-progress-large.html'"></div>
+                <div class="transfer-line" ng-repeat="transfer in uploads.slice(0,3)" ng-include="'/resources/templates/transfers/transfer-progress-large.html'"></div>
                 <div ng-show="uploads.length > 3" class="queued">
                     <a href="/transfers/uploads">and {{ uploads.length - 3 }} more...</a>
                 </div>
@@ -51,7 +51,7 @@
         <div class="section">Recently Completed</div>
         <div class="boxContent">
             <div class="transferSummary">
-                <div ng-repeat="transfer in completed.slice(0,5)" class="transfer clearfix">
+                <div class="transfer-line" ng-repeat="transfer in completed.slice(0,5)" class="transfer clearfix">
                     <div class="label"><a ng-href="/transfers/{{ transfer.id }}">{{ transfer.description }}</a></div>
                 </div>
                 <div ng-show="completed.length > 5" class="queued">

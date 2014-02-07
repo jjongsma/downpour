@@ -67,10 +67,11 @@ class Flow(object):
         for name in callbacks:
             setattr(self, name, callbacks[name])
 
-        self.current = 'none'
-
         if init and 'defer' not in init:
+            self.current = 'none'
             getattr(self, init['event'])()
+        else:
+            self.current = init['state']
 
     def _build_event(self, event):
 

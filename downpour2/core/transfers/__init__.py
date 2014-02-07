@@ -15,6 +15,7 @@ class TransferManager(object):
         self.log = logging.getLogger(__name__)
         self.application = app
         self.agents = []
+        self.users = {}
 
         self.hostname = socket.gethostname()
         self.interface = app.config.value(('downpour', 'interface'), '0.0.0.0')
@@ -26,17 +27,11 @@ class TransferManager(object):
         if self.address is None:
             self.address = 'disconnected'
 
-        # Recently completed downloads
-        self.recent = list(self.application.store.find(
-            store.Transfer, store.Transfer.removed == True).order_by(
-                Desc(store.Transfer.completed))[:30])
-
         # Update recent download list on transfer complete
         self.application.events.subscribe(event.REMOVED, self.transfer_complete)
 
-    def transfer_complete(self, transfer):
-        self.recent.insert(0, transfer)
-        self.recent = self.recent[:30]
+    def transfer_complete(self, client):
+        self.user(client.transfer.user_id).removed(client.transfer)
 
     def add(self, transfer):
 
@@ -91,7 +86,9 @@ class TransferManager(object):
         raise NotImplementedError('No agents could handle this download')
 
     def user(self, user_id):
-        return UserTransferManager(user_id, self)
+        if not user_id in self.users:
+            self.users[user_id] = UserTransferManager(user_id, self)
+        return self.users[user_id]
 
     @property
     def status(self):
@@ -134,6 +131,18 @@ class UserTransferManager(object):
     def __init__(self, user_id, manager):
         self.user_id = user_id
         self.manager = manager
+
+        # Recently completed downloads
+        self.recent = list(self.manager.application.store.find(
+            store.Transfer, store.Transfer.completed > 0,
+            store.Transfer.removed == True,
+            store.Transfer.user_id == self.user_id).order_by(
+                Desc(store.Transfer.completed))[:30])
+
+    def removed(self, transfer):
+        if transfer.completed:
+            self.recent.insert(0, transfer)
+            self.recent = self.recent[:30]
 
     @property
     def status(self):

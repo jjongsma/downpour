@@ -75,11 +75,11 @@ class LocalAgent(plugin.Plugin, agent.TransferAgent):
         self.resume()
 
     def _remove(self, client):
-        agt = self.agent(client.client.user_id)
+        agt = self.agent(client.transfer.user_id)
         if agt is not None and client in agt.clients:
             agt.clients.remove(client)
             if len(agt.clients) == 0:
-                del self.user_agents[client.client.user_id]
+                del self.user_agents[client.transfer.user_id]
 
     def reload(self):
         # The only real config-dependent stuff is in auto-queue

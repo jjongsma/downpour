@@ -21,7 +21,7 @@ class Detail(common.Resource):
 
     def getChild(self, path, request):
         if path.isdigit():
-            return Transfer(path, self.application, self.environment)
+            return Transfer(int(path), self.application, self.environment)
         return common.NotFoundResource(self.application, self.environment)
 
 
@@ -29,6 +29,10 @@ class Transfer(common.AuthenticatedResource):
     def __init__(self, id, application, environment):
         super(Transfer, self).__init__(application, environment)
         self.id = id
+        self.putChild('', self)
+        self.putChild('start', TransferAction(id, event.START, application, environment))
+        self.putChild('stop', TransferAction(id, event.STOP, application, environment))
+        self.putChild('remove', TransferAction(id, event.REMOVE, application, environment))
 
     def render_GET(self, request):
         agent = self.application.transfer_manager.user(self.get_user(request).id)
@@ -37,6 +41,22 @@ class Transfer(common.AuthenticatedResource):
             return self.render_json(transfer)
         return self.render_json_error(request, 404, 'Transfer not found')
 
+
+class TransferAction(common.AuthenticatedResource):
+
+    def __init__(self, id, evt, application, environment):
+        super(TransferAction, self).__init__(application, environment)
+        self.id = id
+        self.evt = evt
+        self.putChild('', self)
+
+    def render_POST(self, request):
+        agent = self.application.transfer_manager.user(self.get_user(request).id)
+        transfer = agent.client(self.id)
+        if transfer is not None and transfer.can(self.evt):
+            transfer.fire(self.evt)
+            return '{ "status": "ok" }'
+        return self.render_json_error(request, 403, 'Action not allowed')
 
 class Status(common.Resource):
     def __init__(self, application, environment):
@@ -50,9 +70,13 @@ class Status(common.Resource):
             return self.render_json([])
         else:
             clients = self.application.transfer_manager.user(self.get_user(request).id).clients
-            return self.render_json(
-                [self.format_transfer(c) for c in clients]
-            )
+            transfers = [self.format_transfer(c) for c in clients]
+
+            encoder = StormModelEncoder()
+            recent = self.application.transfer_manager.user(self.get_user(request).id).recent[:5]
+            transfers.extend([encoder.default(t) for t in recent])
+
+            return self.render_json(transfers)
 
     def format_transfer(self, client):
         encoder = StormModelEncoder()

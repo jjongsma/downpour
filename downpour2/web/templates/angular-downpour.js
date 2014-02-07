@@ -18,10 +18,10 @@ downpour.config(['$routeProvider', '$locationProvider', '$httpProvider',
         // Configure core routes
         $routeProvider.when('/transfers', {
             templateUrl: '/resources/templates/transfers/index.html',
-            controller: 'TransferList'
+            controller: 'TransferListView'
         }).when('/transfers/:id', {
             templateUrl: '/resources/templates/transfers/detail.html',
-            controller: 'TransferDetail'
+            controller: 'TransferDetailView'
         }).when('/account/login', {
             templateUrl: '/resources/templates/account/login.html',
             controller: 'AccountLogin'
@@ -96,7 +96,7 @@ dpServices.provider('contentInjector',
         this.addNavGroup = addNavGroup;
         this.addBlock = addBlock;
 
-        this.$get = ['$rootScope', function($rootScope) {
+        this.$get = function() {
 
             return {
                 'navLink': navLink,
@@ -119,7 +119,7 @@ dpServices.provider('contentInjector',
                 }
             };
 
-        }];
+        };
 
     }
 );
@@ -341,7 +341,7 @@ dpFilters.filter('bytes', function() {
     return function(bytes, precision) {
 		if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return '-';
 		if (typeof precision === 'undefined') precision = 1;
-        if (!bytes) return '0b';
+        if (!bytes) return '0 b';
 		var units = ['b', 'kB', 'MB', 'GB', 'TB', 'PB'];
         var number = Math.floor(Math.log(bytes) / Math.log(1024));
 		return (bytes / Math.pow(1024, Math.floor(number))).toFixed(precision) +  ' ' + units[number];
@@ -370,12 +370,13 @@ dpFilters.filter('interval', function() {
         var minutes = (seconds - rem) / 60;
         seconds = rem;
 
-        var daystr = ''
-        if (days > 0)
-            daystr = days + 'd ';
+        if (days > 1)
+            return days + 'days';
 
-        return daystr
-            + pad(hours) + ':'
+        if (days > 0)
+            hours += days * 24;
+
+        return pad(hours) + ':'
             + pad(minutes) + ':'
             + pad(seconds);
     }
@@ -406,17 +407,17 @@ dpControllers.controller('dpLiveMode', ['$rootScope', '$location',
 /*
  * Main controller for header/footer/menu.
  */
-dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootScope', '$interval',
+dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$interval',
     'state', 'contentInjector', 'authenticator',
-    function($scope, $routeParams, $http, $rootScope, $interval, state, contentInjector, authenticator) {
+    function($scope, $routeParams, $http, $interval, state, contentInjector, authenticator) {
 
         // Menu / etc
         $scope.title = 'Downpour';
         $scope.menu = contentInjector.menu;
-        $rootScope.section = 'overview';
-        $rootScope.setSection = function(s) {
+        $scope.section = null;
+        $scope.setSection = function(s) {
             $scope.menu.open = false;
-            $rootScope.section = s;
+            $scope.section = s;
         }
 
         $scope.$watch('menu.open', function() {
@@ -458,12 +459,11 @@ dpControllers.controller('dpPage', ['$scope', '$routeParams', '$http', '$rootSco
 dpControllers.controller('dpOverview', ['$scope', '$http', 'authenticator', 'contentInjector',
     function($scope, $http, authenticator, contentInjector) {
 
-        $scope.mainblocks = contentInjector.block('homecolumn');
-        $scope.sideblocks = contentInjector.block('homeblock');
-
         authenticator.require().then(
             function(user) {
-                // Setup page here
+                $scope.setSection('overview');
+                $scope.sideblocks = contentInjector.block('homeblock');
+                $scope.mainblocks = contentInjector.block('homecolumn');
             }
         );
 
