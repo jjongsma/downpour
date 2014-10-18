@@ -167,6 +167,11 @@ stopwords = [
     re.compile(r'\[0-9]{3,4}p\b.*', re.IGNORECASE),
 ]
 
+blacklist = [
+    # Sample videos
+    re.compile(r'\Wsample\b.*', re.IGNORECASE),
+]
+
 # Post-process downloads to organize them into media libraries
 # This should be _very_ fault-tolerant; it can be run multiple
 # times (if a user changes which library they want a download
@@ -220,6 +225,17 @@ def import_files(download, manager, library, firstRun=True):
 
     for file in download.files:
 
+        # Skip blacklisted patterns (samples, etc)
+        blocked = False
+        for bl in blacklist:
+            if bl.search(file.filename):
+                blocked = True
+                break
+
+        if blocked:
+            logging.debug('Skipping blacklisted file %s' % file.filename)
+            continue
+
         fullpath = file.filename
         if firstRun:
             fullpath = '%s/%s' % (manager.get_work_directory(download), file.filename)
@@ -247,6 +263,7 @@ def import_files(download, manager, library, firstRun=True):
                     while os.path.exists(dir) and not len(os.listdir(dir)):
                         os.rmdir(dir)
                         dir = os.path.dirname(dir)
+                logging.debug('Skipping unrecognized media %s' % file.filename)
                 continue
 
         # Map filename to desired renaming pattern
@@ -256,11 +273,13 @@ def import_files(download, manager, library, firstRun=True):
             while dest.find('//') > -1:
                 dest = dest.replace('//', '/')
         else:
+            logging.debug('Pattern replace failed, skipping %s' % file.filename)
             continue
 
         # Move file on disk
         dfr = None
         targetfile = '%s/%s' % (targetdir, dest)
+        logging.debug('Importing file %s to %s' % (file.filename, targetfile))
         if not firstRun:
             dfr = threads.deferToThread(move_file, \
                 fullpath, targetfile, trim_empty_dirs=True)
