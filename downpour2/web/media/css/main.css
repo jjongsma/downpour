@@ -122,6 +122,7 @@ input[type=text], input[type=password], select, textarea {
  */
 
 #header { position: relative; color: white; background-color: #354B5E; z-index: 2000; }
+#header .desktop { position: relative; max-width: 1200px; }
 #header a { color: #CCC; }
 #header a:hover { color: #AAA; }
 #logo { float: left; padding: 10px; }
@@ -144,7 +145,7 @@ input[type=text], input[type=password], select, textarea {
 #header .unread .fa-lg { font-size: 36px; }
 #header .unread-count { font-size: 18px; }
 
-#content { position: relative; padding: 10px; margin-left: 200px; }
+#content { position: relative; padding: 10px; margin-left: 200px; max-width: 1000px; }
 .column { float: left; width: 50%; margin: 0; padding: 0; }
 .column.main { float: left; width: 60%; margin: 0; padding: 0; }
 .column.side { float: right; clear: right; width: 40%; margin: 0; padding: 0; }

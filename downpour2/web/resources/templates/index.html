@@ -38,7 +38,7 @@
 		<div class="section">Downloading</div>
 		<div class="boxContent">
 			<div class="transferSummary">
-				<div ng-repeat="transfer in downloads.slice(0, 10)" ng-include="'/resources/templates/transfers/transfer-progress-small.html'"></div>
+				<div ng-repeat="transfer in downloads.slice(0, 10) track by $index" ng-include="'/resources/templates/transfers/transfer-progress-small.html'"></div>
                 <div ng-show="downloads.length > 10" class="queued">
                     <a href="/transfers">and {{ (downloads.length + queued.length) - 10 }} more...</a>
                 </div>

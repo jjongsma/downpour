@@ -81,35 +81,36 @@ class DemoStatus(common.AuthenticatedResource):
 
         transfers = [
             # Downloads
-            [u'Elementary.S02E13.HDTV.x264-LOL.mp4', u'video/tv', state.DOWNLOADING, 98.2],
-            [u'Community.S05E03.HDTV.x264-LOL.mp4', u'video/tv', state.DOWNLOADING, 35.4],
-            [u'The.Colbert.Report.2014.01.08.Ishmael.Beah.HDTV.x264-LMAO.[VTV].mp4', u'video/tv', state.STOPPED,
+            [1, u'Elementary.S02E13.HDTV.x264-LOL.mp4', u'video/tv', state.DOWNLOADING, 98.2],
+            [2, u'Community.S05E03.HDTV.x264-LOL.mp4', u'video/tv', state.DOWNLOADING, 35.4],
+            [3, u'The.Colbert.Report.2014.01.08.Ishmael.Beah.HDTV.x264-LMAO.[VTV].mp4', u'video/tv', state.STOPPED,
              73.7],
-            [u'The.Colbert.Report.2014.01.07.John.Seigenthaler.HDTV.x264-LMAO.mp4', u'video/tv', state.DOWNLOADING,
+            [4, u'The.Colbert.Report.2014.01.07.John.Seigenthaler.HDTV.x264-LMAO.mp4', u'video/tv', state.DOWNLOADING,
              12.4],
-            [u'Marvels.Agents.of.S.H.I.E.L.D.S01E11.REPACK.HDTV.x264-KILLERS.[VTV].mp4', u'video/tv', state.STARTING,
+            [5, u'Marvels.Agents.of.S.H.I.E.L.D.S01E11.REPACK.HDTV.x264-KILLERS.[VTV].mp4', u'video/tv', state.STARTING,
              23.4],
-            [u'Justified.S05E01.HDTV.x264-EXCELLENCE.mp4', u'video/tv', state.INITIALIZING, 0.0],
-            [u'NCIS.S11E12.HDTV.x264-LOL.mp4', u'video/tv', state.QUEUED, 0.0],
-            [u'Person.of.Interest.S03E12.HDTV.x264-LOL.mp4', u'video/tv', state.QUEUED, 0.0],
+            [6, u'Justified.S05E01.HDTV.x264-EXCELLENCE.mp4', u'video/tv', state.INITIALIZING, 0.0],
+            [7, u'NCIS.S11E12.HDTV.x264-LOL.mp4', u'video/tv', state.QUEUED, 0.0],
+            [8, u'Person.of.Interest.S03E12.HDTV.x264-LOL.mp4', u'video/tv', state.QUEUED, 0.0],
             # Uploads / seeds
-            [u'MythBusters.S13E01.Star.Wars.Revenge.Of.The.Myth.PROPER.HDTV.x264-YesTV[rarbg]', u'video/tv',
+            [9, u'MythBusters.S13E01.Star.Wars.Revenge.Of.The.Myth.PROPER.HDTV.x264-YesTV[rarbg]', u'video/tv',
              state.SEEDING, 23.5],
-            [u'Grimm.S03E09.HDTV.x264-LOL[rarbg]', u'video/tv', state.SEEDING, 100.0],
-            [u'Community.S05E02.HDTV.x264-LOL.mp4', u'video/tv', state.SEEDING, 100.0],
+            [10, u'Grimm.S03E09.HDTV.x264-LOL[rarbg]', u'video/tv', state.SEEDING, 100.0],
+            [11, u'Community.S05E02.HDTV.x264-LOL.mp4', u'video/tv', state.SEEDING, 100.0],
             # Completed
-            [u'The.Colbert.Report.2014.01.28.Justin.Tuck.HDTV.x264-SWOLLED.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
-            [u'Justified.S05E04.HDTV.x264-EXCELLENCE.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
-            [u'MythBusters.S13E04.720p.HDTV.x264-KILLERS[rarbg]', u'video/tv', state.COMPLETED, 100.0],
-            [u'The.Colbert.Report.2014.01.27.Nate.Silver.HDTV.x264-SWOLLED.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
-            [u'How.I.Met.Your.Mother.S09E16.HDTV.x264-KILLERS.mp4', u'video/tv', state.COMPLETED, 100.0]
+            [12, u'The.Colbert.Report.2014.01.28.Justin.Tuck.HDTV.x264-SWOLLED.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
+            [13, u'Justified.S05E04.HDTV.x264-EXCELLENCE.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
+            [14, u'MythBusters.S13E04.720p.HDTV.x264-KILLERS[rarbg]', u'video/tv', state.COMPLETED, 100.0],
+            [15, u'The.Colbert.Report.2014.01.27.Nate.Silver.HDTV.x264-SWOLLED.[VTV].mp4', u'video/tv', state.COMPLETED, 100.0],
+            [16, u'How.I.Met.Your.Mother.S09E16.HDTV.x264-KILLERS.mp4', u'video/tv', state.COMPLETED, 100.0]
         ]
 
         return json.dumps([transfer(*t) for t in transfers], cls=ObjectEncoder, indent=4)
 
 
-def transfer(name, media_type, st, progress):
+def transfer(id, name, media_type, st, progress):
     t = {
+        'id': id,
         'description': name,
         'media_type': media_type,
         'state': state.describe(st),

@@ -1,0 +1,19 @@
+<div class="transfer clearfix">
+    <div class="healthmeter">
+        <div class="health" ng-class="transfer.health"></div>
+    </div>
+    <div class="label"><a ng-href="/transfers/{{ transfer.id }}">{{ transfer.description }}</a></div>
+    <div class="progress">
+        <div class="meter" ng-class="{
+             animate: transfer.state.transferring && transfer.progress < 100,
+             green: transfer.state.style == 'default',
+             blue: transfer.state.style == 'secondary',
+             yellow: transfer.state.style == 'blocked',
+             red: transfer.state.style == 'stopped'
+         }">
+            <span style="width: {{ transfer.progress }}%"></span>
+            <div ng-show="transfer.state.progress">{{ transfer.progress|number:1 }}%</div>
+            <div ng-hide="transfer.state.progress">{{ transfer.state.name }}</div>
+        </div>
+    </div>
+</div>
