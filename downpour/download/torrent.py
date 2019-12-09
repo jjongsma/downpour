@@ -330,7 +330,8 @@ class LibtorrentClient(DownloadClient):
             if self.torrent:
                 fileprogress = self.torrent.file_progress()
             for idx in range(0, len(fileentries)):
-                file = fileentries[idx]
+                file = fileentries[idx] if isinstance(fileentries, list) else fileentries.at(idx)
+                
                 progress = 0
                 if fileprogress:
                     progress = (float(fileprogress[idx]) / file.size) * 100
