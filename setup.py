@@ -31,5 +31,5 @@ setup(name="Downpour",
         ('/usr/share/icons/hicolor/48x48/apps', ['graphics/icons/48x48/apps/downpour.png']),
         ('/usr/share/icons/hicolor/scalable/apps', ['graphics/icons/scalable/apps/downpour.svg'])
         ],
-    install_requires=['Twisted>=9.0', 'storm>=0.14', 'jinja2==2.5', 'FeedParser>=4.1', 'python-dateutil==1.5']
+    install_requires=['Twisted>=9.0', 'storm>=0.14', 'jinja2==2.11.3', 'FeedParser>=4.1', 'python-dateutil==1.5']
 )
